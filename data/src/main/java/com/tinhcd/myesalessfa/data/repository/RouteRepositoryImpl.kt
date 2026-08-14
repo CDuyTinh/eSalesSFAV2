@@ -1,15 +1,13 @@
 package com.tinhcd.myesalessfa.data.repository
 
 import com.tinhcd.myesalessfa.data.remote.CustomerDto
-import com.tinhcd.myesalessfa.data.remote.RouteCustomerDto
-import com.tinhcd.myesalessfa.data.remote.VisitDto
+import com.tinhcd.myesalessfa.data.remote.FunctionsService
+import com.tinhcd.myesalessfa.data.remote.RouteStopDto
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.Customer
 import com.tinhcd.myesalessfa.domain.model.RouteStop
 import com.tinhcd.myesalessfa.domain.model.VisitStatus
 import com.tinhcd.myesalessfa.domain.repository.RouteRepository
-import com.tinhcd.myesalessfa.data.remote.Filters
-import com.tinhcd.myesalessfa.data.remote.PostgrestService
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import javax.inject.Inject
@@ -17,37 +15,21 @@ import javax.inject.Singleton
 
 @Singleton
 class RouteRepositoryImpl @Inject constructor(
-    private val service: PostgrestService,
+    private val service: FunctionsService,
 ) : RouteRepository {
 
     /**
-     * Two round trips rather than one clever join: the stops for the weekday,
-     * and today's visit rows. RLS already limits both to the signed-in rep, so
-     * neither query carries a branch or salesperson filter — that is the whole
-     * point of pushing scoping into the database.
+     * One call. This used to be two round trips plus a client-side join — the
+     * stops for the weekday, today's visit rows, matched by customer id. The
+     * function does that join next to the data, and derives the weekday from the
+     * date so the two can no longer disagree.
+     *
+     * Still no branch or salesperson filter anywhere: RLS scopes it, on both sides
+     * of the function boundary.
      */
     override suspend fun getRoute(date: LocalDate): DataResult<List<RouteStop>> = try {
-        val weekday = date.dayOfWeek.value // ISO: Monday = 1
-
-        val stops = service.routeCustomers(
-            visitWeekdays = Filters.arrayContains(weekday),
-        )
-
-        val visits = service.visits(visitDate = Filters.eq(date.toString()))
-            .associateBy { it.customerId }
-
         DataResult.Success(
-            stops.map { stop ->
-                val visit = visits[stop.customer.id]
-                RouteStop(
-                    customer = stop.customer.toDomain(),
-                    visitOrder = stop.visitOrder,
-                    status = visit?.status.toVisitStatus(),
-                    visitId = visit?.id,
-                    checkInAtEpochMs = visit?.checkInAt?.toEpochMillisOrNull(),
-                    checkOutAtEpochMs = visit?.checkOutAt?.toEpochMillisOrNull(),
-                )
-            },
+            service.route(date.toString()).stops.map { it.toDomain() },
         )
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())
@@ -62,6 +44,15 @@ class RouteRepositoryImpl @Inject constructor(
         }
 }
 
+private fun RouteStopDto.toDomain() = RouteStop(
+    customer = customer.toDomain(),
+    visitOrder = visitOrder,
+    status = status.toVisitStatus(),
+    visitId = visitId,
+    checkInAtEpochMs = checkInAt?.toEpochMillisOrNull(),
+    checkOutAtEpochMs = checkOutAt?.toEpochMillisOrNull(),
+)
+
 private fun CustomerDto.toDomain() = Customer(
     id = id,
     code = code,
@@ -75,7 +66,7 @@ private fun CustomerDto.toDomain() = Customer(
     classId = classId,
 )
 
-private fun String?.toVisitStatus(): VisitStatus = when (this) {
+private fun String.toVisitStatus(): VisitStatus = when (this) {
     "in_progress" -> VisitStatus.IN_PROGRESS
     "completed" -> VisitStatus.COMPLETED
     "no_order" -> VisitStatus.NO_ORDER

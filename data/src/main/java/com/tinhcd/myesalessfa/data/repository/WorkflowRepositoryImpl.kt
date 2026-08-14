@@ -10,8 +10,7 @@ import com.tinhcd.myesalessfa.data.outbox.OutboxFlusher
 import com.tinhcd.myesalessfa.data.outbox.OutboxWorker
 import com.tinhcd.myesalessfa.data.outbox.StepResultPayload
 import com.tinhcd.myesalessfa.data.outbox.StockCountPayload
-import com.tinhcd.myesalessfa.data.remote.Filters
-import com.tinhcd.myesalessfa.data.remote.PostgrestService
+import com.tinhcd.myesalessfa.data.remote.FunctionsService
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.SalesStep
 import com.tinhcd.myesalessfa.domain.model.StepCompletion
@@ -33,7 +32,7 @@ private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 @Singleton
 class WorkflowRepositoryImpl @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val service: PostgrestService,
+    private val service: FunctionsService,
     private val configDao: ConfigDao,
     private val outboxDao: OutboxDao,
     private val flusher: OutboxFlusher,
@@ -103,7 +102,7 @@ class WorkflowRepositoryImpl @Inject constructor(
     }
 
     private suspend fun remoteCompletions(visitId: String): List<StepCompletion> =
-        service.stepResults(visitId = Filters.eq(visitId))
+        service.visitWorkflow(visitId).completions
             .mapNotNull { dto ->
                 dto.completedAt.toEpochMillisOrNull()
                     ?.let { StepCompletion(visitId, dto.formId, it) }

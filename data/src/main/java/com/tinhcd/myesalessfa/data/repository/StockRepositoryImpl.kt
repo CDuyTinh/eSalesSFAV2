@@ -40,15 +40,10 @@ class StockRepositoryImpl @Inject constructor(
         customerId: String,
         visitId: String,
     ): DataResult<Map<String, Int>> = try {
-        val previous = stockApi.previousCount(customerId, visitId)
-        DataResult.Success(
-            // Summed per product: the same product may have been counted loose
-            // and by the case, and only the base-unit total compares.
-            previous?.lines
-                ?.groupBy { it.productId }
-                ?.mapValues { (_, lines) -> lines.sumOf { it.baseQty } }
-                .orEmpty(),
-        )
+        // Already totalled per product in base units by the function; the same
+        // product may have been counted loose and by the case, and only the
+        // base-unit total compares.
+        DataResult.Success(stockApi.previousCount(customerId, visitId))
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())
     }

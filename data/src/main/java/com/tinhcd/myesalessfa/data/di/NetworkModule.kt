@@ -1,7 +1,7 @@
 package com.tinhcd.myesalessfa.data.di
 
 import com.tinhcd.myesalessfa.data.BuildConfig
-import com.tinhcd.myesalessfa.data.remote.PostgrestService
+import com.tinhcd.myesalessfa.data.remote.FunctionsService
 import com.tinhcd.myesalessfa.data.remote.http.SessionTokens
 import com.tinhcd.myesalessfa.data.remote.http.SupabaseApiKey
 import com.tinhcd.myesalessfa.data.remote.http.SupabaseAuthInterceptor
@@ -22,11 +22,12 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 /**
- * Retrofit against PostgREST, which is where every data call goes.
+ * Retrofit against the project's Edge Functions, which is where every data call
+ * goes.
  *
  * The Supabase SDK is still installed (see [SupabaseModule]) but only for auth.
- * This client borrows the rep's JWT from it per request, so there is one place
- * that owns the session and one place that talks to the database.
+ * This client borrows the rep's JWT from it per request — the functions then build
+ * their own database client from that same JWT, so RLS applies across the hop.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -94,7 +95,7 @@ object NetworkModule {
             "supabase.url is missing from local.properties"
         }
         return Retrofit.Builder()
-            .baseUrl(BuildConfig.SUPABASE_URL.trimEnd('/') + "/rest/v1/")
+            .baseUrl(BuildConfig.SUPABASE_URL.trimEnd('/') + "/functions/v1/")
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
@@ -102,6 +103,6 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun providePostgrestService(retrofit: Retrofit): PostgrestService =
-        retrofit.create(PostgrestService::class.java)
+    fun provideFunctionsService(retrofit: Retrofit): FunctionsService =
+        retrofit.create(FunctionsService::class.java)
 }

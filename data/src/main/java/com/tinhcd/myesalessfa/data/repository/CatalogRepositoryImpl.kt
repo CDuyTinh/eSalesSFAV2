@@ -5,8 +5,6 @@ import com.tinhcd.myesalessfa.data.local.PriceRuleEntity
 import com.tinhcd.myesalessfa.data.local.ProductEntity
 import com.tinhcd.myesalessfa.data.local.SaleUnitEntity
 import com.tinhcd.myesalessfa.data.remote.PriceListDto
-import com.tinhcd.myesalessfa.data.remote.ProductDto
-import com.tinhcd.myesalessfa.data.remote.ProductUomDto
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.PriceRule
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
@@ -14,7 +12,7 @@ import com.tinhcd.myesalessfa.domain.model.Product
 import com.tinhcd.myesalessfa.domain.model.SaleUnit
 import com.tinhcd.myesalessfa.domain.model.priceCatalogue
 import com.tinhcd.myesalessfa.domain.repository.CatalogRepository
-import com.tinhcd.myesalessfa.data.remote.PostgrestService
+import com.tinhcd.myesalessfa.data.remote.FunctionsService
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -27,17 +25,24 @@ import javax.inject.Singleton
  */
 @Singleton
 class CatalogRepositoryImpl @Inject constructor(
-    private val service: PostgrestService,
+    private val service: FunctionsService,
     private val dao: CatalogDao,
 ) : CatalogRepository {
 
+    /**
+     * One call where there were three, with units already nested inside their
+     * product and paging handled by the function. Those three reads had no limit,
+     * so on a real catalogue they would have hit the row cap and arrived silently
+     * truncated — the app would have run on a partial product list with nothing to
+     * say so.
+     */
     override suspend fun refresh(): DataResult<Unit> = try {
-        val products = service.products()
-        val units = service.productUoms()
+        val catalogue = service.catalogue()
+        val products = catalogue.products
 
-        // RLS already limits this to the list price and the classes in the rep's
+        // RLS already limits these to the list price and the classes in the rep's
         // own branch, so there is no filter here to forget.
-        val prices = service.priceList()
+        val prices = catalogue.priceRules
 
         // Replaced wholesale rather than merged: a product withdrawn upstream, or
         // a price row that ended, has to disappear here too. Leaving one behind
@@ -52,31 +57,34 @@ class CatalogRepositoryImpl @Inject constructor(
                     id = it.id,
                     code = it.code,
                     name = it.name,
-                    categoryName = it.category?.name,
-                    categorySort = it.category?.sortOrder ?: Int.MAX_VALUE,
+                    categoryName = it.categoryName,
+                    categorySort = it.categorySort,
                     baseUom = it.baseUom,
                     vatBasisPoints = it.vatBasisPoints,
                 )
             },
         )
 
-        // Units and prices for products that did not come back — inactive ones —
-        // are dropped, or the catalogue would offer something with no product row
-        // behind it.
-        val known = products.mapTo(mutableSetOf()) { it.id }
-
+        // Nested inside their product by the function, so there is no grouping to
+        // do and no orphan possible — a unit cannot arrive without its product.
         dao.upsertSaleUnits(
-            units.filter { it.productId in known }.map {
-                SaleUnitEntity(
-                    productId = it.productId,
-                    uomCode = it.uomCode,
-                    uomName = it.uom?.name ?: it.uomCode,
-                    conversionRate = it.conversionRate,
-                    isDefaultSale = it.isDefaultSale,
-                    sortOrder = it.sortOrder,
-                )
+            products.flatMap { product ->
+                product.units.map {
+                    SaleUnitEntity(
+                        productId = product.id,
+                        uomCode = it.uomCode,
+                        uomName = it.uomName,
+                        conversionRate = it.conversionRate,
+                        isDefaultSale = it.isDefaultSale,
+                        sortOrder = it.sortOrder,
+                    )
+                }
             },
         )
+
+        // Prices still arrive flat, so a rule for a product that did not come back
+        // — an inactive one — is dropped rather than left pointing at nothing.
+        val known = products.mapTo(mutableSetOf()) { it.id }
 
         dao.upsertPriceRules(
             prices.filter { it.productId in known }.map {
