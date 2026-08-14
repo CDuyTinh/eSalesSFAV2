@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.data.repository
 
 import android.content.Context
+import com.tinhcd.myesalessfa.data.local.CatalogDao
 import com.tinhcd.myesalessfa.data.local.OutboxDao
 import com.tinhcd.myesalessfa.data.local.OutboxEntity
 import com.tinhcd.myesalessfa.data.outbox.OutboxFlusher
@@ -33,6 +34,7 @@ class StockRepositoryImpl @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val stockApi: StockApi,
     private val outboxDao: OutboxDao,
+    private val catalogDao: CatalogDao,
     private val flusher: OutboxFlusher,
 ) : StockRepository {
 
@@ -46,6 +48,51 @@ class StockRepositoryImpl @Inject constructor(
         DataResult.Success(stockApi.previousCount(customerId, visitId))
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())
+    }
+
+    /**
+     * The server's view merged with a count still in the outbox, queued winning.
+     *
+     * The queued one is by construction the newer of the two — it has not been
+     * delivered — and it is the whole reason this merge exists: a rep who counted in
+     * a dead spot must still get order suggestions rather than being told the shelf
+     * is at par because the server has never heard otherwise.
+     *
+     * Base quantities are recomputed from the cached catalogue, because the outbox
+     * payload carries only what the rep entered: product, unit and quantity.
+     */
+    override suspend fun countedBaseQty(visitId: String): DataResult<Map<String, Int>> = try {
+        val remote = runCatching { stockApi.visitCount(visitId) }.getOrDefault(emptyMap())
+        val queued = queuedCount(visitId)
+        DataResult.Success(if (queued != null) queued else remote)
+    } catch (e: Exception) {
+        DataResult.Failure(e.toAppError())
+    }
+
+    /**
+     * Null when nothing is queued for this visit — distinct from an empty map, which
+     * would say the rep counted and found nothing at all.
+     */
+    private suspend fun queuedCount(visitId: String): Map<String, Int>? {
+        val payloads = outboxDao.payloadsOfType(OutboxEntity.TYPE_STOCK_COUNT)
+            .mapNotNull { raw ->
+                runCatching { json.decodeFromString<StockCountPayload>(raw) }.getOrNull()
+            }
+            .filter { it.visitId == visitId }
+
+        // A recount replaces rather than accumulates, so the newest queued entry is
+        // the count — matching what submit_stock_count does server-side.
+        val newest = payloads.maxByOrNull { it.clientCreatedAt } ?: return null
+
+        val ratesByProductUom = catalogDao.saleUnits()
+            .associate { (it.productId to it.uomCode) to it.conversionRate }
+
+        val totals = mutableMapOf<String, Int>()
+        for (line in newest.lines) {
+            val rate = ratesByProductUom[line.productId to line.uomCode] ?: continue
+            totals[line.productId] = (totals[line.productId] ?: 0) + line.qty * rate
+        }
+        return totals
     }
 
     override suspend fun submit(count: DraftStockCount): DataResult<SubmitOutcome> = try {

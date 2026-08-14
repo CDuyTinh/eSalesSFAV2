@@ -4,13 +4,17 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.DataResult
+import com.tinhcd.myesalessfa.domain.model.Customer
 import com.tinhcd.myesalessfa.domain.model.DraftOrder
 import com.tinhcd.myesalessfa.domain.model.OrderLine
+import com.tinhcd.myesalessfa.domain.model.OrderSuggestion
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
 import com.tinhcd.myesalessfa.domain.model.PricedUnit
+import com.tinhcd.myesalessfa.domain.model.orderSuggestions
 import com.tinhcd.myesalessfa.domain.repository.CatalogRepository
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository
 import com.tinhcd.myesalessfa.domain.repository.RouteRepository
+import com.tinhcd.myesalessfa.domain.repository.StockRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,10 +32,19 @@ data class TakeOrderUiState(
     /** Which unit the rep has picked per product; absent means the default. */
     val chosenUnit: Map<String, String> = emptyMap(),
     val order: DraftOrder = DraftOrder(visitId = "", customerId = ""),
+    /**
+     * Replenishment for must-stock SKUs the count found below par. Offered, never
+     * applied on arrival — see [TakeOrderViewModel.applySuggestions].
+     */
+    val suggestions: List<OrderSuggestion> = emptyList(),
+    val suggestionsApplied: Boolean = false,
     val submitting: Boolean = false,
     val error: String? = null,
     val finished: Boolean = false,
 ) {
+    fun suggestionFor(productId: String): OrderSuggestion? =
+        suggestions.firstOrNull { it.productId == productId }
+
     val visible: List<PricedProduct>
         get() = if (query.isBlank()) {
             catalogue
@@ -64,6 +77,7 @@ class TakeOrderViewModel @Inject constructor(
     private val catalogRepository: CatalogRepository,
     private val orderRepository: OrderRepository,
     private val routeRepository: RouteRepository,
+    private val stockRepository: StockRepository,
 ) : ViewModel() {
 
     private val visitId: String = checkNotNull(savedStateHandle["visitId"])
@@ -85,19 +99,93 @@ class TakeOrderViewModel @Inject constructor(
             // The customer's class decides the price list that applies, so it is
             // needed before anything can be shown with a figure next to it.
             when (val result = catalogRepository.catalogue(stop?.customer?.classId, LocalDate.now())) {
-                is DataResult.Success -> _state.update {
-                    it.copy(
-                        loading = false,
-                        customerName = stop?.customer?.name.orEmpty(),
-                        catalogue = result.data,
-                        order = DraftOrder(visitId = visitId, customerId = customerId),
-                    )
+                is DataResult.Success -> {
+                    // What the stock count found short of par, converted into whole
+                    // sale units. Failure here costs the suggestions and nothing
+                    // else — the rep can still write the order by hand.
+                    val suggestions = suggestionsFor(stop?.customer, result.data)
+
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            customerName = stop?.customer?.name.orEmpty(),
+                            catalogue = result.data,
+                            suggestions = suggestions,
+                            suggestionsApplied = false,
+                            order = DraftOrder(visitId = visitId, customerId = customerId),
+                        )
+                    }
                 }
 
                 is DataResult.Failure -> _state.update {
                     it.copy(loading = false, error = "Khong tai duoc danh muc san pham")
                 }
             }
+        }
+    }
+
+    /**
+     * Reads the count for this visit and turns whatever is below par into whole
+     * sale units. All three inputs are separately survivable: no must-stock list, no
+     * count, or a catalogue miss each simply produce fewer suggestions.
+     */
+    private suspend fun suggestionsFor(
+        customer: Customer?,
+        catalogue: List<PricedProduct>,
+    ): List<OrderSuggestion> {
+        val mustStock = (
+            catalogRepository.mustStock(
+                channelId = customer?.channelId,
+                shopTypeId = customer?.shopTypeId,
+                on = LocalDate.now(),
+            ) as? DataResult.Success
+            )?.data ?: return emptyList()
+
+        val counted = (stockRepository.countedBaseQty(visitId) as? DataResult.Success)
+            ?.data ?: return emptyList()
+
+        return orderSuggestions(
+            mustStock = mustStock,
+            countedBaseQty = counted,
+            catalogue = catalogue,
+        )
+    }
+
+    /**
+     * Puts the suggested quantities into the order.
+     *
+     * Deliberately an action the rep takes rather than something that has already
+     * happened when the screen opens. An order is a commitment to the customer, and
+     * a screen that arrives pre-filled invites submitting quantities nobody agreed
+     * to. Each line stays editable afterwards, and applying twice is harmless
+     * because withLine replaces rather than accumulates.
+     */
+    fun applySuggestions() {
+        val current = _state.value
+        if (current.suggestions.isEmpty()) return
+
+        var order = current.order
+        var chosen = current.chosenUnit
+
+        for (suggestion in current.suggestions) {
+            val product = current.catalogue
+                .firstOrNull { it.product.id == suggestion.productId } ?: continue
+            val unit = product.units
+                .firstOrNull { it.unit.uomCode == suggestion.uomCode } ?: continue
+
+            // Move the picker onto the unit the suggestion is expressed in, or the
+            // rep would see a case quantity sitting under a "piece" selection.
+            chosen = chosen + (suggestion.productId to suggestion.uomCode)
+            order = order.withLine(lineFor(product, unit, suggestion.suggestedQty))
+        }
+
+        _state.update {
+            it.copy(
+                order = order,
+                chosenUnit = chosen,
+                suggestionsApplied = true,
+                error = null,
+            )
         }
     }
 
