@@ -1,18 +1,22 @@
 package com.tinhcd.myesalessfa.data.repository
 
 import com.tinhcd.myesalessfa.data.local.CatalogDao
+import com.tinhcd.myesalessfa.data.local.MslEntity
+import com.tinhcd.myesalessfa.data.local.MslItemEntity
 import com.tinhcd.myesalessfa.data.local.PriceRuleEntity
 import com.tinhcd.myesalessfa.data.local.ProductEntity
 import com.tinhcd.myesalessfa.data.local.SaleUnitEntity
-import com.tinhcd.myesalessfa.data.remote.PriceListDto
+import com.tinhcd.myesalessfa.data.remote.FunctionsService
 import com.tinhcd.myesalessfa.domain.DataResult
+import com.tinhcd.myesalessfa.domain.model.MslDefinition
+import com.tinhcd.myesalessfa.domain.model.MslItem
 import com.tinhcd.myesalessfa.domain.model.PriceRule
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
 import com.tinhcd.myesalessfa.domain.model.Product
 import com.tinhcd.myesalessfa.domain.model.SaleUnit
+import com.tinhcd.myesalessfa.domain.model.mslFor
 import com.tinhcd.myesalessfa.domain.model.priceCatalogue
 import com.tinhcd.myesalessfa.domain.repository.CatalogRepository
-import com.tinhcd.myesalessfa.data.remote.FunctionsService
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -99,6 +103,35 @@ class CatalogRepositoryImpl @Inject constructor(
             },
         )
 
+        dao.clearMslItems()
+        dao.clearMsl()
+        dao.upsertMsl(
+            catalogue.msl.map {
+                MslEntity(
+                    id = it.id,
+                    code = it.code,
+                    channelId = it.channelId,
+                    shopTypeId = it.shopTypeId,
+                    fromDate = it.fromDate,
+                    toDate = it.toDate,
+                )
+            },
+        )
+        dao.upsertMslItems(
+            catalogue.msl.flatMap { list ->
+                // A required SKU that is no longer in the catalogue cannot be
+                // counted, so keeping the obligation would mark the outlet
+                // permanently non-compliant for something it cannot buy.
+                list.items.filter { it.productId in known }.map {
+                    MslItemEntity(
+                        mslId = list.id,
+                        productId = it.productId,
+                        minBaseQty = it.minBaseQty,
+                    )
+                }
+            },
+        )
+
         DataResult.Success(Unit)
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())
@@ -162,6 +195,42 @@ class CatalogRepositoryImpl @Inject constructor(
                 on = on,
             ),
         )
+    } catch (e: Exception) {
+        DataResult.Failure(e.toAppError())
+    }
+    /**
+     * Reads the cached lists and hands the scoping rule to :domain, the same
+     * division as pricing: the repository fetches, the domain decides. The rule
+     * here is a union with the strictest par level winning, which is tested
+     * without a database in front of it.
+     */
+    override suspend fun mustStock(
+        channelId: String?,
+        shopTypeId: String?,
+        on: LocalDate,
+    ): DataResult<Map<String, Int>> = try {
+        val itemsByList = dao.mslItems().groupBy { it.mslId }
+
+        val definitions = dao.msl().mapNotNull { row ->
+            // A list whose dates will not parse cannot be scoped by date, and
+            // guessing would either impose obligations that have ended or drop ones
+            // in force.
+            val from = row.fromDate.toLocalDateOrNull() ?: return@mapNotNull null
+            val to = row.toDate.toLocalDateOrNull() ?: return@mapNotNull null
+            MslDefinition(
+                id = row.id,
+                code = row.code,
+                channelId = row.channelId,
+                shopTypeId = row.shopTypeId,
+                fromDate = from,
+                toDate = to,
+                items = itemsByList[row.id].orEmpty().map {
+                    MslItem(productId = it.productId, minBaseQty = it.minBaseQty)
+                },
+            )
+        }
+
+        DataResult.Success(definitions.mslFor(channelId, shopTypeId, on))
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())
     }

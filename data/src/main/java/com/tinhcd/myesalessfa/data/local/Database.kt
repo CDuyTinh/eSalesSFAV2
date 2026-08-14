@@ -188,6 +188,31 @@ data class PriceRuleEntity(
     val toDate: String,
 )
 
+/**
+ * Must-stock lists, cached with the rest of the catalogue. Which ones apply to an
+ * outlet depends on its channel and shop type, so the resolution happens on the
+ * device — that is what lets the stock screen mark required SKUs with no signal.
+ */
+@Entity(tableName = "msl")
+data class MslEntity(
+    @PrimaryKey val id: String,
+    val code: String,
+    /** Null means the list applies to any channel. */
+    val channelId: String?,
+    val shopTypeId: String?,
+    /** ISO yyyy-MM-dd, as for price rules. */
+    val fromDate: String,
+    val toDate: String,
+)
+
+@Entity(tableName = "msl_item", primaryKeys = ["mslId", "productId"])
+data class MslItemEntity(
+    val mslId: String,
+    val productId: String,
+    /** Par level in base units. */
+    val minBaseQty: Int,
+)
+
 @Dao
 interface CatalogDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -219,6 +244,24 @@ interface CatalogDao {
 
     @Query("SELECT COUNT(*) FROM product")
     suspend fun productCount(): Int
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertMsl(rows: List<MslEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertMslItems(rows: List<MslItemEntity>)
+
+    @Query("DELETE FROM msl")
+    suspend fun clearMsl()
+
+    @Query("DELETE FROM msl_item")
+    suspend fun clearMslItems()
+
+    @Query("SELECT * FROM msl")
+    suspend fun msl(): List<MslEntity>
+
+    @Query("SELECT * FROM msl_item")
+    suspend fun mslItems(): List<MslItemEntity>
 }
 
 @Database(
@@ -231,14 +274,19 @@ interface CatalogDao {
         ProductEntity::class,
         SaleUnitEntity::class,
         PriceRuleEntity::class,
+        MslEntity::class,
+        MslItemEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
-    // v3 only adds the catalogue tables, so Room can derive the migration. It is
-    // spelled out rather than left to the destructive fallback because the outbox
-    // now carries orders: dropping it would throw away a sale the rep has already
-    // agreed with the customer and cannot reconstruct.
-    autoMigrations = [AutoMigration(from = 2, to = 3)],
+    // Both steps only add tables, so Room derives them. Spelled out rather than
+    // left to the destructive fallback because the outbox carries orders and stock
+    // counts: dropping it would throw away a sale already agreed with a customer,
+    // or a shelf count nobody can retake from memory.
+    autoMigrations = [
+        AutoMigration(from = 2, to = 3),
+        AutoMigration(from = 3, to = 4),
+    ],
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun outboxDao(): OutboxDao

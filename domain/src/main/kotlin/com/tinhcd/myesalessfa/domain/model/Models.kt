@@ -26,6 +26,12 @@ data class Customer(
      * outlet pays list price.
      */
     val classId: String? = null,
+    /**
+     * Segment the must-stock lists are scoped by. Null on either means the outlet
+     * only picks up lists that name no channel / no shop type.
+     */
+    val channelId: String? = null,
+    val shopTypeId: String? = null,
 )
 
 enum class VisitStatus { PLANNED, IN_PROGRESS, COMPLETED, NO_ORDER, CLOSED }
