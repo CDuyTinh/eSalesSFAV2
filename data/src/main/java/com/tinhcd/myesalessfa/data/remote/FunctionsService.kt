@@ -3,6 +3,7 @@ package com.tinhcd.myesalessfa.data.remote
 import com.tinhcd.myesalessfa.data.outbox.DisplayAuditPayload
 import com.tinhcd.myesalessfa.data.outbox.OrderPayload
 import com.tinhcd.myesalessfa.data.outbox.StockCountPayload
+import com.tinhcd.myesalessfa.data.outbox.SurveyPayload
 import kotlinx.serialization.json.JsonObject
 import retrofit2.Response
 import retrofit2.http.Body
@@ -109,4 +110,12 @@ interface FunctionsService {
      */
     @POST("submit-display-audit")
     suspend fun submitDisplayAudit(@Body audit: DisplayAuditPayload): Response<WriteAckDto>
+
+    /**
+     * Forwards to `submit_survey`. One endpoint for every questionnaire step: the
+     * payload's form id selects which questionnaire it is, and the server recomputes
+     * the score from the question definitions.
+     */
+    @POST("submit-survey")
+    suspend fun submitSurvey(@Body survey: SurveyPayload): Response<WriteAckDto>
 }

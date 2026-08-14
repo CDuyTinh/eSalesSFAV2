@@ -16,6 +16,47 @@ import kotlinx.serialization.Serializable
  */
 
 @Serializable
+data class SurveyOptionDto(
+    val id: String,
+    val code: String,
+    val content: String,
+    val score: Int = 0,
+)
+
+@Serializable
+data class SurveyQuestionDto(
+    val id: String,
+    val code: String,
+    val content: String,
+    @SerialName("answer_type") val answerType: String,
+    @SerialName("is_required") val isRequired: Boolean = true,
+    val score: Int = 0,
+    val options: List<SurveyOptionDto> = emptyList(),
+)
+
+@Serializable
+data class SurveyGroupDto(
+    val name: String,
+    val questions: List<SurveyQuestionDto> = emptyList(),
+)
+
+/**
+ * One questionnaire, nested and already sorted by the function — PostgREST does not
+ * order embedded rows, and a questionnaire whose questions shuffle between screen
+ * loads is one no rep can work through.
+ */
+@Serializable
+data class SurveyTypeDto(
+    val id: String,
+    val code: String,
+    val name: String,
+    /** The workflow step this questionnaire belongs to. */
+    @SerialName("form_id") val formId: String,
+    @SerialName("pass_score") val passScore: Int = 0,
+    val groups: List<SurveyGroupDto> = emptyList(),
+)
+
+@Serializable
 data class BootstrapDto(
     /** Null when the auth user has no salesperson row — an unprovisioned account. */
     val salesperson: SalespersonDto? = null,
@@ -24,6 +65,8 @@ data class BootstrapDto(
     @SerialName("sales_steps") val salesSteps: List<SalesStepDto> = emptyList(),
     val lang: String = "vi",
     val translations: Map<String, String> = emptyMap(),
+    /** One per questionnaire step; cached whole and read whole. */
+    val surveys: List<SurveyTypeDto> = emptyList(),
 )
 
 @Serializable

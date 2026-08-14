@@ -6,12 +6,14 @@ import com.tinhcd.myesalessfa.domain.model.CheckInRequest
 import com.tinhcd.myesalessfa.domain.model.DraftDisplayAudit
 import com.tinhcd.myesalessfa.domain.model.DraftOrder
 import com.tinhcd.myesalessfa.domain.model.DraftStockCount
+import com.tinhcd.myesalessfa.domain.model.DraftSurvey
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
 import com.tinhcd.myesalessfa.domain.model.ReasonCode
 import com.tinhcd.myesalessfa.domain.model.ReasonKind
 import com.tinhcd.myesalessfa.domain.model.RouteStop
 import com.tinhcd.myesalessfa.domain.model.SalesStep
 import com.tinhcd.myesalessfa.domain.model.Salesperson
+import com.tinhcd.myesalessfa.domain.model.SurveyDefinition
 import com.tinhcd.myesalessfa.domain.model.VisitWorkflow
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
@@ -130,6 +132,21 @@ interface StockRepository {
      * and marks the `stock_outlet` step done in the same transaction.
      */
     suspend fun submit(count: DraftStockCount): DataResult<SubmitOutcome>
+}
+
+interface SurveyRepository {
+    /**
+     * The questionnaire configured for [formId], from the local cache so a
+     * questionnaire step works with no signal. Null when the server has no active
+     * questionnaire for that step.
+     */
+    suspend fun definition(formId: String): DataResult<SurveyDefinition?>
+
+    /**
+     * Queues [survey]. The server recomputes the score from the question definitions
+     * and marks the step done in the same transaction.
+     */
+    suspend fun submit(survey: DraftSurvey): DataResult<SubmitOutcome>
 }
 
 interface DisplayAuditRepository {

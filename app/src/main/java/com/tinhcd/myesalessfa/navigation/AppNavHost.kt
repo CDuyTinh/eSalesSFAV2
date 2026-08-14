@@ -16,6 +16,7 @@ import com.tinhcd.myesalessfa.feature.incall.InCallScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.DisplayAuditScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.NoteStepScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.StockCountScreen
+import com.tinhcd.myesalessfa.feature.incall.steps.SurveyScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.TakeOrderScreen
 import com.tinhcd.myesalessfa.feature.route.RouteScreen
 
@@ -126,6 +127,12 @@ fun AppNavHost(
 
                 SupportedSteps.DISPLAY_REMARK ->
                     DisplayAuditScreen(onDone = { navController.popBackStack() })
+
+                // Every questionnaire step shares this screen. Adding another is a
+                // survey_type row naming its form id, plus that id in SupportedSteps —
+                // no branch of its own.
+                in SupportedSteps.surveyFormIds ->
+                    SurveyScreen(onDone = { navController.popBackStack() })
 
                 // The step list already refuses to open these, but answering an
                 // unknown step with a note form would record the wrong shape of

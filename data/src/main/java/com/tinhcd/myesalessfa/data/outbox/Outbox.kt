@@ -16,6 +16,7 @@ import com.tinhcd.myesalessfa.data.remote.DisplayAuditApi
 import com.tinhcd.myesalessfa.data.remote.NewVisitDto
 import com.tinhcd.myesalessfa.data.remote.OrderApi
 import com.tinhcd.myesalessfa.data.remote.StockApi
+import com.tinhcd.myesalessfa.data.remote.SurveyApi
 import com.tinhcd.myesalessfa.data.remote.VisitApi
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -39,6 +40,7 @@ class OutboxFlusher @Inject constructor(
     private val orderApi: OrderApi,
     private val stockApi: StockApi,
     private val displayAuditApi: DisplayAuditApi,
+    private val surveyApi: SurveyApi,
 ) {
     /** @return true if the queue is now empty. */
     suspend fun flush(): Boolean {
@@ -77,6 +79,9 @@ class OutboxFlusher @Inject constructor(
 
             OutboxEntity.TYPE_DISPLAY_AUDIT ->
                 displayAuditApi.submit(json.decodeFromString<DisplayAuditPayload>(entry.payload))
+
+            OutboxEntity.TYPE_SURVEY ->
+                surveyApi.submit(json.decodeFromString<SurveyPayload>(entry.payload))
 
             else -> error("Unknown outbox type ${entry.type}")
         }
@@ -189,6 +194,38 @@ data class AuditPhotoPayload(
     val lat: Double? = null,
     val lng: Double? = null,
     @SerialName("file_size") val fileSize: Long = 0,
+)
+
+/**
+ * A completed questionnaire on its way to `submit_survey`.
+ *
+ * `form_id` is what selects the questionnaire, so one payload type and one endpoint
+ * serve every questionnaire step. No score travels: the server computes it from the
+ * question definitions, because a client that can name its own score is a client that
+ * can pass an audit it failed.
+ */
+@kotlinx.serialization.Serializable
+data class SurveyPayload(
+    val id: String,
+    @SerialName("visit_id") val visitId: String,
+    @SerialName("form_id") val formId: String,
+    @SerialName("survey_date") val surveyDate: String,
+    val note: String? = null,
+    @SerialName("client_created_at") val clientCreatedAt: String,
+    val answers: List<SurveyAnswerPayload>,
+)
+
+/**
+ * One stored fact. A multi-choice question contributes one of these per chosen option,
+ * matching how `survey_answer` is keyed.
+ */
+@kotlinx.serialization.Serializable
+data class SurveyAnswerPayload(
+    @SerialName("question_id") val questionId: String,
+    @SerialName("option_id") val optionId: String? = null,
+    @SerialName("answer_text") val answerText: String? = null,
+    @SerialName("answer_value") val answerValue: Double? = null,
+    @SerialName("answer_bool") val answerBool: Boolean? = null,
 )
 
 @HiltWorker
