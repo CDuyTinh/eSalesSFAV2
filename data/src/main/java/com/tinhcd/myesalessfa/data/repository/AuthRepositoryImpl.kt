@@ -26,6 +26,12 @@ import javax.inject.Singleton
  */
 private const val EMAIL_DOMAIN = "@esales.local"
 
+/** No salesperson row points at this auth user. Permanent; head office must fix it. */
+const val ERROR_NOT_PROVISIONED = "account_not_provisioned"
+
+/** Signed in, but the profile could not be fetched. Transient; retrying may work. */
+const val ERROR_PROFILE_UNAVAILABLE = "profile_unavailable"
+
 /**
  * Sign-in, sign-out and the session Flow stay on the Supabase SDK — it owns token
  * refresh and session persistence, which is the part worth not hand-rolling. The
@@ -56,24 +62,47 @@ class AuthRepositoryImpl @Inject constructor(
             }
             .onEach { session.current.value = it }
 
-    override suspend fun signIn(username: String, password: String): DataResult<Salesperson> = try {
-        client.auth.signInWith(Email) {
-            this.email = username.lowercase() + EMAIL_DOMAIN
-            this.password = password
+    /**
+     * Signing in has two steps that fail for unrelated reasons, and they are kept
+     * apart on purpose.
+     *
+     * The credentials are checked first. Then the profile is fetched, and that fetch
+     * can fail on its own — no connection, a rejected token, a server error. It used
+     * to go through `loadProfileOrNull()`, which swallows everything into a null, and
+     * a null here reads as "no salesperson row exists": a dropped request told the rep
+     * their account was not provisioned and sent them to ring head office about a
+     * problem that was neither theirs nor permanent. Observed on a real device, so the
+     * two are now separate outcomes.
+     */
+    override suspend fun signIn(username: String, password: String): DataResult<Salesperson> {
+        try {
+            client.auth.signInWith(Email) {
+                this.email = username.lowercase() + EMAIL_DOMAIN
+                this.password = password
+            }
+        } catch (e: Exception) {
+            return DataResult.Failure(e.toAppError())
         }
-        val profile = loadProfileOrNull()
+
+        val profile = try {
+            service.bootstrap(lang = activeLanguage()).salesperson?.toDomain()
+        } catch (e: Exception) {
+            // The session is valid — the password was accepted — so it stays. The rep
+            // can retry without typing it again, and the message says what actually
+            // went wrong.
+            return DataResult.Failure(AppError.Auth(ERROR_PROFILE_UNAVAILABLE))
+        }
+
         if (profile == null) {
-            // Authenticated, but no salesperson row points at this auth user.
-            // Treat as a failed login rather than dropping the user into an
-            // app with no branch and no route.
+            // Authenticated, but genuinely no salesperson row points at this auth
+            // user. Treat as a failed login rather than dropping the rep into an app
+            // with no branch and no route.
             client.auth.signOut()
-            DataResult.Failure(AppError.Auth("account_not_provisioned"))
-        } else {
-            session.current.value = profile
-            DataResult.Success(profile)
+            return DataResult.Failure(AppError.Auth(ERROR_NOT_PROVISIONED))
         }
-    } catch (e: Exception) {
-        DataResult.Failure(e.toAppError())
+
+        session.current.value = profile
+        return DataResult.Success(profile)
     }
 
     override suspend fun signOut(): DataResult<Unit> = try {
