@@ -13,9 +13,11 @@ import androidx.work.WorkerParameters
 import com.tinhcd.myesalessfa.data.local.OutboxDao
 import com.tinhcd.myesalessfa.data.local.OutboxEntity
 import com.tinhcd.myesalessfa.data.remote.NewVisitDto
+import com.tinhcd.myesalessfa.data.remote.OrderApi
 import com.tinhcd.myesalessfa.data.remote.VisitApi
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.json.Json
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -32,6 +34,7 @@ private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 class OutboxFlusher @Inject constructor(
     private val dao: OutboxDao,
     private val visitApi: VisitApi,
+    private val orderApi: OrderApi,
 ) {
     /** @return true if the queue is now empty. */
     suspend fun flush(): Boolean {
@@ -62,6 +65,9 @@ class OutboxFlusher @Inject constructor(
             OutboxEntity.TYPE_STEP_RESULT ->
                 visitApi.saveStepResult(json.decodeFromString<StepResultPayload>(entry.payload))
 
+            OutboxEntity.TYPE_ORDER ->
+                orderApi.submit(json.decodeFromString<OrderPayload>(entry.payload))
+
             else -> error("Unknown outbox type ${entry.type}")
         }
     }
@@ -83,6 +89,38 @@ data class StepResultPayload(
     val formId: String,
     val completedAt: String,
     val fields: Map<String, String> = emptyMap(),
+)
+
+/**
+ * An order on its way to `submit_order`.
+ *
+ * Field names are the RPC's own, so the payload goes over the wire unchanged
+ * rather than through a second mapping that could disagree with the function
+ * signature.
+ *
+ * It carries no prices. The server looks up price, VAT and unit conversion for
+ * itself from the effective-dated catalogue, which is why `order_date` matters:
+ * an order that waited overnight in the outbox still prices at the day the rep
+ * agreed it, not the day it happened to arrive. `client_total_amount` is the
+ * device's own figure, sent to be recorded rather than trusted.
+ */
+@kotlinx.serialization.Serializable
+data class OrderPayload(
+    val id: String,
+    @SerialName("visit_id") val visitId: String,
+    @SerialName("order_date") val orderDate: String,
+    val note: String? = null,
+    @SerialName("client_total_amount") val clientTotalAmount: Long,
+    @SerialName("client_created_at") val clientCreatedAt: String,
+    val lines: List<OrderLinePayload>,
+)
+
+@kotlinx.serialization.Serializable
+data class OrderLinePayload(
+    @SerialName("line_no") val lineNo: Int,
+    @SerialName("product_id") val productId: String,
+    @SerialName("uom_code") val uomCode: String,
+    val qty: Int,
 )
 
 @HiltWorker

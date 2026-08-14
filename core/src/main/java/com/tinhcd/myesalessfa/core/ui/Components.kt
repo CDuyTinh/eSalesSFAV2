@@ -68,6 +68,20 @@ fun ErrorBox(
 }
 
 /**
+ * Dong, grouped the way it is written in Vietnam: 1.234.567 d.
+ *
+ * Built by hand rather than through NumberFormat so the grouping does not follow
+ * the device locale. A rep reading a total out to a customer must see the same
+ * separators whatever language the phone is set to, and an English-locale phone
+ * would otherwise render it 1,234,567.
+ */
+fun formatDong(amount: Long): String {
+    val digits = amount.toString()
+    val grouped = digits.reversed().chunked(3).joinToString(".").reversed()
+    return "$grouped d"
+}
+
+/**
  * Tall by design: this gets tapped one-handed, outdoors, often in a hurry.
  */
 @Composable

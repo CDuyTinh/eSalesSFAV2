@@ -3,6 +3,8 @@ package com.tinhcd.myesalessfa.domain.repository
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.CheckInPolicy
 import com.tinhcd.myesalessfa.domain.model.CheckInRequest
+import com.tinhcd.myesalessfa.domain.model.DraftOrder
+import com.tinhcd.myesalessfa.domain.model.PricedProduct
 import com.tinhcd.myesalessfa.domain.model.ReasonCode
 import com.tinhcd.myesalessfa.domain.model.ReasonKind
 import com.tinhcd.myesalessfa.domain.model.RouteStop
@@ -65,6 +67,31 @@ interface ConfigRepository {
 
     /** Pulls settings, reason codes, workflow steps and translations locally. */
     suspend fun refresh(): DataResult<Unit>
+}
+
+interface CatalogRepository {
+    /** Pulls products, sale units and the price list into the local cache. */
+    suspend fun refresh(): DataResult<Unit>
+
+    /**
+     * The catalogue as this customer may buy it: units they have no price for are
+     * not offered, because the server refuses to book an unpriced line.
+     *
+     * @param on the order date, since prices are effective-dated.
+     */
+    suspend fun catalogue(
+        classId: String?,
+        on: LocalDate,
+    ): DataResult<List<PricedProduct>>
+}
+
+interface OrderRepository {
+    /**
+     * Queues [order] for delivery. The server prices it and marks the
+     * `take_order` step done in the same transaction, so a delivered order can
+     * never leave the rep still owing the step.
+     */
+    suspend fun submit(order: DraftOrder): DataResult<SubmitOutcome>
 }
 
 interface WorkflowRepository {

@@ -17,7 +17,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val ROUTE_COLUMNS =
-    "visit_order,customer:customer_id(id,code,name,address,phone,lat,lng,avatar_url,checkin_radius_m)"
+    "visit_order,customer:customer_id(id,code,name,address,phone,lat,lng,avatar_url," +
+        "checkin_radius_m,class_id)"
 
 @Singleton
 class RouteRepositoryImpl @Inject constructor(
@@ -86,6 +87,7 @@ private fun CustomerDto.toDomain() = Customer(
     lng = lng,
     avatarUrl = avatarUrl,
     checkInRadiusM = checkInRadiusM,
+    classId = classId,
 )
 
 private fun String?.toVisitStatus(): VisitStatus = when (this) {

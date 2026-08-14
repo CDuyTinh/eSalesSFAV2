@@ -3,6 +3,7 @@ package com.tinhcd.myesalessfa.data.di
 import android.content.Context
 import androidx.room.Room
 import com.tinhcd.myesalessfa.data.local.AppDatabase
+import com.tinhcd.myesalessfa.data.local.CatalogDao
 import com.tinhcd.myesalessfa.data.local.ConfigDao
 import com.tinhcd.myesalessfa.data.local.OutboxDao
 import dagger.Module
@@ -31,4 +32,7 @@ object DatabaseModule {
 
     @Provides
     fun provideConfigDao(db: AppDatabase): ConfigDao = db.configDao()
+
+    @Provides
+    fun provideCatalogDao(db: AppDatabase): CatalogDao = db.catalogDao()
 }

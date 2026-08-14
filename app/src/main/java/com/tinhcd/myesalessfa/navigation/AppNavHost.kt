@@ -14,6 +14,7 @@ import com.tinhcd.myesalessfa.feature.auth.LoginScreen
 import com.tinhcd.myesalessfa.feature.checkin.CheckInScreen
 import com.tinhcd.myesalessfa.feature.incall.InCallScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.NoteStepScreen
+import com.tinhcd.myesalessfa.feature.incall.steps.TakeOrderScreen
 import com.tinhcd.myesalessfa.feature.route.RouteScreen
 
 object Routes {
@@ -21,11 +22,16 @@ object Routes {
     const val ROUTE = "route"
     const val CHECK_IN = "checkin/{customerId}"
     const val IN_CALL = "incall/{visitId}/{customerId}"
-    const val STEP = "step/{visitId}/{formId}"
+    // The customer travels with the step, not just the visit: take_order prices
+    // against the outlet's customer class, and re-deriving it from the visit
+    // would be a second round trip inside a screen that already has one.
+    const val STEP = "step/{visitId}/{customerId}/{formId}"
 
     fun checkIn(customerId: String) = "checkin/$customerId"
     fun inCall(visitId: String, customerId: String) = "incall/$visitId/$customerId"
-    fun step(visitId: String, formId: String) = "step/$visitId/$formId"
+
+    fun step(visitId: String, customerId: String, formId: String) =
+        "step/$visitId/$customerId/$formId"
 }
 
 @Composable
@@ -86,8 +92,11 @@ fun AppNavHost(
             ),
         ) { entry ->
             val visitId = entry.arguments?.getString("visitId").orEmpty()
+            val customerId = entry.arguments?.getString("customerId").orEmpty()
             InCallScreen(
-                onOpenStep = { formId -> navController.navigate(Routes.step(visitId, formId)) },
+                onOpenStep = { formId ->
+                    navController.navigate(Routes.step(visitId, customerId, formId))
+                },
                 onCheckedOut = { navController.popBackStack(Routes.ROUTE, inclusive = false) },
             )
         }
@@ -96,6 +105,7 @@ fun AppNavHost(
             route = Routes.STEP,
             arguments = listOf(
                 navArgument("visitId") { type = NavType.StringType },
+                navArgument("customerId") { type = NavType.StringType },
                 navArgument("formId") { type = NavType.StringType },
             ),
         ) { entry ->
@@ -105,6 +115,9 @@ fun AppNavHost(
             when (entry.arguments?.getString("formId")) {
                 SupportedSteps.OUTSIDE_CHECKING, SupportedSteps.FEEDBACK ->
                     NoteStepScreen(onDone = { navController.popBackStack() })
+
+                SupportedSteps.TAKE_ORDER ->
+                    TakeOrderScreen(onDone = { navController.popBackStack() })
 
                 // The step list already refuses to open these, but answering an
                 // unknown step with a note form would record the wrong shape of

@@ -48,9 +48,10 @@ object StepConfig {
  */
 object SupportedSteps {
     const val OUTSIDE_CHECKING = "outside_checking"
+    const val TAKE_ORDER = "take_order"
     const val FEEDBACK = "feedback"
 
-    val formIds: Set<String> = setOf(OUTSIDE_CHECKING, FEEDBACK)
+    val formIds: Set<String> = setOf(OUTSIDE_CHECKING, TAKE_ORDER, FEEDBACK)
 }
 
 data class WorkflowStep(

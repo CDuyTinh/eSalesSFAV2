@@ -21,6 +21,11 @@ data class Customer(
     val avatarUrl: String?,
     /** Null means "fall back to the global gps_checkin_radius_m setting". */
     val checkInRadiusM: Int?,
+    /**
+     * Customer class, which is what the price list is grouped by. Null means the
+     * outlet pays list price.
+     */
+    val classId: String? = null,
 )
 
 enum class VisitStatus { PLANNED, IN_PROGRESS, COMPLETED, NO_ORDER, CLOSED }
