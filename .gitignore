@@ -7,6 +7,8 @@
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
+# Records how one developer sorted the device table. Same class as workspace.xml.
+/.idea/deviceManager.xml
 # Android Studio sometimes drops an .idea/ inside a module. That is per-user
 # state and never belongs in the repo; only the root .idea/ is partly shared.
 /*/.idea/
