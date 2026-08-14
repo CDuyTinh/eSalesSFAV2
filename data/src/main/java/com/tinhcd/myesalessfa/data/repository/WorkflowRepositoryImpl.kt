@@ -9,6 +9,7 @@ import com.tinhcd.myesalessfa.data.outbox.OrderPayload
 import com.tinhcd.myesalessfa.data.outbox.OutboxFlusher
 import com.tinhcd.myesalessfa.data.outbox.OutboxWorker
 import com.tinhcd.myesalessfa.data.outbox.StepResultPayload
+import com.tinhcd.myesalessfa.data.outbox.StockCountPayload
 import com.tinhcd.myesalessfa.data.remote.VisitStepResultDto
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.SalesStep
@@ -59,6 +60,7 @@ class WorkflowRepositoryImpl @Inject constructor(
                 definition = definition,
                 completions = remote + queuedCompletions(),
                 titleOf = { titles[it.titleKey] ?: it.titleKey },
+                prerequisites = configRepository.stepPrerequisites(),
             ),
         )
     } catch (e: Exception) {
@@ -121,7 +123,7 @@ class WorkflowRepositoryImpl @Inject constructor(
      * assembler's job, so this stays a plain decode.
      */
     private suspend fun queuedCompletions(): List<StepCompletion> =
-        queuedStepResults() + queuedOrders()
+        queuedStepResults() + queuedOrders() + queuedStockCounts()
 
     private suspend fun queuedStepResults(): List<StepCompletion> =
         outboxDao.payloadsOfType(OutboxEntity.TYPE_STEP_RESULT)
@@ -143,6 +145,22 @@ class WorkflowRepositoryImpl @Inject constructor(
             .mapNotNull { payload ->
                 payload.clientCreatedAt.toEpochMillisOrNull()
                     ?.let { StepCompletion(payload.visitId, SupportedSteps.TAKE_ORDER, it) }
+            }
+
+    /**
+     * A queued count completes `stock_outlet`, for the same reason a queued order
+     * completes `take_order` — and with more at stake here, because the order step
+     * is gated behind this one. A rep who counted in a dead spot would otherwise
+     * be locked out of selling until they got signal back.
+     */
+    private suspend fun queuedStockCounts(): List<StepCompletion> =
+        outboxDao.payloadsOfType(OutboxEntity.TYPE_STOCK_COUNT)
+            .mapNotNull { raw ->
+                runCatching { json.decodeFromString<StockCountPayload>(raw) }.getOrNull()
+            }
+            .mapNotNull { payload ->
+                payload.clientCreatedAt.toEpochMillisOrNull()
+                    ?.let { StepCompletion(payload.visitId, SupportedSteps.STOCK_OUTLET, it) }
             }
 }
 

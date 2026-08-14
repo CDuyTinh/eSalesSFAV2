@@ -40,6 +40,7 @@ data class OutboxEntity(
         const val TYPE_CHECK_OUT = "check_out"
         const val TYPE_STEP_RESULT = "step_result"
         const val TYPE_ORDER = "order"
+        const val TYPE_STOCK_COUNT = "stock_count"
     }
 }
 

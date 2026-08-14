@@ -123,6 +123,25 @@ data class PriceListDto(
     @SerialName("to_date") val toDate: String,
 )
 
+// -----------------------------------------------------------------------------
+// Stock counts
+// -----------------------------------------------------------------------------
+
+@Serializable
+data class PreviousCountLineDto(
+    @SerialName("product_id") val productId: String,
+    @SerialName("uom_code") val uomCode: String,
+    val qty: Int,
+    @SerialName("base_qty") val baseQty: Int,
+)
+
+@Serializable
+data class PreviousCountDto(
+    val id: String,
+    @SerialName("count_date") val countDate: String,
+    val lines: List<PreviousCountLineDto> = emptyList(),
+)
+
 @Serializable
 data class VisitStepResultDto(
     @SerialName("form_id") val formId: String,

@@ -12,6 +12,7 @@ import com.tinhcd.myesalessfa.data.remote.TranslationDto
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.CheckInPolicy
 import com.tinhcd.myesalessfa.domain.model.ReasonCode
+import com.tinhcd.myesalessfa.domain.model.SupportedSteps
 import com.tinhcd.myesalessfa.domain.model.ReasonKind
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
 import io.github.jan.supabase.SupabaseClient
@@ -50,6 +51,21 @@ class ConfigRepositoryImpl @Inject constructor(
 
     /** Falls back to the key so a missing label is visible rather than blank. */
     override suspend fun translate(key: String): String = dao.translation(key) ?: key
+
+    /**
+     * Currently one rule, the legacy REQUIRE_STOCK_BEFORE_ORDER: count the
+     * shelves before writing the order, so the order is based on what is actually
+     * there.
+     *
+     * Absent defaults to off. A setting nobody configured must not stand between
+     * a rep and a sale, and this is the one place where failing closed would cost
+     * revenue rather than protect anything.
+     */
+    override suspend fun stepPrerequisites(): Map<String, String> = buildMap {
+        if (dao.setting(KEY_STOCK_BEFORE_ORDER)?.toBooleanStrictOrNull() == true) {
+            put(SupportedSteps.TAKE_ORDER, SupportedSteps.STOCK_OUTLET)
+        }
+    }
 
     override suspend fun refresh(): DataResult<Unit> = try {
         val settings = client.from("app_setting")
@@ -116,6 +132,7 @@ class ConfigRepositoryImpl @Inject constructor(
         const val KEY_RADIUS = "gps_checkin_radius_m"
         const val KEY_ACCURACY = "gps_max_accuracy_m"
         const val KEY_ALLOW_REASON = "allow_reason_when_far"
+        const val KEY_STOCK_BEFORE_ORDER = "require_stock_before_order"
 
         const val DEFAULT_LANGUAGE = "vi"
         val SUPPORTED_LANGUAGES = setOf("vi", "en")
