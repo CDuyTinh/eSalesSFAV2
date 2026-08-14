@@ -18,6 +18,15 @@ import { handler, json, unwrap } from "../_shared/client.ts";
 const SALESPERSON_COLUMNS =
   "id,code,full_name,branch_id,branch:branch_id(id,code,name)";
 
+// Nested two levels deep on purpose. The client caches each questionnaire as one
+// JSON row and only ever reads it whole, so a flat shape would only be reassembled
+// into this one on arrival.
+const SURVEY_COLUMNS =
+  "id,code,name,form_id,pass_score," +
+  "groups:survey_question_group(name,sort_order," +
+  "questions:survey_question(id,code,content,answer_type,is_required,score,sort_order," +
+  "options:survey_question_option(id,code,content,score,sort_order)))";
+
 interface KeyValue {
   key: string;
   value: string;
@@ -29,7 +38,7 @@ Deno.serve(handler(async (req, db) => {
   const requested = new URL(req.url).searchParams.get("lang") ?? "vi";
   const lang = requested === "en" ? "en" : "vi";
 
-  const [salesperson, settings, reasonCodes, salesSteps, translations] =
+  const [salesperson, settings, reasonCodes, salesSteps, translations, surveys] =
     await Promise.all([
       db.from("salesperson").select(SALESPERSON_COLUMNS).then(unwrap),
       db.from("app_setting").select("key,value").then(unwrap),
@@ -40,6 +49,8 @@ Deno.serve(handler(async (req, db) => {
         .eq("is_active", true).order("step").then(unwrap),
       db.from("translation").select("key,value").eq("lang_code", lang)
         .then(unwrap),
+      db.from("survey_type").select(SURVEY_COLUMNS).eq("is_active", true)
+        .order("code").then(unwrap),
     ]);
 
   const toMap = (rows: KeyValue[]) =>
@@ -55,5 +66,34 @@ Deno.serve(handler(async (req, db) => {
     sales_steps: salesSteps,
     lang,
     translations: toMap(translations as KeyValue[]),
+    // Sorted here rather than on the device: PostgREST does not order embedded rows,
+    // and a questionnaire whose questions shuffle between screen loads is one no rep
+    // can work through.
+    surveys: sortSurveys(surveys as SurveyType[]),
   });
 }));
+
+interface Sortable {
+  sort_order?: number;
+}
+
+interface SurveyType {
+  groups?: (Sortable & { questions?: (Sortable & { options?: Sortable[] })[] })[];
+}
+
+function bySortOrder(a: Sortable, b: Sortable): number {
+  return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+}
+
+function sortSurveys(surveys: SurveyType[]): SurveyType[] {
+  for (const survey of surveys) {
+    survey.groups?.sort(bySortOrder);
+    for (const group of survey.groups ?? []) {
+      group.questions?.sort(bySortOrder);
+      for (const question of group.questions ?? []) {
+        question.options?.sort(bySortOrder);
+      }
+    }
+  }
+  return surveys;
+}

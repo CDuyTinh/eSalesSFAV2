@@ -4,6 +4,7 @@ import com.tinhcd.myesalessfa.data.local.ConfigDao
 import com.tinhcd.myesalessfa.data.local.ReasonEntity
 import com.tinhcd.myesalessfa.data.local.SalesStepEntity
 import com.tinhcd.myesalessfa.data.local.SettingEntity
+import com.tinhcd.myesalessfa.data.local.SurveyDefinitionEntity
 import com.tinhcd.myesalessfa.data.local.TranslationEntity
 import com.tinhcd.myesalessfa.data.remote.ReasonCodeDto
 import com.tinhcd.myesalessfa.data.remote.SalesStepDto
@@ -17,15 +18,17 @@ import com.tinhcd.myesalessfa.domain.model.ReasonKind
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
 import com.tinhcd.myesalessfa.data.remote.FunctionsService
 import com.tinhcd.myesalessfa.data.remote.activeLanguage
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
-import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
+private val json = Json { encodeDefaults = true; explicitNulls = false }
+
 /**
- * Settings, reason codes, workflow definition and labels are pulled once after
- * sign-in and cached, so the in-call screen renders instantly and the check-in
- * rules still apply when the shop turns out to be a signal dead spot.
+ * Settings, reason codes, workflow definition, labels and questionnaires are pulled
+ * once after sign-in and cached, so the in-call screen renders instantly and the
+ * check-in rules still apply when the shop turns out to be a signal dead spot.
  */
 @Singleton
 class ConfigRepositoryImpl @Inject constructor(
@@ -100,6 +103,16 @@ class ConfigRepositoryImpl @Inject constructor(
 
         dao.upsertTranslations(
             bootstrap.translations.map { (key, value) -> TranslationEntity(key, value) },
+        )
+
+        // Stored as the JSON that arrived, keyed by the step it belongs to. Replaced
+        // wholesale for the same reason the steps are: a questionnaire retired upstream
+        // must stop appearing here.
+        dao.clearSurveyDefinitions()
+        dao.upsertSurveyDefinitions(
+            bootstrap.surveys.map {
+                SurveyDefinitionEntity(formId = it.formId, json = json.encodeToString(it))
+            },
         )
 
         DataResult.Success(Unit)

@@ -8,6 +8,7 @@ import com.tinhcd.myesalessfa.data.repository.ConfigRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.OrderRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.RouteRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.StockRepositoryImpl
+import com.tinhcd.myesalessfa.data.repository.SurveyRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.WorkflowRepositoryImpl
 import com.tinhcd.myesalessfa.domain.repository.AuthRepository
 import com.tinhcd.myesalessfa.domain.repository.CatalogRepository
@@ -17,6 +18,7 @@ import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository
 import com.tinhcd.myesalessfa.domain.repository.RouteRepository
 import com.tinhcd.myesalessfa.domain.repository.StockRepository
+import com.tinhcd.myesalessfa.domain.repository.SurveyRepository
 import com.tinhcd.myesalessfa.domain.repository.WorkflowRepository
 import dagger.Binds
 import dagger.Module
@@ -69,4 +71,8 @@ abstract class RepositoryModule {
     abstract fun bindDisplayAuditRepository(
         impl: DisplayAuditRepositoryImpl,
     ): DisplayAuditRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSurveyRepository(impl: SurveyRepositoryImpl): SurveyRepository
 }

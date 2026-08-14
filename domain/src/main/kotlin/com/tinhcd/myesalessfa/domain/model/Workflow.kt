@@ -57,7 +57,15 @@ object SupportedSteps {
     const val STOCK_OUTLET = "stock_outlet"
     const val TAKE_ORDER = "take_order"
     const val DISPLAY_REMARK = "display_remark"
+    const val POSM_STATUS = "posm_status"
+    const val MARKET_INFO = "market_info"
     const val FEEDBACK = "feedback"
+
+    /**
+     * The questionnaire steps, which all share one screen. A step added here needs no
+     * new screen — only a `survey_type` row naming its form id.
+     */
+    val surveyFormIds: Set<String> = setOf(POSM_STATUS, MARKET_INFO)
 
     val formIds: Set<String> = setOf(
         OUTSIDE_CHECKING,
@@ -65,7 +73,7 @@ object SupportedSteps {
         TAKE_ORDER,
         DISPLAY_REMARK,
         FEEDBACK,
-    )
+    ) + surveyFormIds
 }
 
 data class WorkflowStep(

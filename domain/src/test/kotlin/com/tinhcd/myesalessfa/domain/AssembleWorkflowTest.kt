@@ -12,6 +12,16 @@ import org.junit.Test
 
 class AssembleWorkflowTest {
 
+    /**
+     * A step the server could enable that this build has never heard of.
+     *
+     * Deliberately fictional. These tests used to name a real-but-unbuilt step, and
+     * every time one of those shipped the fixture quietly stopped testing what it
+     * claimed to. Every step in the seed is now implemented, so the only honest way to
+     * test "cannot render" is with an id no release will ever claim.
+     */
+    private val UNRENDERABLE = "planogram_check"
+
     private fun definition(formId: String, order: Int, required: Boolean = false) = SalesStep(
         formId = formId,
         order = order,
@@ -84,7 +94,7 @@ class AssembleWorkflowTest {
             visitId = "v1",
             definition = listOf(
                 definition(SupportedSteps.OUTSIDE_CHECKING, order = 1),
-                definition("posm_status", order = 2, required = true),
+                definition(UNRENDERABLE, order = 2, required = true),
             ),
             completions = emptyList(),
             titleOf = titleOf,
@@ -180,12 +190,12 @@ class AssembleWorkflowTest {
         val workflow = assembleWorkflow(
             visitId = "v1",
             definition = listOf(
-                definition("posm_status", order = 1),
+                definition(UNRENDERABLE, order = 1),
                 definition(SupportedSteps.TAKE_ORDER, order = 3),
             ),
             completions = emptyList(),
             titleOf = titleOf,
-            prerequisites = mapOf(SupportedSteps.TAKE_ORDER to "posm_status"),
+            prerequisites = mapOf(SupportedSteps.TAKE_ORDER to UNRENDERABLE),
         )
         assertTrue(workflow.steps.single { it.step.formId == SupportedSteps.TAKE_ORDER }.canOpen)
     }

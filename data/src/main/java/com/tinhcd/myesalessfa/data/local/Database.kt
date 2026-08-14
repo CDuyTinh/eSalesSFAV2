@@ -42,6 +42,7 @@ data class OutboxEntity(
         const val TYPE_ORDER = "order"
         const val TYPE_STOCK_COUNT = "stock_count"
         const val TYPE_DISPLAY_AUDIT = "display_audit"
+        const val TYPE_SURVEY = "survey"
     }
 }
 
@@ -108,6 +109,20 @@ data class TranslationEntity(
     val value: String,
 )
 
+/**
+ * A questionnaire, stored as the JSON the server sent.
+ *
+ * Deliberately not four relational tables. The definition is only ever read whole —
+ * the survey screen wants the entire tree or nothing — so normalising it on the device
+ * would buy a join and cost the reassembly. Keyed by form id because that is how a
+ * workflow step finds its own questionnaire.
+ */
+@Entity(tableName = "survey_definition")
+data class SurveyDefinitionEntity(
+    @PrimaryKey val formId: String,
+    val json: String,
+)
+
 @Dao
 interface ConfigDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -142,6 +157,15 @@ interface ConfigDao {
 
     @Query("SELECT value FROM translation WHERE key = :key")
     suspend fun translation(key: String): String?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertSurveyDefinitions(rows: List<SurveyDefinitionEntity>)
+
+    @Query("DELETE FROM survey_definition")
+    suspend fun clearSurveyDefinitions()
+
+    @Query("SELECT json FROM survey_definition WHERE formId = :formId")
+    suspend fun surveyDefinition(formId: String): String?
 }
 
 // -----------------------------------------------------------------------------
@@ -277,8 +301,9 @@ interface CatalogDao {
         PriceRuleEntity::class,
         MslEntity::class,
         MslItemEntity::class,
+        SurveyDefinitionEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
     // Both steps only add tables, so Room derives them. Spelled out rather than
     // left to the destructive fallback because the outbox carries orders and stock
@@ -287,6 +312,7 @@ interface CatalogDao {
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
+        AutoMigration(from = 4, to = 5),
     ],
 )
 abstract class AppDatabase : RoomDatabase() {

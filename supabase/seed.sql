@@ -393,3 +393,75 @@ insert into msl_item (msl_id, product_id, min_base_qty) values
     -- SM
     ('00000000-0000-0000-0000-000000000f03', '00000000-0000-0000-0000-000000000c12', 72)
 on conflict (msl_id, product_id) do nothing;
+
+-- -----------------------------------------------------------------------------
+-- Questionnaires                                          (uuid scheme: ..gxx)
+--
+-- Two survey types, each naming the workflow step it belongs to. Between them they
+-- cover every answer type the client renders, so the survey screen and the scoring
+-- are exercised by data rather than only by unit tests.
+--
+-- POSM is scored and has a pass threshold: 12 of an achievable 18.
+--   yes_no  10 (2 questions worth 5)
+--   single   5 (best option)
+--   multi    3 (2 options at 2 and 1)
+-- MARKET_INFO is informational, so every score is zero and pass_score is zero —
+-- it always passes, which is what an information-gathering step should do.
+-- -----------------------------------------------------------------------------
+insert into survey_type (id, code, name, form_id, pass_score) values
+    ('00000000-0000-0000-0000-000000000e01', 'POSM', 'Kiem tra POSM',
+     'posm_status', 12),
+    ('00000000-0000-0000-0000-000000000e02', 'MKTINFO', 'Thong tin thi truong',
+     'market_info', 0)
+on conflict (id) do nothing;
+
+insert into survey_question_group (id, survey_type_id, name, sort_order) values
+    ('00000000-0000-0000-0000-000000000e11', '00000000-0000-0000-0000-000000000e01',
+     'Hien dien POSM', 1),
+    ('00000000-0000-0000-0000-000000000e12', '00000000-0000-0000-0000-000000000e01',
+     'Chat luong trung bay', 2),
+    ('00000000-0000-0000-0000-000000000e13', '00000000-0000-0000-0000-000000000e02',
+     'Doi thu canh tranh', 1),
+    ('00000000-0000-0000-0000-000000000e14', '00000000-0000-0000-0000-000000000e02',
+     'Ghi nhan khac', 2)
+on conflict (id) do nothing;
+
+insert into survey_question
+    (id, group_id, code, content, answer_type, is_required, score, sort_order) values
+    -- POSM: two yes_no worth 5 each
+    ('00000000-0000-0000-0000-000000000e21', '00000000-0000-0000-0000-000000000e11',
+     'POSTER', 'Co poster treo dung vi tri?', 'yes_no', true, 5, 1),
+    ('00000000-0000-0000-0000-000000000e22', '00000000-0000-0000-0000-000000000e11',
+     'KE_RIENG', 'Co ke trung bay rieng cua hang?', 'yes_no', true, 5, 2),
+    -- single: score comes from the chosen option, so the question score is 0
+    ('00000000-0000-0000-0000-000000000e23', '00000000-0000-0000-0000-000000000e12',
+     'VI_TRI', 'Vi tri trung bay trong cua hang', 'single', true, 0, 1),
+    -- multi: score is the sum of chosen options
+    ('00000000-0000-0000-0000-000000000e24', '00000000-0000-0000-0000-000000000e12',
+     'VAN_DE', 'Cac van de ghi nhan (chon nhieu)', 'multi', false, 0, 2),
+    -- MARKET_INFO: informational, every score 0
+    ('00000000-0000-0000-0000-000000000e25', '00000000-0000-0000-0000-000000000e13',
+     'DT_GIA', 'Gia ban cua doi thu (dong)', 'number', true, 0, 1),
+    ('00000000-0000-0000-0000-000000000e26', '00000000-0000-0000-0000-000000000e13',
+     'DT_KM', 'Doi thu dang co chuong trinh khuyen mai?', 'yes_no', true, 0, 2),
+    ('00000000-0000-0000-0000-000000000e27', '00000000-0000-0000-0000-000000000e14',
+     'GHI_CHU', 'Ghi nhan tinh hinh thi truong', 'text', false, 0, 1)
+on conflict (id) do nothing;
+
+insert into survey_question_option
+    (id, question_id, code, content, score, sort_order) values
+    -- VI_TRI: best is 5, which is what max_score counts for a single question
+    ('00000000-0000-0000-0000-000000000e31', '00000000-0000-0000-0000-000000000e23',
+     'QUAY', 'Ngay quay thu ngan', 5, 1),
+    ('00000000-0000-0000-0000-000000000e32', '00000000-0000-0000-0000-000000000e23',
+     'LOI_DI', 'Loi di chinh', 3, 2),
+    ('00000000-0000-0000-0000-000000000e33', '00000000-0000-0000-0000-000000000e23',
+     'GOC', 'Goc cua hang', 1, 3),
+    -- VAN_DE: multi, so max_score counts all three (2 + 1 + 0 = 3)
+    ('00000000-0000-0000-0000-000000000e34', '00000000-0000-0000-0000-000000000e24',
+     'SACH', 'Ke sach se, hang xep ngay', 2, 1),
+    ('00000000-0000-0000-0000-000000000e35', '00000000-0000-0000-0000-000000000e24',
+     'GIA_DUNG', 'Bang gia dung quy dinh', 1, 2),
+    ('00000000-0000-0000-0000-000000000e36', '00000000-0000-0000-0000-000000000e24',
+     'HET_HAN', 'Co hang gan het han tren ke', 0, 3)
+on conflict (id) do nothing;
