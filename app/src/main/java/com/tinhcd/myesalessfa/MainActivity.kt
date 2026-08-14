@@ -1,15 +1,17 @@
 package com.tinhcd.myesalessfa
 
 import android.os.Bundle
+import android.os.SystemClock
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
@@ -27,16 +29,41 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Held long enough to hide the hand-off into the first real screen, and no longer.
+ *
+ * Restoring the session can involve a network call, and the HTTP client allows twenty
+ * seconds to connect. Keeping the splash up for that would look like a frozen launch,
+ * so once this budget passes the app falls through to its ordinary loading state, which
+ * at least says out loud that it is still working.
+ */
+private const val SPLASH_HOLD_MS = 800L
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    /**
+     * Owned by the activity rather than created inside setContent, because the splash
+     * has to read its state from outside the composition — the keep-on-screen condition
+     * is evaluated before there is any composition to read from.
+     */
+    private val rootViewModel: RootViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
+
+        val launchedAt = SystemClock.elapsedRealtime()
+        splash.setKeepOnScreenCondition {
+            rootViewModel.startDestination.value == null &&
+                SystemClock.elapsedRealtime() - launchedAt < SPLASH_HOLD_MS
+        }
+
         enableEdgeToEdge()
         setContent {
             MyeSalesTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
-                    val viewModel: RootViewModel = hiltViewModel()
-                    val start by viewModel.startDestination.collectAsStateWithLifecycle()
+                    val start by rootViewModel.startDestination.collectAsStateWithLifecycle()
 
                     // Null while the stored session is being restored. Showing
                     // the login form first and yanking it away a moment later

@@ -13,6 +13,7 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
@@ -37,8 +38,19 @@ class AuthRepositoryImpl @Inject constructor(
     private val session: SessionStore,
 ) : AuthRepository {
 
+    /**
+     * Emits only once the SDK has settled on an answer.
+     *
+     * `sessionStatus` starts at [SessionStatus.Initializing] while the stored session is
+     * being restored. Mapping that to null — as this did — means the first value a
+     * collector sees says "signed out" before anyone has looked, and a caller taking
+     * `first()` acts on it: a rep with a perfectly good session was sent back to the
+     * login screen on every cold start. Filtering it out makes the flow's contract
+     * "signed in as X, or definitely not signed in", which is what callers assume.
+     */
     override val currentUser: Flow<Salesperson?> =
         client.auth.sessionStatus
+            .filter { it !is SessionStatus.Initializing }
             .map { status ->
                 if (status is SessionStatus.Authenticated) loadProfileOrNull() else null
             }
