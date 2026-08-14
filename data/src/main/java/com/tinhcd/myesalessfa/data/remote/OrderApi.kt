@@ -1,15 +1,12 @@
 package com.tinhcd.myesalessfa.data.remote
 
 import com.tinhcd.myesalessfa.data.outbox.OrderPayload
-import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.postgrest.postgrest
+import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import javax.inject.Inject
 import javax.inject.Singleton
-
-private val json = Json { encodeDefaults = true; explicitNulls = false }
 
 /**
  * Order submission, which is the one write in this app that is not a plain table
@@ -23,14 +20,12 @@ private val json = Json { encodeDefaults = true; explicitNulls = false }
  */
 @Singleton
 class OrderApi @Inject constructor(
-    private val client: SupabaseClient,
+    private val service: PostgrestService,
+    private val json: Json,
 ) {
     suspend fun submit(payload: OrderPayload) {
-        client.postgrest.rpc(
-            function = "submit_order",
-            parameters = buildJsonObject {
-                put("p_order", json.encodeToJsonElement(payload))
-            },
-        )
+        service.submitOrder(
+            buildJsonObject { put("p_order", json.encodeToJsonElement(payload)) },
+        ).orThrow()
     }
 }

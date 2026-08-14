@@ -50,11 +50,17 @@ ksp {
 dependencies {
     implementation(project(":domain"))
 
+    // Supabase SDK for auth only — sign-in, session persistence and token
+    // refresh. Every data call goes through Retrofit below.
     implementation(platform(libs.supabase.bom))
-    implementation(libs.supabase.postgrest)
     implementation(libs.supabase.auth)
     implementation(libs.supabase.storage)
     implementation(libs.ktor.client.okhttp)
+
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.kotlinx.serialization)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging.interceptor)
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
@@ -73,6 +79,10 @@ dependencies {
     ksp(libs.androidx.hilt.compiler)
 
     testImplementation(libs.junit)
+    // Asserts the requests Retrofit actually builds. Without a device to run the
+    // app on, this is what proves the annotations produce the URLs verified
+    // against the live API by hand.
+    testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     testImplementation(libs.mockk)

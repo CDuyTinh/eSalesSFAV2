@@ -15,9 +15,8 @@ import com.tinhcd.myesalessfa.domain.model.ReasonCode
 import com.tinhcd.myesalessfa.domain.model.SupportedSteps
 import com.tinhcd.myesalessfa.domain.model.ReasonKind
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
-import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.Columns
+import com.tinhcd.myesalessfa.data.remote.Filters
+import com.tinhcd.myesalessfa.data.remote.PostgrestService
 import kotlinx.serialization.json.JsonPrimitive
 import java.util.Locale
 import javax.inject.Inject
@@ -30,7 +29,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class ConfigRepositoryImpl @Inject constructor(
-    private val client: SupabaseClient,
+    private val service: PostgrestService,
     private val dao: ConfigDao,
 ) : ConfigRepository {
 
@@ -68,27 +67,10 @@ class ConfigRepositoryImpl @Inject constructor(
     }
 
     override suspend fun refresh(): DataResult<Unit> = try {
-        val settings = client.from("app_setting")
-            .select(Columns.raw("key,value"))
-            .decodeList<SettingDto>()
-
-        val reasons = client.from("reason_code")
-            .select(Columns.raw("id,code,name,kind")) {
-                filter { eq("is_active", true) }
-            }
-            .decodeList<ReasonCodeDto>()
-
-        val steps = client.from("sales_step")
-            .select(Columns.raw("form_id,step,title_key,is_required,config")) {
-                filter { eq("is_active", true) }
-            }
-            .decodeList<SalesStepDto>()
-
-        val translations = client.from("translation")
-            .select(Columns.raw("key,value")) {
-                filter { eq("lang_code", activeLanguage()) }
-            }
-            .decodeList<TranslationDto>()
+        val settings = service.settings()
+        val reasons = service.reasonCodes()
+        val steps = service.salesSteps()
+        val translations = service.translations(langCode = Filters.eq(activeLanguage()))
 
         dao.upsertSettings(settings.map { SettingEntity(it.key, it.value) })
 

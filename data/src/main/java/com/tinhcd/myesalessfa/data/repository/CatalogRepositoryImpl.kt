@@ -14,21 +14,10 @@ import com.tinhcd.myesalessfa.domain.model.Product
 import com.tinhcd.myesalessfa.domain.model.SaleUnit
 import com.tinhcd.myesalessfa.domain.model.priceCatalogue
 import com.tinhcd.myesalessfa.domain.repository.CatalogRepository
-import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.Columns
+import com.tinhcd.myesalessfa.data.remote.PostgrestService
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
-
-private const val PRODUCT_COLUMNS =
-    "id,code,name,base_uom,vat_basis_points,category:category_id(name,sort_order)"
-
-private const val PRODUCT_UOM_COLUMNS =
-    "product_id,uom_code,conversion_rate,is_default_sale,sort_order,uom:uom_code(name)"
-
-private const val PRICE_COLUMNS =
-    "product_id,uom_code,class_id,price,from_date,to_date"
 
 /**
  * The catalogue is cached because an order is built standing in a shop. Pulling
@@ -38,26 +27,17 @@ private const val PRICE_COLUMNS =
  */
 @Singleton
 class CatalogRepositoryImpl @Inject constructor(
-    private val client: SupabaseClient,
+    private val service: PostgrestService,
     private val dao: CatalogDao,
 ) : CatalogRepository {
 
     override suspend fun refresh(): DataResult<Unit> = try {
-        val products = client.from("product")
-            .select(Columns.raw(PRODUCT_COLUMNS)) {
-                filter { eq("is_active", true) }
-            }
-            .decodeList<ProductDto>()
-
-        val units = client.from("product_uom")
-            .select(Columns.raw(PRODUCT_UOM_COLUMNS))
-            .decodeList<ProductUomDto>()
+        val products = service.products()
+        val units = service.productUoms()
 
         // RLS already limits this to the list price and the classes in the rep's
         // own branch, so there is no filter here to forget.
-        val prices = client.from("price_list")
-            .select(Columns.raw(PRICE_COLUMNS))
-            .decodeList<PriceListDto>()
+        val prices = service.priceList()
 
         // Replaced wholesale rather than merged: a product withdrawn upstream, or
         // a price row that ended, has to disappear here too. Leaving one behind

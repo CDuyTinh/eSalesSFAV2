@@ -8,21 +8,16 @@ import com.tinhcd.myesalessfa.domain.model.Customer
 import com.tinhcd.myesalessfa.domain.model.RouteStop
 import com.tinhcd.myesalessfa.domain.model.VisitStatus
 import com.tinhcd.myesalessfa.domain.repository.RouteRepository
-import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.Columns
+import com.tinhcd.myesalessfa.data.remote.Filters
+import com.tinhcd.myesalessfa.data.remote.PostgrestService
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private const val ROUTE_COLUMNS =
-    "visit_order,customer:customer_id(id,code,name,address,phone,lat,lng,avatar_url," +
-        "checkin_radius_m,class_id)"
-
 @Singleton
 class RouteRepositoryImpl @Inject constructor(
-    private val client: SupabaseClient,
+    private val service: PostgrestService,
 ) : RouteRepository {
 
     /**
@@ -34,21 +29,11 @@ class RouteRepositoryImpl @Inject constructor(
     override suspend fun getRoute(date: LocalDate): DataResult<List<RouteStop>> = try {
         val weekday = date.dayOfWeek.value // ISO: Monday = 1
 
-        val stops = client.from("route_customer")
-            .select(Columns.raw(ROUTE_COLUMNS)) {
-                filter {
-                    eq("is_active", true)
-                    contains("visit_weekdays", listOf(weekday))
-                }
-                order("visit_order", io.github.jan.supabase.postgrest.query.Order.ASCENDING)
-            }
-            .decodeList<RouteCustomerDto>()
+        val stops = service.routeCustomers(
+            visitWeekdays = Filters.arrayContains(weekday),
+        )
 
-        val visits = client.from("visit")
-            .select(Columns.raw("id,customer_id,status,check_in_at,check_out_at")) {
-                filter { eq("visit_date", date.toString()) }
-            }
-            .decodeList<VisitDto>()
+        val visits = service.visits(visitDate = Filters.eq(date.toString()))
             .associateBy { it.customerId }
 
         DataResult.Success(
