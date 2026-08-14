@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Splash mark: a stocked shelf, which is what this app is about.
+
+  A placeholder, deliberately a simple geometric one. The launcher icon is still the
+  Android Studio template — a green robot — so pointing the splash at it would put the
+  stock mascot on a branded screen. This at least belongs to the product. Replace both
+  together when there is a real brand asset.
+
+  Geometry follows the splash icon spec: a 108dp canvas with all content inside the
+  central two thirds (18..90), which is the circle the platform reserves for the icon.
+  Drawn white so it reads on the brand blue background.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Shelf unit -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M24,26 H84 V82 H24 Z"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineJoin="round"
+        android:strokeWidth="4" />
+
+    <!-- Shelves -->
+    <path
+        android:pathData="M24,45 H84"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3" />
+    <path
+        android:pathData="M24,64 H84"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3" />
+
+    <!-- Stock, in varying heights so the mark reads as goods rather than a grid -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,32 h8 v13 h-8 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M42,29 h8 v16 h-8 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,34 h8 v11 h-8 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M66,31 h8 v14 h-8 z" />
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,51 h10 v13 h-10 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,49 h8 v15 h-8 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M56,53 h9 v11 h-9 z" />
+
+    <!-- The bottom row carries a third block so the shelf reads as stocked rather
+         than as having run out on one side. -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,70 h11 v12 h-11 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M45,67 h9 v15 h-9 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M58,71 h16 v11 h-16 z" />
+</vector>

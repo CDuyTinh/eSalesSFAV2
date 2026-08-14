@@ -10,6 +10,9 @@ ksp = "2.3.11"
 
 coreKtx = "1.19.0"
 activityCompose = "1.13.0"
+# Backports the Android 12 splash screen API to minSdk 26, so the same declarative
+# theme drives it on every device the app supports.
+coreSplashscreen = "1.0.1"
 lifecycle = "2.11.0"
 composeBom = "2026.02.01"
 navigationCompose = "2.9.8"
@@ -56,6 +59,7 @@ mockk = "1.14.7"
 [libraries]
 # --- AndroidX / Compose ---
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }

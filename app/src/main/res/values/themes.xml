@@ -2,4 +2,22 @@
 <resources>
 
     <style name="Theme.MyeSalesSFA" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!--
+      The launch theme. Declarative on purpose: the system draws this window itself,
+      before the process is warm, which is the only thing that can cover the gap
+      between tapping the icon and Compose's first frame.
+
+      It also fixes a real defect. Theme.MyeSalesSFA inherits a light window
+      background, so on a device rendering the app dark the old launch flashed white
+      before Compose drew over it. The splash background is brand blue in both
+      themes, matching the palette's own decision to hold fixed brand colours rather
+      than follow the system.
+    -->
+    <style name="Theme.MyeSalesSFA.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <!-- Handed over to the real theme the moment the splash is dismissed. -->
+        <item name="postSplashScreenTheme">@style/Theme.MyeSalesSFA</item>
+    </style>
 </resources>
