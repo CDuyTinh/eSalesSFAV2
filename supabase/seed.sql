@@ -162,13 +162,13 @@ on conflict (key) do nothing;
 -- In-call workflow — server-driven, as in the legacy PPC_SalesStep
 -- -----------------------------------------------------------------------------
 insert into sales_step (form_id, step, title_key, is_required, needs_visit, config) values
-    ('outside_checking', 1, 'step_outside_checking', true,  true, '{}'),
+    ('outside_checking', 1, 'step_outside_checking', true,  true, '{"note_min_length": 10}'),
     ('stock_outlet',     2, 'step_stock_outlet',     false, true, '{}'),
     ('take_order',       3, 'step_take_order',       false, true, '{}'),
     ('display_remark',   4, 'step_display_remark',   false, true, '{"photo_min": 1}'),
     ('posm_status',      5, 'step_posm_status',      false, true, '{}'),
     ('market_info',      6, 'step_market_info',      false, true, '{}'),
-    ('feedback',         7, 'step_feedback',         false, true, '{"allow_audio": true}')
+    ('feedback',         7, 'step_feedback',         false, true, '{"allow_audio": true, "note_min_length": 5}')
 on conflict (form_id) do nothing;
 
 -- -----------------------------------------------------------------------------

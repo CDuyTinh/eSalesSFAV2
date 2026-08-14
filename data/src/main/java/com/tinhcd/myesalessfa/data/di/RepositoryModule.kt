@@ -4,10 +4,12 @@ import com.tinhcd.myesalessfa.data.repository.AuthRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.CheckInRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.ConfigRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.RouteRepositoryImpl
+import com.tinhcd.myesalessfa.data.repository.WorkflowRepositoryImpl
 import com.tinhcd.myesalessfa.domain.repository.AuthRepository
 import com.tinhcd.myesalessfa.domain.repository.CheckInRepository
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
 import com.tinhcd.myesalessfa.domain.repository.RouteRepository
+import com.tinhcd.myesalessfa.domain.repository.WorkflowRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -37,4 +39,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindConfigRepository(impl: ConfigRepositoryImpl): ConfigRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindWorkflowRepository(impl: WorkflowRepositoryImpl): WorkflowRepository
 }

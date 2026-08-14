@@ -136,20 +136,12 @@ fun CheckInScreen(
 
                 Spacer(Modifier.height(4.dp))
 
-                if (state.alreadyCheckedIn) {
-                    PrimaryButton(
-                        text = "Check-out",
-                        onClick = viewModel::checkOut,
-                        loading = state.submitting,
-                    )
-                } else {
-                    PrimaryButton(
-                        text = "Check-in",
-                        onClick = viewModel::submit,
-                        enabled = state.canSubmit,
-                        loading = state.submitting,
-                    )
-                }
+                PrimaryButton(
+                    text = "Check-in",
+                    onClick = viewModel::submit,
+                    enabled = state.canSubmit,
+                    loading = state.submitting,
+                )
 
                 OutlinedButton(
                     onClick = onDone,

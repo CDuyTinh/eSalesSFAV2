@@ -59,6 +59,9 @@ class OutboxFlusher @Inject constructor(
             OutboxEntity.TYPE_CHECK_OUT ->
                 visitApi.markCheckedOut(json.decodeFromString<CheckOutPayload>(entry.payload))
 
+            OutboxEntity.TYPE_STEP_RESULT ->
+                visitApi.saveStepResult(json.decodeFromString<StepResultPayload>(entry.payload))
+
             else -> error("Unknown outbox type ${entry.type}")
         }
     }
@@ -68,6 +71,18 @@ class OutboxFlusher @Inject constructor(
 data class CheckOutPayload(
     val visitId: String,
     val checkOutAt: String,
+)
+
+/**
+ * A completed workflow step. `fields` is whatever that step chose to record —
+ * kept as flat strings so the outbox stays agnostic about step shapes.
+ */
+@kotlinx.serialization.Serializable
+data class StepResultPayload(
+    val visitId: String,
+    val formId: String,
+    val completedAt: String,
+    val fields: Map<String, String> = emptyMap(),
 )
 
 @HiltWorker

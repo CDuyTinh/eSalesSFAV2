@@ -6,7 +6,9 @@ import com.tinhcd.myesalessfa.domain.model.CheckInRequest
 import com.tinhcd.myesalessfa.domain.model.ReasonCode
 import com.tinhcd.myesalessfa.domain.model.ReasonKind
 import com.tinhcd.myesalessfa.domain.model.RouteStop
+import com.tinhcd.myesalessfa.domain.model.SalesStep
 import com.tinhcd.myesalessfa.domain.model.Salesperson
+import com.tinhcd.myesalessfa.domain.model.VisitWorkflow
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -58,6 +60,31 @@ interface ConfigRepository {
 
     suspend fun reasons(kind: ReasonKind): List<ReasonCode>
 
-    /** Pulls settings, reason codes and translations into the local cache. */
+    /** Translated label for [key], falling back to [key] itself. */
+    suspend fun translate(key: String): String
+
+    /** Pulls settings, reason codes, workflow steps and translations locally. */
     suspend fun refresh(): DataResult<Unit>
+}
+
+interface WorkflowRepository {
+    /**
+     * The configured steps for this visit, merged with what the rep has already
+     * completed — including completions still sitting in the outbox, so a step
+     * finished without signal does not appear undone.
+     */
+    suspend fun workflow(visitId: String): DataResult<VisitWorkflow>
+
+    /**
+     * The definition of a single step, so its screen can read its own label and
+     * config instead of assuming either. Null when the server has never sent a
+     * step with this [formId].
+     */
+    suspend fun step(formId: String): DataResult<SalesStep?>
+
+    suspend fun completeStep(
+        visitId: String,
+        formId: String,
+        payload: Map<String, String>,
+    ): DataResult<SubmitOutcome>
 }
