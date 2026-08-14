@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The one directory a camera app is allowed to write into. Scoped to
+  files/visit-photos rather than to files/, so granting the camera write access to a
+  photo does not expose the outbox database sitting alongside it.
+-->
+<paths>
+    <files-path
+        name="visit-photos"
+        path="visit-photos/" />
+</paths>

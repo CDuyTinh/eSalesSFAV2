@@ -39,6 +39,22 @@
         </activity>
 
         <!--
+          Lets the camera app write a photo into our own private storage. The
+          camera is a separate process, so it cannot be handed a path; taking a
+          picture grants it write access to exactly one file through this
+          provider, and file_paths.xml limits that to the photo directory.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.photos"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!--
           MyeSalesApp supplies its own WorkManager Configuration so the outbox
           worker can be Hilt-injected. That requires switching off the default
           on-startup initialiser.

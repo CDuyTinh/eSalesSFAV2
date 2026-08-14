@@ -3,6 +3,7 @@ package com.tinhcd.myesalessfa.data.di
 import com.tinhcd.myesalessfa.data.repository.AuthRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.CatalogRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.CheckInRepositoryImpl
+import com.tinhcd.myesalessfa.data.repository.DisplayAuditRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.ConfigRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.OrderRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.RouteRepositoryImpl
@@ -11,6 +12,7 @@ import com.tinhcd.myesalessfa.data.repository.WorkflowRepositoryImpl
 import com.tinhcd.myesalessfa.domain.repository.AuthRepository
 import com.tinhcd.myesalessfa.domain.repository.CatalogRepository
 import com.tinhcd.myesalessfa.domain.repository.CheckInRepository
+import com.tinhcd.myesalessfa.domain.repository.DisplayAuditRepository
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository
 import com.tinhcd.myesalessfa.domain.repository.RouteRepository
@@ -61,4 +63,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindStockRepository(impl: StockRepositoryImpl): StockRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindDisplayAuditRepository(
+        impl: DisplayAuditRepositoryImpl,
+    ): DisplayAuditRepository
 }

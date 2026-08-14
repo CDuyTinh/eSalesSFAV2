@@ -3,6 +3,7 @@ package com.tinhcd.myesalessfa.domain.repository
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.CheckInPolicy
 import com.tinhcd.myesalessfa.domain.model.CheckInRequest
+import com.tinhcd.myesalessfa.domain.model.DraftDisplayAudit
 import com.tinhcd.myesalessfa.domain.model.DraftOrder
 import com.tinhcd.myesalessfa.domain.model.DraftStockCount
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
@@ -129,6 +130,14 @@ interface StockRepository {
      * and marks the `stock_outlet` step done in the same transaction.
      */
     suspend fun submit(count: DraftStockCount): DataResult<SubmitOutcome>
+}
+
+interface DisplayAuditRepository {
+    /**
+     * Queues [audit] for delivery, photos and all. The photos are uploaded first and
+     * the row written second, so a delivered audit always has its evidence behind it.
+     */
+    suspend fun submit(audit: DraftDisplayAudit): DataResult<SubmitOutcome>
 }
 
 interface OrderRepository {

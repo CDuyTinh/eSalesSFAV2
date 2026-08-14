@@ -41,6 +41,7 @@ data class OutboxEntity(
         const val TYPE_STEP_RESULT = "step_result"
         const val TYPE_ORDER = "order"
         const val TYPE_STOCK_COUNT = "stock_count"
+        const val TYPE_DISPLAY_AUDIT = "display_audit"
     }
 }
 

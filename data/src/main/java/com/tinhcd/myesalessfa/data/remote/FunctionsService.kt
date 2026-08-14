@@ -1,5 +1,6 @@
 package com.tinhcd.myesalessfa.data.remote
 
+import com.tinhcd.myesalessfa.data.outbox.DisplayAuditPayload
 import com.tinhcd.myesalessfa.data.outbox.OrderPayload
 import com.tinhcd.myesalessfa.data.outbox.StockCountPayload
 import kotlinx.serialization.json.JsonObject
@@ -100,4 +101,12 @@ interface FunctionsService {
 
     @POST("submit-stock-count")
     suspend fun submitStockCount(@Body count: StockCountPayload): Response<WriteAckDto>
+
+    /**
+     * Forwards to `submit_display_audit`, which checks the step's own photo_min and
+     * that every storage path it is handed actually exists. The photos must already
+     * be uploaded when this is called.
+     */
+    @POST("submit-display-audit")
+    suspend fun submitDisplayAudit(@Body audit: DisplayAuditPayload): Response<WriteAckDto>
 }
