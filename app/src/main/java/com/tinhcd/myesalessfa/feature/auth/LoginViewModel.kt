@@ -70,7 +70,11 @@ class LoginViewModel @Inject constructor(
 private fun AppError.toMessage(): String = when (this) {
     is AppError.Auth -> when (message) {
         "invalid_credentials" -> "Sai ten dang nhap hoac mat khau"
+        // Permanent, and only head office can fix it.
         "account_not_provisioned" -> "Tai khoan chua duoc gan nhan vien ban hang"
+        // Transient: the password was accepted, the profile was not fetched. Says so,
+        // rather than blaming the account.
+        "profile_unavailable" -> "Da dang nhap nhung chua tai duoc thong tin nhan vien. Thu lai."
         else -> "Dang nhap that bai"
     }
 
