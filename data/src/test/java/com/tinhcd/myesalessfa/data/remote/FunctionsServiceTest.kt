@@ -199,6 +199,56 @@ class FunctionsServiceTest {
     }
 
     @Test
+    fun `catalogue decodes the must-stock lists with their scoping intact`() = runTest {
+        // Trimmed from the deployed function's real output. The wildcard nulls are
+        // load-bearing: they are how a national list is expressed, and losing them
+        // in decoding would silently scope the core list to nobody.
+        enqueue(
+            """{"generated_at":"now","products":[],"price_rules":[],"msl":[
+                 {"id":"f01","code":"CORE","channel_id":null,"shop_type_id":null,
+                  "from_date":"2026-01-01","to_date":"2099-12-31",
+                  "items":[{"product_id":"c01","min_base_qty":24},
+                           {"product_id":"c03","min_base_qty":48}]},
+                 {"id":"f02","code":"GT","channel_id":"ch-gt","shop_type_id":null,
+                  "from_date":"2026-01-01","to_date":"2099-12-31",
+                  "items":[{"product_id":"c01","min_base_qty":48}]}]}""",
+        )
+
+        val lists = service.catalogue().msl
+        assertEquals(listOf("CORE", "GT"), lists.map { it.code })
+
+        val core = lists.first()
+        assertNull(core.channelId)
+        assertNull(core.shopTypeId)
+        assertEquals(24, core.items.first { it.productId == "c01" }.minBaseQty)
+
+        // The channel list demands more of the same SKU; the union rule in :domain
+        // resolves that to 48.
+        assertEquals("ch-gt", lists.last().channelId)
+        assertEquals(48, lists.last().items.single().minBaseQty)
+    }
+
+    @Test
+    fun `a project with no must-stock lists decodes as none, not as a failure`() = runTest {
+        enqueue("""{"generated_at":"now","products":[],"price_rules":[]}""")
+        assertTrue(service.catalogue().msl.isEmpty())
+    }
+
+    @Test
+    fun `route carries the segment the must-stock lists are scoped by`() = runTest {
+        enqueue(
+            """{"date":"2026-08-14","stops":[{"visit_order":1,
+                 "customer":{"id":"c1","code":"KH001","name":"Tap hoa Minh Anh",
+                   "class_id":"class-a","channel_id":"ch-gt","shop_type_id":"shop-th"},
+                 "visit_id":null,"status":"planned"}]}""",
+        )
+
+        val customer = service.route("2026-08-14").stops.single().customer
+        assertEquals("ch-gt", customer.channelId)
+        assertEquals("shop-th", customer.shopTypeId)
+    }
+
+    @Test
     fun `an uncategorised product sorts last rather than first`() = runTest {
         // category_sort defaults high so a product with no category does not lead
         // the catalogue the rep scrolls.

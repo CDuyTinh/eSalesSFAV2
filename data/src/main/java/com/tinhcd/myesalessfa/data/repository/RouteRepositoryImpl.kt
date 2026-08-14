@@ -64,6 +64,8 @@ private fun CustomerDto.toDomain() = Customer(
     avatarUrl = avatarUrl,
     checkInRadiusM = checkInRadiusM,
     classId = classId,
+    channelId = channelId,
+    shopTypeId = shopTypeId,
 )
 
 private fun String.toVisitStatus(): VisitStatus = when (this) {

@@ -354,3 +354,42 @@ insert into price_list (product_id, uom_code, class_id, price, from_date) values
     ('00000000-0000-0000-0000-000000000c05', 'CASE',
      '00000000-0000-0000-0000-000000000051', 294000, date '2026-01-01')
 on conflict (product_id, uom_code, class_id, from_date) where class_id is not null do nothing;
+
+-- -----------------------------------------------------------------------------
+-- Must-stock lists                                        (uuid scheme: ..fxx)
+--
+-- Three lists on purpose, so the resolution rule is exercised by data rather than
+-- only by unit tests:
+--   f01  no channel, no shop type  -> the national core list, applies to everyone
+--   f02  General Trade only        -> adds SKUs, and demands more Coca than f01
+--   f03  Sieu thi mini only        -> scoped by shop type alone, not channel
+--
+-- KH001 is GT + Tap hoa, so it resolves to f01 + f02 with Coca at f02's stricter
+-- 48. KH003 is MT + Sieu thi mini, so it resolves to f01 + f03 and never sees
+-- f02's additions.
+-- -----------------------------------------------------------------------------
+insert into msl (id, code, name, channel_id, shop_type_id, from_date) values
+    ('00000000-0000-0000-0000-000000000f01', 'CORE', 'Danh muc bat buoc toan quoc',
+     null, null, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000f02', 'GT', 'Bo sung kenh General Trade',
+     '00000000-0000-0000-0000-000000000061', null, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000f03', 'SM', 'Bo sung sieu thi mini',
+     null, '00000000-0000-0000-0000-000000000072', date '2026-01-01')
+on conflict (id) do nothing;
+
+-- min_base_qty is in base units. Coca's base unit is PCS at 24 to the case, so
+-- 48 means the shelf should hold two cases' worth.
+insert into msl_item (msl_id, product_id, min_base_qty) values
+    -- CORE
+    ('00000000-0000-0000-0000-000000000f01', '00000000-0000-0000-0000-000000000c01', 24),
+    ('00000000-0000-0000-0000-000000000f01', '00000000-0000-0000-0000-000000000c02', 24),
+    ('00000000-0000-0000-0000-000000000f01', '00000000-0000-0000-0000-000000000c03', 48),
+    ('00000000-0000-0000-0000-000000000f01', '00000000-0000-0000-0000-000000000c06', 36),
+    -- GT: overlaps CORE on Coca with a stricter figure, which the union resolves
+    -- to 48 rather than picking one list and discarding the other.
+    ('00000000-0000-0000-0000-000000000f02', '00000000-0000-0000-0000-000000000c01', 48),
+    ('00000000-0000-0000-0000-000000000f02', '00000000-0000-0000-0000-000000000c04', 24),
+    ('00000000-0000-0000-0000-000000000f02', '00000000-0000-0000-0000-000000000c09', 60),
+    -- SM
+    ('00000000-0000-0000-0000-000000000f03', '00000000-0000-0000-0000-000000000c12', 72)
+on conflict (msl_id, product_id) do nothing;

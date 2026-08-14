@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -116,6 +117,29 @@ fun StockCountScreen(
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                     )
 
+                    // Only worth offering when the outlet actually owes something.
+                    val compliance = state.count.compliance
+                    if (compliance.required > 0) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 12.dp),
+                        ) {
+                            FilterChip(
+                                selected = state.mustStockOnly,
+                                onClick = { viewModel.onMustStockOnlyChange(!state.mustStockOnly) },
+                                label = { Text("Chi hang bat buoc (${compliance.required})") },
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            if (compliance.unchecked > 0) {
+                                Text(
+                                    "con ${compliance.unchecked} chua kiem",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                        }
+                    }
+
                     val visible = state.visible
                     if (visible.isEmpty()) {
                         ErrorBox("Khong tim thay san pham nao")
@@ -163,18 +187,33 @@ private fun StockRow(
     val line = state.count.lineFor(product.product.id, unit.unit.uomCode)
     val prevBase = state.previous[product.product.id]
     val baseUom = product.product.baseUomCode.lowercase()
+    val par = state.parFor(product)
 
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Marked before the name, so a rep scanning the list sees the
+                        // obligation without reading each row.
+                        if (par != null) {
+                            Text(
+                                "BAT BUOC",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(end = 6.dp),
+                            )
+                        }
+                        Text(
+                            product.product.name,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
                     Text(
-                        product.product.name,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    Text(
-                        product.product.code,
+                        product.product.code +
+                            if (par != null) "  -  dinh muc $par $baseUom" else "",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -251,6 +290,18 @@ private fun StockRow(
                     },
                     modifier = Modifier.padding(top = 6.dp),
                 )
+
+                // The replenishment figure: the gap between the shelf and the par
+                // level. Shown only when there is one, so it reads as an action
+                // rather than as decoration.
+                if (line.shortfallBaseQty > 0) {
+                    Text(
+                        "Thieu ${line.shortfallBaseQty} $baseUom so voi dinh muc",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
             }
         }
     }
@@ -326,6 +377,49 @@ private fun StockFooter(
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.error,
                         fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+
+            val compliance = state.count.compliance
+            if (compliance.required > 0) {
+                Row(Modifier.fillMaxWidth()) {
+                    Text(
+                        "Hang bat buoc co san",
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        // Measured over what was checked, not over what was
+                        // required: a SKU nobody looked at is not evidence either
+                        // way, and counting it as absent would put the rep's
+                        // omission on the outlet's record.
+                        "${compliance.available}/${compliance.available + compliance.outOfStock}" +
+                            " (${compliance.availabilityPercent}%)",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = if (compliance.outOfStock > 0) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
+                    )
+                }
+
+                if (!compliance.isComplete) {
+                    Text(
+                        "Con ${compliance.unchecked} mat hang bat buoc chua kiem",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+
+                if (state.count.totalShortfallBaseQty > 0) {
+                    Text(
+                        "Can bo sung ${state.count.totalShortfallBaseQty} don vi de dat dinh muc",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }

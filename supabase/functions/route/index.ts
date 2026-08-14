@@ -15,9 +15,13 @@
 
 import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
 
+// channel_id and shop_type_id come along because the must-stock lists are scoped
+// by them: the stock screen resolves which SKUs are required from the outlet's own
+// segment, and re-fetching the customer to learn it would be a second round trip
+// inside a screen that already has one.
 const ROUTE_COLUMNS =
   "visit_order,customer:customer_id(id,code,name,address,phone,lat,lng," +
-  "avatar_url,checkin_radius_m,class_id)";
+  "avatar_url,checkin_radius_m,class_id,channel_id,shop_type_id)";
 
 const VISIT_COLUMNS = "id,customer_id,status,check_in_at,check_out_at";
 

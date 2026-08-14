@@ -31,20 +31,26 @@ data class StockCountUiState(
     val previousUnavailable: Boolean = false,
     val chosenUnit: Map<String, String> = emptyMap(),
     val count: DraftStockCount = DraftStockCount(visitId = "", customerId = ""),
+    /** When on, the list shows only the SKUs the outlet is obliged to stock. */
+    val mustStockOnly: Boolean = false,
     val submitting: Boolean = false,
     val error: String? = null,
     val finished: Boolean = false,
 ) {
     val visible: List<PricedProduct>
-        get() = if (query.isBlank()) {
-            catalogue
-        } else {
+        get() {
             val needle = query.trim().lowercase()
-            catalogue.filter {
-                it.product.name.lowercase().contains(needle) ||
-                    it.product.code.lowercase().contains(needle)
+            return catalogue.filter { priced ->
+                val matchesQuery = needle.isBlank() ||
+                    priced.product.name.lowercase().contains(needle) ||
+                    priced.product.code.lowercase().contains(needle)
+                val matchesFilter = !mustStockOnly ||
+                    priced.product.id in count.mustStock
+                matchesQuery && matchesFilter
             }
         }
+
+    fun parFor(product: PricedProduct): Int? = count.mustStock[product.product.id]
 
     fun unitFor(product: PricedProduct): PricedUnit {
         val code = chosenUnit[product.product.id] ?: return product.defaultUnit
@@ -91,6 +97,15 @@ class StockCountViewModel @Inject constructor(
 
             val previous = stockRepository.previousCount(customerId, visitId)
 
+            // Which SKUs this outlet owes comes from its channel and shop type,
+            // resolved against the cached lists — so it works with no signal, which
+            // is the situation this screen exists for.
+            val mustStock = catalogRepository.mustStock(
+                channelId = stop?.customer?.channelId,
+                shopTypeId = stop?.customer?.shopTypeId,
+                on = LocalDate.now(),
+            )
+
             when (catalogue) {
                 is DataResult.Success -> _state.update {
                     it.copy(
@@ -101,7 +116,11 @@ class StockCountViewModel @Inject constructor(
                         // Not an error the rep has to act on: they can still
                         // count, they just do it without the comparison.
                         previousUnavailable = previous is DataResult.Failure,
-                        count = DraftStockCount(visitId = visitId, customerId = customerId),
+                        count = DraftStockCount(
+                            visitId = visitId,
+                            customerId = customerId,
+                            mustStock = (mustStock as? DataResult.Success)?.data.orEmpty(),
+                        ),
                     )
                 }
 
@@ -113,6 +132,9 @@ class StockCountViewModel @Inject constructor(
     }
 
     fun onQueryChange(value: String) = _state.update { it.copy(query = value) }
+
+    fun onMustStockOnlyChange(enabled: Boolean) =
+        _state.update { it.copy(mustStockOnly = enabled) }
 
     /** Moves any entry onto the new unit rather than leaving one behind. */
     fun onUnitChange(product: PricedProduct, uomCode: String) {
@@ -184,5 +206,6 @@ class StockCountViewModel @Inject constructor(
         conversionRate = unit.unit.conversionRate,
         qty = qty,
         prevBaseQty = _state.value.previous[product.product.id] ?: 0,
+        mslMinBaseQty = _state.value.count.mustStock[product.product.id],
     )
 }

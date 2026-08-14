@@ -33,6 +33,9 @@ data class CustomerDto(
     @SerialName("checkin_radius_m") val checkInRadiusM: Int? = null,
     /** Drives which price list rows apply to this outlet. */
     @SerialName("class_id") val classId: String? = null,
+    /** Both drive which must-stock lists apply. */
+    @SerialName("channel_id") val channelId: String? = null,
+    @SerialName("shop_type_id") val shopTypeId: String? = null,
 )
 
 @Serializable

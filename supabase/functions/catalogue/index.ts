@@ -18,6 +18,11 @@
 // route holds customers in different classes, so the price only exists relative
 // to whichever outlet the rep is standing in; resolving it here would mean
 // re-fetching the catalogue per customer.
+//
+// Must-stock lists ride along for the same reason and resolve the same way: they
+// are scoped by channel and shop type, so which ones apply depends on the outlet.
+// Shipping them with the catalogue means the stock screen can mark required SKUs
+// with no signal, which is the situation it was built for.
 // =============================================================================
 
 import { handler, json, readAll } from "../_shared/client.ts";
@@ -48,8 +53,12 @@ interface UomRow {
   uom: { name: string } | null;
 }
 
+const MSL_COLUMNS =
+  "id,code,channel_id,shop_type_id,from_date,to_date," +
+  "items:msl_item(product_id,min_base_qty)";
+
 Deno.serve(handler(async (_req, db) => {
-  const [products, units, priceRules] = await Promise.all([
+  const [products, units, priceRules, msl] = await Promise.all([
     readAll<ProductRow>((from, to) =>
       db.from("product")
         .select(PRODUCT_COLUMNS)
@@ -69,6 +78,13 @@ Deno.serve(handler(async (_req, db) => {
         .select(PRICE_COLUMNS)
         .order("product_id")
         .order("uom_code")
+        .range(from, to)
+    ),
+    readAll((from, to) =>
+      db.from("msl")
+        .select(MSL_COLUMNS)
+        .eq("is_active", true)
+        .order("code")
         .range(from, to)
     ),
   ]);
@@ -101,5 +117,8 @@ Deno.serve(handler(async (_req, db) => {
       })),
     })),
     price_rules: priceRules,
+    // Unresolved, like the prices: the client applies the outlet's channel and
+    // shop type, unions the matching lists and keeps the strictest par level.
+    msl: msl,
   });
 }));

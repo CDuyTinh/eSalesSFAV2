@@ -49,6 +49,24 @@ data class CatalogueProductDto(
 )
 
 @Serializable
+data class MslItemDto(
+    @SerialName("product_id") val productId: String,
+    @SerialName("min_base_qty") val minBaseQty: Int,
+)
+
+@Serializable
+data class MslDto(
+    val id: String,
+    val code: String,
+    /** Null means the list applies to any channel. */
+    @SerialName("channel_id") val channelId: String? = null,
+    @SerialName("shop_type_id") val shopTypeId: String? = null,
+    @SerialName("from_date") val fromDate: String,
+    @SerialName("to_date") val toDate: String,
+    val items: List<MslItemDto> = emptyList(),
+)
+
+@Serializable
 data class CatalogueDto(
     @SerialName("generated_at") val generatedAt: String,
     val products: List<CatalogueProductDto> = emptyList(),
@@ -57,6 +75,8 @@ data class CatalogueDto(
      * a price only exists relative to the outlet the rep is standing in.
      */
     @SerialName("price_rules") val priceRules: List<PriceListDto> = emptyList(),
+    /** Unresolved for the same reason: scoped by the outlet's channel and shop type. */
+    val msl: List<MslDto> = emptyList(),
 )
 
 @Serializable
