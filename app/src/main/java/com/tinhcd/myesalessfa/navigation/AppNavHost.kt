@@ -13,6 +13,7 @@ import com.tinhcd.myesalessfa.domain.model.VisitStatus
 import com.tinhcd.myesalessfa.feature.auth.LoginScreen
 import com.tinhcd.myesalessfa.feature.checkin.CheckInScreen
 import com.tinhcd.myesalessfa.feature.incall.InCallScreen
+import com.tinhcd.myesalessfa.feature.incall.steps.DisplayAuditScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.NoteStepScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.StockCountScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.TakeOrderScreen
@@ -122,6 +123,9 @@ fun AppNavHost(
 
                 SupportedSteps.STOCK_OUTLET ->
                     StockCountScreen(onDone = { navController.popBackStack() })
+
+                SupportedSteps.DISPLAY_REMARK ->
+                    DisplayAuditScreen(onDone = { navController.popBackStack() })
 
                 // The step list already refuses to open these, but answering an
                 // unknown step with a note form would record the wrong shape of

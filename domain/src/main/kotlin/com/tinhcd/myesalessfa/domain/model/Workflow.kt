@@ -36,6 +36,12 @@ data class SalesStep(
 object StepConfig {
     /** Minimum characters a free-text step will accept. */
     const val NOTE_MIN_LENGTH = "note_min_length"
+
+    /**
+     * Minimum photos a step requires. `submit_display_audit` reads the same key, so
+     * the client refuses exactly what the server would refuse.
+     */
+    const val PHOTO_MIN = "photo_min"
 }
 
 /**
@@ -50,9 +56,16 @@ object SupportedSteps {
     const val OUTSIDE_CHECKING = "outside_checking"
     const val STOCK_OUTLET = "stock_outlet"
     const val TAKE_ORDER = "take_order"
+    const val DISPLAY_REMARK = "display_remark"
     const val FEEDBACK = "feedback"
 
-    val formIds: Set<String> = setOf(OUTSIDE_CHECKING, STOCK_OUTLET, TAKE_ORDER, FEEDBACK)
+    val formIds: Set<String> = setOf(
+        OUTSIDE_CHECKING,
+        STOCK_OUTLET,
+        TAKE_ORDER,
+        DISPLAY_REMARK,
+        FEEDBACK,
+    )
 }
 
 data class WorkflowStep(

@@ -12,6 +12,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.tinhcd.myesalessfa.data.local.OutboxDao
 import com.tinhcd.myesalessfa.data.local.OutboxEntity
+import com.tinhcd.myesalessfa.data.remote.DisplayAuditApi
 import com.tinhcd.myesalessfa.data.remote.NewVisitDto
 import com.tinhcd.myesalessfa.data.remote.OrderApi
 import com.tinhcd.myesalessfa.data.remote.StockApi
@@ -37,6 +38,7 @@ class OutboxFlusher @Inject constructor(
     private val visitApi: VisitApi,
     private val orderApi: OrderApi,
     private val stockApi: StockApi,
+    private val displayAuditApi: DisplayAuditApi,
 ) {
     /** @return true if the queue is now empty. */
     suspend fun flush(): Boolean {
@@ -72,6 +74,9 @@ class OutboxFlusher @Inject constructor(
 
             OutboxEntity.TYPE_STOCK_COUNT ->
                 stockApi.submit(json.decodeFromString<StockCountPayload>(entry.payload))
+
+            OutboxEntity.TYPE_DISPLAY_AUDIT ->
+                displayAuditApi.submit(json.decodeFromString<DisplayAuditPayload>(entry.payload))
 
             else -> error("Unknown outbox type ${entry.type}")
         }
@@ -151,6 +156,39 @@ data class StockCountLinePayload(
     @SerialName("product_id") val productId: String,
     @SerialName("uom_code") val uomCode: String,
     val qty: Int,
+)
+
+/**
+ * A display audit on its way to `submit_display_audit`.
+ *
+ * Carries local file paths, not storage paths — the photos have not been uploaded
+ * when this is queued. The flusher uploads each one, swaps in the object name it gets
+ * back, and only then writes the row. One entry, all or nothing: an audit whose
+ * photo never arrived is not evidence of anything, and a row pointing at a missing
+ * object looks exactly like a completed audit in every report that counts them.
+ */
+@kotlinx.serialization.Serializable
+data class DisplayAuditPayload(
+    val id: String,
+    @SerialName("visit_id") val visitId: String,
+    @SerialName("audit_date") val auditDate: String,
+    val note: String? = null,
+    @SerialName("client_created_at") val clientCreatedAt: String,
+    val photos: List<AuditPhotoPayload>,
+)
+
+@kotlinx.serialization.Serializable
+data class AuditPhotoPayload(
+    /**
+     * Where the file is on this device. Replaced with the storage object name once
+     * uploaded, which is what the row records.
+     */
+    @SerialName("local_path") val localPath: String,
+    @SerialName("storage_path") val storagePath: String? = null,
+    @SerialName("taken_at") val takenAt: String,
+    val lat: Double? = null,
+    val lng: Double? = null,
+    @SerialName("file_size") val fileSize: Long = 0,
 )
 
 @HiltWorker
