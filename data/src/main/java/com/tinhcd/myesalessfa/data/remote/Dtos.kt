@@ -31,6 +31,8 @@ data class CustomerDto(
     val lng: Double? = null,
     @SerialName("avatar_url") val avatarUrl: String? = null,
     @SerialName("checkin_radius_m") val checkInRadiusM: Int? = null,
+    /** Drives which price list rows apply to this outlet. */
+    @SerialName("class_id") val classId: String? = null,
 )
 
 @Serializable
@@ -75,6 +77,50 @@ data class SalesStepDto(
 data class TranslationDto(
     val key: String,
     val value: String,
+)
+
+// -----------------------------------------------------------------------------
+// Product catalogue
+// -----------------------------------------------------------------------------
+
+@Serializable
+data class ProductCategoryRefDto(
+    val name: String,
+    @SerialName("sort_order") val sortOrder: Int = 0,
+)
+
+@Serializable
+data class ProductDto(
+    val id: String,
+    val code: String,
+    val name: String,
+    @SerialName("base_uom") val baseUom: String,
+    @SerialName("vat_basis_points") val vatBasisPoints: Int,
+    /** Embedded through the FK; null for an uncategorised product. */
+    val category: ProductCategoryRefDto? = null,
+)
+
+@Serializable
+data class UomRefDto(val name: String)
+
+@Serializable
+data class ProductUomDto(
+    @SerialName("product_id") val productId: String,
+    @SerialName("uom_code") val uomCode: String,
+    @SerialName("conversion_rate") val conversionRate: Int,
+    @SerialName("is_default_sale") val isDefaultSale: Boolean = false,
+    @SerialName("sort_order") val sortOrder: Int = 0,
+    val uom: UomRefDto? = null,
+)
+
+@Serializable
+data class PriceListDto(
+    @SerialName("product_id") val productId: String,
+    @SerialName("uom_code") val uomCode: String,
+    @SerialName("class_id") val classId: String? = null,
+    val price: Long,
+    @SerialName("from_date") val fromDate: String,
+    @SerialName("to_date") val toDate: String,
 )
 
 @Serializable

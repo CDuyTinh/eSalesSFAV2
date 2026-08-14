@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.AppError
 import com.tinhcd.myesalessfa.domain.DataResult
+import com.tinhcd.myesalessfa.domain.repository.CatalogRepository
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
 import com.tinhcd.myesalessfa.domain.usecase.SignInUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,6 +29,7 @@ data class LoginUiState(
 class LoginViewModel @Inject constructor(
     private val signIn: SignInUseCase,
     private val configRepository: ConfigRepository,
+    private val catalogRepository: CatalogRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginUiState())
@@ -50,6 +52,11 @@ class LoginViewModel @Inject constructor(
                     // signal. Failure here is not fatal — the policy falls
                     // back to strict defaults.
                     configRepository.refresh()
+                    // The catalogue likewise: an order is built inside a shop,
+                    // and the take_order step has nothing to show without it. A
+                    // failure here leaves the step showing an empty catalogue
+                    // rather than blocking sign-in.
+                    catalogRepository.refresh()
                     _state.update { it.copy(loading = false, signedIn = true) }
                 }
 

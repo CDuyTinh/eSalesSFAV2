@@ -214,3 +214,141 @@ insert into translation (lang_code, key, value) values
     ('en', 'step_market_info',      'Market info'),
     ('en', 'step_feedback',         'Customer feedback')
 on conflict (lang_code, key) do nothing;
+
+-- -----------------------------------------------------------------------------
+-- Units of measure
+--
+-- Conversion rates below are deliberately varied (24, 36, 12, 100, 60, 4, 72):
+-- a catalogue where every case held 24 would let a wrong-but-plausible total
+-- pass unnoticed in testing.
+-- -----------------------------------------------------------------------------
+insert into uom (code, name) values
+    ('PCS',  'Le'),
+    ('PACK', 'Lock'),
+    ('CASE', 'Thung')
+on conflict (code) do nothing;
+
+-- -----------------------------------------------------------------------------
+-- Product categories                                     (uuid scheme: ..bxx)
+-- -----------------------------------------------------------------------------
+insert into product_category (id, code, name, sort_order) values
+    ('00000000-0000-0000-0000-000000000b01', 'NGK', 'Nuoc giai khat',    1),
+    ('00000000-0000-0000-0000-000000000b02', 'BK',  'Banh keo',          2),
+    ('00000000-0000-0000-0000-000000000b03', 'GD',  'Hoa pham gia dung', 3)
+on conflict (id) do nothing;
+
+-- -----------------------------------------------------------------------------
+-- Products                                               (uuid scheme: ..cxx)
+--
+-- vat_basis_points: 1000 = 10%, 800 = 8%. Both appear so a mixed-VAT order is
+-- reachable without editing data.
+-- -----------------------------------------------------------------------------
+insert into product (id, code, name, category_id, base_uom, vat_basis_points) values
+    ('00000000-0000-0000-0000-000000000c01', 'NGK001', 'Nuoc ngot Coca-Cola 330ml',
+     '00000000-0000-0000-0000-000000000b01', 'PCS', 1000),
+    ('00000000-0000-0000-0000-000000000c02', 'NGK002', 'Nuoc ngot Pepsi 330ml',
+     '00000000-0000-0000-0000-000000000b01', 'PCS', 1000),
+    ('00000000-0000-0000-0000-000000000c03', 'NGK003', 'Nuoc suoi Aquafina 500ml',
+     '00000000-0000-0000-0000-000000000b01', 'PCS',  800),
+    ('00000000-0000-0000-0000-000000000c04', 'NGK004', 'Tra xanh Khong Do 455ml',
+     '00000000-0000-0000-0000-000000000b01', 'PCS', 1000),
+    ('00000000-0000-0000-0000-000000000c05', 'NGK005', 'Bia Saigon Lager 330ml',
+     '00000000-0000-0000-0000-000000000b01', 'PCS', 1000),
+    ('00000000-0000-0000-0000-000000000c06', 'BK001', 'Banh Oreo goi 119g',
+     '00000000-0000-0000-0000-000000000b02', 'PCS',  800),
+    ('00000000-0000-0000-0000-000000000c07', 'BK002', 'Banh Cosy hop 336g',
+     '00000000-0000-0000-0000-000000000b02', 'PCS',  800),
+    ('00000000-0000-0000-0000-000000000c08', 'BK003', 'Keo Alpenliebe goi 105g',
+     '00000000-0000-0000-0000-000000000b02', 'PCS',  800),
+    ('00000000-0000-0000-0000-000000000c09', 'BK004', 'Snack Oishi tom cay 40g',
+     '00000000-0000-0000-0000-000000000b02', 'PCS',  800),
+    ('00000000-0000-0000-0000-000000000c10', 'GD001', 'Nuoc giat Omo Matic 2.7kg',
+     '00000000-0000-0000-0000-000000000b03', 'PCS', 1000),
+    ('00000000-0000-0000-0000-000000000c11', 'GD002', 'Nuoc rua bat Sunlight 750ml',
+     '00000000-0000-0000-0000-000000000b03', 'PCS', 1000),
+    ('00000000-0000-0000-0000-000000000c12', 'GD003', 'Kem danh rang P/S 180g',
+     '00000000-0000-0000-0000-000000000b03', 'PCS', 1000)
+on conflict (id) do nothing;
+
+-- -----------------------------------------------------------------------------
+-- Sale units per product
+--
+-- Every product carries a row for its own base unit at rate 1, so the client
+-- never has to special-case the base unit. Ids are generated here: the
+-- (product_id, uom_code) constraint is what makes re-seeding idempotent.
+-- -----------------------------------------------------------------------------
+insert into product_uom (product_id, uom_code, conversion_rate, is_default_sale, sort_order)
+values
+    ('00000000-0000-0000-0000-000000000c01', 'PCS',    1, false, 1),
+    ('00000000-0000-0000-0000-000000000c01', 'CASE',  24, true,  2),
+    ('00000000-0000-0000-0000-000000000c02', 'PCS',    1, false, 1),
+    ('00000000-0000-0000-0000-000000000c02', 'CASE',  24, true,  2),
+    ('00000000-0000-0000-0000-000000000c03', 'PCS',    1, false, 1),
+    ('00000000-0000-0000-0000-000000000c03', 'CASE',  24, true,  2),
+    ('00000000-0000-0000-0000-000000000c04', 'PCS',    1, false, 1),
+    ('00000000-0000-0000-0000-000000000c04', 'CASE',  24, true,  2),
+    ('00000000-0000-0000-0000-000000000c05', 'PCS',    1, false, 1),
+    ('00000000-0000-0000-0000-000000000c05', 'CASE',  24, true,  2),
+    ('00000000-0000-0000-0000-000000000c06', 'PCS',    1, false, 1),
+    ('00000000-0000-0000-0000-000000000c06', 'CASE',  36, true,  2),
+    ('00000000-0000-0000-0000-000000000c07', 'PCS',    1, false, 1),
+    ('00000000-0000-0000-0000-000000000c07', 'CASE',  12, true,  2),
+    -- Three sale units, so the unit picker is exercised by real data.
+    ('00000000-0000-0000-0000-000000000c08', 'PCS',    1, false, 1),
+    ('00000000-0000-0000-0000-000000000c08', 'PACK',  10, false, 2),
+    ('00000000-0000-0000-0000-000000000c08', 'CASE', 100, true,  3),
+    ('00000000-0000-0000-0000-000000000c09', 'PCS',    1, false, 1),
+    ('00000000-0000-0000-0000-000000000c09', 'PACK',   6, false, 2),
+    ('00000000-0000-0000-0000-000000000c09', 'CASE',  60, true,  3),
+    -- Sold loose: a 2.7 kg bag is not a case item, so the base unit is default.
+    ('00000000-0000-0000-0000-000000000c10', 'PCS',    1, true,  1),
+    ('00000000-0000-0000-0000-000000000c10', 'CASE',   4, false, 2),
+    ('00000000-0000-0000-0000-000000000c11', 'PCS',    1, false, 1),
+    ('00000000-0000-0000-0000-000000000c11', 'CASE',  12, true,  2),
+    ('00000000-0000-0000-0000-000000000c12', 'PCS',    1, false, 1),
+    ('00000000-0000-0000-0000-000000000c12', 'CASE',  72, true,  2)
+on conflict (product_id, uom_code) do nothing;
+
+-- -----------------------------------------------------------------------------
+-- List prices — class_id null is what every customer pays unless overridden.
+--
+-- Case prices sit below unit price x conversion rate, as they do in the trade.
+-- -----------------------------------------------------------------------------
+insert into price_list (product_id, uom_code, class_id, price, from_date) values
+    ('00000000-0000-0000-0000-000000000c01', 'PCS',  null,   10000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c01', 'CASE', null,  228000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c02', 'PCS',  null,    9500, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c02', 'CASE', null,  216000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c03', 'PCS',  null,    5000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c03', 'CASE', null,  112000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c04', 'PCS',  null,   10000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c04', 'CASE', null,  232000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c05', 'PCS',  null,   13000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c05', 'CASE', null,  300000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c06', 'PCS',  null,   15000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c06', 'CASE', null,  520000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c07', 'PCS',  null,   42000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c07', 'CASE', null,  495000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c08', 'PCS',  null,   12000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c08', 'PACK', null,  115000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c08', 'CASE', null, 1130000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c09', 'PCS',  null,    5000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c09', 'PACK', null,   29000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c09', 'CASE', null,  285000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c10', 'PCS',  null,  175000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c10', 'CASE', null,  690000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c11', 'PCS',  null,   32000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c11', 'CASE', null,  375000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c12', 'PCS',  null,   28000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c12', 'CASE', null, 1980000, date '2026-01-01')
+on conflict (product_id, uom_code, from_date) where class_id is null do nothing;
+
+-- Class A buys volume and pays less for it. These two rows exist so the price
+-- lookup's class-over-list fallback is exercised by the seed and not only by
+-- unit tests. Customer KH001 is class A.
+insert into price_list (product_id, uom_code, class_id, price, from_date) values
+    ('00000000-0000-0000-0000-000000000c01', 'CASE',
+     '00000000-0000-0000-0000-000000000051', 222000, date '2026-01-01'),
+    ('00000000-0000-0000-0000-000000000c05', 'CASE',
+     '00000000-0000-0000-0000-000000000051', 294000, date '2026-01-01')
+on conflict (product_id, uom_code, class_id, from_date) where class_id is not null do nothing;

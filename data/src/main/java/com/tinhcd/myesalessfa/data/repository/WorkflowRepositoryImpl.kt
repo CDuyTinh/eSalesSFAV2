@@ -5,6 +5,7 @@ import com.tinhcd.myesalessfa.data.local.ConfigDao
 import com.tinhcd.myesalessfa.data.local.OutboxDao
 import com.tinhcd.myesalessfa.data.local.OutboxEntity
 import com.tinhcd.myesalessfa.data.local.SalesStepEntity
+import com.tinhcd.myesalessfa.data.outbox.OrderPayload
 import com.tinhcd.myesalessfa.data.outbox.OutboxFlusher
 import com.tinhcd.myesalessfa.data.outbox.OutboxWorker
 import com.tinhcd.myesalessfa.data.outbox.StepResultPayload
@@ -12,6 +13,7 @@ import com.tinhcd.myesalessfa.data.remote.VisitStepResultDto
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.SalesStep
 import com.tinhcd.myesalessfa.domain.model.StepCompletion
+import com.tinhcd.myesalessfa.domain.model.SupportedSteps
 import com.tinhcd.myesalessfa.domain.model.VisitWorkflow
 import com.tinhcd.myesalessfa.domain.model.assembleWorkflow
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
@@ -119,11 +121,28 @@ class WorkflowRepositoryImpl @Inject constructor(
      * assembler's job, so this stays a plain decode.
      */
     private suspend fun queuedCompletions(): List<StepCompletion> =
+        queuedStepResults() + queuedOrders()
+
+    private suspend fun queuedStepResults(): List<StepCompletion> =
         outboxDao.payloadsOfType(OutboxEntity.TYPE_STEP_RESULT)
             .mapNotNull { raw -> runCatching { json.decodeFromString<StepResultPayload>(raw) }.getOrNull() }
             .mapNotNull { payload ->
                 payload.completedAt.toEpochMillisOrNull()
                     ?.let { StepCompletion(payload.visitId, payload.formId, it) }
+            }
+
+    /**
+     * A queued order completes `take_order` too. The server writes that step
+     * result inside `submit_order`, so until the order is delivered there is no
+     * step result anywhere — and a rep who took an order with no signal would
+     * watch the step sit unticked and quite reasonably take it again.
+     */
+    private suspend fun queuedOrders(): List<StepCompletion> =
+        outboxDao.payloadsOfType(OutboxEntity.TYPE_ORDER)
+            .mapNotNull { raw -> runCatching { json.decodeFromString<OrderPayload>(raw) }.getOrNull() }
+            .mapNotNull { payload ->
+                payload.clientCreatedAt.toEpochMillisOrNull()
+                    ?.let { StepCompletion(payload.visitId, SupportedSteps.TAKE_ORDER, it) }
             }
 }
 
