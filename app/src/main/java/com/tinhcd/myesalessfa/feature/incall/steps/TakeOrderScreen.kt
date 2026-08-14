@@ -90,6 +90,11 @@ fun TakeOrderScreen(
                         .fillMaxSize()
                         .imePadding(),
                 ) {
+                    SuggestionBanner(
+                        state = state,
+                        onApply = viewModel::applySuggestions,
+                    )
+
                     OutlinedTextField(
                         value = state.query,
                         onValueChange = viewModel::onQueryChange,
@@ -130,6 +135,53 @@ fun TakeOrderScreen(
                         onBack = onDone,
                     )
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Offers the replenishment the stock count implies, rather than applying it.
+ *
+ * An order is a commitment to the customer. A screen that opens already filled in
+ * invites submitting quantities nobody agreed to, so the rep presses this.
+ */
+@Composable
+private fun SuggestionBanner(
+    state: TakeOrderUiState,
+    onApply: () -> Unit,
+) {
+    if (state.suggestions.isEmpty()) return
+
+    val totalUnits = state.suggestions.sumOf { it.suggestedQty }
+
+    Surface(
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    "Goi y tu kiem ton: ${state.suggestions.size} mat hang duoi dinh muc",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    if (state.suggestionsApplied) {
+                        "Da dien $totalUnits don vi - sua lai truoc khi gui neu can"
+                    } else {
+                        "Tong $totalUnits don vi"
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
+            }
+
+            if (!state.suggestionsApplied) {
+                OutlinedButton(onClick = onApply) { Text("Ap dung") }
             }
         }
     }
@@ -201,6 +253,26 @@ private fun ProductRow(
                 }
 
                 QtyStepper(qty = qty, onQtyChange = onQtyChange)
+            }
+
+            // The shortfall behind the suggestion, so a rep who did not press
+            // "Ap dung" still sees which SKUs the shelf is short of — and can see
+            // when a whole case is being suggested to cover a small gap.
+            val suggestion = state.suggestionFor(product.product.id)
+            if (suggestion != null) {
+                Text(
+                    "Thieu ${suggestion.shortfallBaseQty} " +
+                        "${product.product.baseUomCode.lowercase()} so voi dinh muc " +
+                        "- goi y ${suggestion.suggestedQty} ${suggestion.uomName}" +
+                        if (suggestion.overshootBaseQty > 0) {
+                            " (thua ${suggestion.overshootBaseQty})"
+                        } else {
+                            ""
+                        },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
             }
 
             if (line != null) {

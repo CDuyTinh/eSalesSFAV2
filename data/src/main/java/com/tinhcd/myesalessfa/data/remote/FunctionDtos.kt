@@ -113,6 +113,15 @@ data class PreviousCountDto(
     val previous: Map<String, Int> = emptyMap(),
 )
 
+@Serializable
+data class VisitCountDto(
+    @SerialName("visit_id") val visitId: String,
+    /** Null when this visit has not been counted yet. */
+    @SerialName("count_date") val countDate: String? = null,
+    /** Product id -> base-unit total, summed server-side across sale units. */
+    val counted: Map<String, Int> = emptyMap(),
+)
+
 /** Every write function answers with this, or with an error body carrying `message`. */
 @Serializable
 data class WriteAckDto(

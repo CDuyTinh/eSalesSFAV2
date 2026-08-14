@@ -61,6 +61,13 @@ interface FunctionsService {
         @Query("exceptVisitId") exceptVisitId: String,
     ): PreviousCountDto
 
+    /**
+     * This visit's own count, which is what the order screen measures against par.
+     * The inverse of [previousCount], which excludes it.
+     */
+    @GET("visit-count")
+    suspend fun visitCount(@Query("visitId") visitId: String): VisitCountDto
+
     // -------------------------------------------------------------------------
     // Writes
     //

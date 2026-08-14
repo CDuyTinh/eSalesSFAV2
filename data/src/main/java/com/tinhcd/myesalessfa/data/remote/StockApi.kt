@@ -30,4 +30,8 @@ class StockApi @Inject constructor(
      */
     suspend fun previousCount(customerId: String, exceptVisitId: String): Map<String, Int> =
         service.previousCount(customerId = customerId, exceptVisitId = exceptVisitId).previous
+
+    /** This visit's own count, which the order screen measures against par. */
+    suspend fun visitCount(visitId: String): Map<String, Int> =
+        service.visitCount(visitId).counted
 }

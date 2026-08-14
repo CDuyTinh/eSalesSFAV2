@@ -116,6 +116,15 @@ interface StockRepository {
     suspend fun previousCount(customerId: String, visitId: String): DataResult<Map<String, Int>>
 
     /**
+     * What this visit's count found, as product id -> base units.
+     *
+     * Includes a count still sitting in the outbox: a rep who counted in a dead
+     * spot must still get order suggestions, and the server has not heard about it
+     * yet. Empty when nothing has been counted on this visit.
+     */
+    suspend fun countedBaseQty(visitId: String): DataResult<Map<String, Int>>
+
+    /**
      * Queues [count] for delivery. The server fills each line's previous figure
      * and marks the `stock_outlet` step done in the same transaction.
      */
