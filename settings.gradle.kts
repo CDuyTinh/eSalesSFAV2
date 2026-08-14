@@ -23,5 +23,12 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "MyeSalesSFA"
+
+// Four modules. The boundary that earns its keep is :domain — a pure JVM
+// module, so business rules cannot reach for android.* and their tests run
+// without an emulator. Features live as packages inside :app until one of them
+// is big enough to deserve its own module.
 include(":app")
- 
+include(":domain")
+include(":data")
+include(":core")

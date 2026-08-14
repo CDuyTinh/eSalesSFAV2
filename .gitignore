@@ -1,15 +1,22 @@
 *.iml
 .gradle
-/local.properties
+.kotlin
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
+# Android Studio sometimes drops an .idea/ inside a module. That is per-user
+# state and never belongs in the repo; only the root .idea/ is partly shared.
+/*/.idea/
 .DS_Store
-/build
+# Unanchored so it also covers :core, :data and :domain, not just the root.
+# Anchored "/build" let module build output reach the index.
+build/
 /captures
 .externalNativeBuild
 .cxx
+
+# Holds the Supabase URL, publishable key and database password.
 local.properties
