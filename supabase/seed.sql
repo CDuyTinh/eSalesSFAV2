@@ -155,7 +155,9 @@ insert into app_setting (key, value, description) values
     ('checkout_photo_required', 'true',  'Require a photo at outlet check-out'),
     ('checkin_late_after',      '08:30', 'Clock-in later than this is flagged'),
     ('allow_reason_when_far',   'true',  'Offer a reason code instead of blocking check-in'),
-    ('default_language',        'vi',    'Fallback language code')
+    ('default_language',        'vi',    'Fallback language code'),
+    ('require_stock_before_order', 'true',
+     'Rep must count outlet stock before the order step opens')
 on conflict (key) do nothing;
 
 -- -----------------------------------------------------------------------------

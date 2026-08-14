@@ -48,10 +48,11 @@ object StepConfig {
  */
 object SupportedSteps {
     const val OUTSIDE_CHECKING = "outside_checking"
+    const val STOCK_OUTLET = "stock_outlet"
     const val TAKE_ORDER = "take_order"
     const val FEEDBACK = "feedback"
 
-    val formIds: Set<String> = setOf(OUTSIDE_CHECKING, TAKE_ORDER, FEEDBACK)
+    val formIds: Set<String> = setOf(OUTSIDE_CHECKING, STOCK_OUTLET, TAKE_ORDER, FEEDBACK)
 }
 
 data class WorkflowStep(
@@ -61,9 +62,23 @@ data class WorkflowStep(
     val completedAtEpochMs: Long?,
     /** False for steps that exist in config but have no screen yet. */
     val implemented: Boolean,
+    /**
+     * The step that has to happen first, when it has not happened yet. Null once
+     * the prerequisite is done, or when there never was one.
+     */
+    val waitingOn: WaitingOn? = null,
 ) {
     val isDone: Boolean get() = completedAtEpochMs != null
+
+    /** Whether the rep can open this step right now. */
+    val canOpen: Boolean get() = implemented && waitingOn == null
 }
+
+/** The unmet prerequisite of a step, named so the UI can say which one. */
+data class WaitingOn(
+    val formId: String,
+    val title: String,
+)
 
 data class VisitWorkflow(
     val visitId: String,
@@ -108,6 +123,11 @@ fun assembleWorkflow(
     definition: List<SalesStep>,
     completions: List<StepCompletion>,
     titleOf: (SalesStep) -> String,
+    /**
+     * Step form id -> the form id that must be completed before it opens. Used
+     * for rules like "count the shelves before you write the order".
+     */
+    prerequisites: Map<String, String> = emptyMap(),
 ): VisitWorkflow {
     // Latest wins. A locally queued completion is by construction newer than
     // the server's copy, which is exactly the case that matters: a step redone
@@ -116,6 +136,19 @@ fun assembleWorkflow(
         .filter { it.visitId == visitId }
         .groupBy { it.formId }
         .mapValues { (_, records) -> records.maxOf { it.atEpochMs } }
+
+    val byFormId = definition.associateBy { it.formId }
+
+    fun waitingOn(step: SalesStep): WaitingOn? {
+        val requiredId = prerequisites[step.formId] ?: return null
+        if (completedAt.containsKey(requiredId)) return null
+        // A prerequisite the server never configured, or that this build cannot
+        // render, must not close the step behind it. Holding an order back for a
+        // count the app cannot even take would leave the rep unable to sell.
+        val required = byFormId[requiredId] ?: return null
+        if (requiredId !in SupportedSteps.formIds) return null
+        return WaitingOn(formId = requiredId, title = titleOf(required))
+    }
 
     return VisitWorkflow(
         visitId = visitId,
@@ -127,6 +160,7 @@ fun assembleWorkflow(
                     title = titleOf(step),
                     completedAtEpochMs = completedAt[step.formId],
                     implemented = step.formId in SupportedSteps.formIds,
+                    waitingOn = waitingOn(step),
                 )
             },
     )

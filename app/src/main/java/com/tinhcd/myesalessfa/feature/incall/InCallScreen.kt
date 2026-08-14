@@ -139,7 +139,7 @@ private fun StepRow(step: WorkflowStep, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = step.implemented, onClick = onClick),
+            .clickable(enabled = step.canOpen, onClick = onClick),
     ) {
         Row(
             modifier = Modifier.padding(14.dp),
@@ -149,7 +149,7 @@ private fun StepRow(step: WorkflowStep, onClick: () -> Unit) {
                 shape = CircleShape,
                 color = when {
                     step.isDone -> scheme.primary
-                    !step.implemented -> scheme.surfaceVariant
+                    !step.canOpen -> scheme.surfaceVariant
                     else -> scheme.primaryContainer
                 },
                 modifier = Modifier.size(34.dp),
@@ -162,7 +162,10 @@ private fun StepRow(step: WorkflowStep, onClick: () -> Unit) {
                             tint = Color.White,
                         )
 
-                        !step.implemented -> Icon(
+                        // Locked covers both "no screen for it" and "another
+                        // step has to happen first" — from the rep's side they
+                        // are the same thing: not tappable yet.
+                        !step.canOpen -> Icon(
                             Icons.Default.Lock,
                             contentDescription = null,
                             tint = scheme.onSurfaceVariant,
@@ -187,15 +190,19 @@ private fun StepRow(step: WorkflowStep, onClick: () -> Unit) {
                     fontWeight = FontWeight.Medium,
                     textDecoration = if (step.isDone) TextDecoration.LineThrough else null,
                 )
+                val waitingOn = step.waitingOn
                 val note = when {
                     !step.implemented -> "Chua xay dung trong ban nay"
+                    // Says which step, so the rep is not left guessing what
+                    // unlocks this one.
+                    waitingOn != null -> "Can lam \"${waitingOn.title}\" truoc"
                     step.step.isRequired -> "Bat buoc"
                     else -> "Tuy chon"
                 }
                 Text(
                     text = note,
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (step.implemented) {
+                    color = if (step.canOpen) {
                         scheme.onSurfaceVariant
                     } else {
                         scheme.error
@@ -203,7 +210,7 @@ private fun StepRow(step: WorkflowStep, onClick: () -> Unit) {
                 )
             }
 
-            if (step.implemented) {
+            if (step.canOpen) {
                 Icon(
                     Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,

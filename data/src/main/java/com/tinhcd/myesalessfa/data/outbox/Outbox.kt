@@ -14,6 +14,7 @@ import com.tinhcd.myesalessfa.data.local.OutboxDao
 import com.tinhcd.myesalessfa.data.local.OutboxEntity
 import com.tinhcd.myesalessfa.data.remote.NewVisitDto
 import com.tinhcd.myesalessfa.data.remote.OrderApi
+import com.tinhcd.myesalessfa.data.remote.StockApi
 import com.tinhcd.myesalessfa.data.remote.VisitApi
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -35,6 +36,7 @@ class OutboxFlusher @Inject constructor(
     private val dao: OutboxDao,
     private val visitApi: VisitApi,
     private val orderApi: OrderApi,
+    private val stockApi: StockApi,
 ) {
     /** @return true if the queue is now empty. */
     suspend fun flush(): Boolean {
@@ -67,6 +69,9 @@ class OutboxFlusher @Inject constructor(
 
             OutboxEntity.TYPE_ORDER ->
                 orderApi.submit(json.decodeFromString<OrderPayload>(entry.payload))
+
+            OutboxEntity.TYPE_STOCK_COUNT ->
+                stockApi.submit(json.decodeFromString<StockCountPayload>(entry.payload))
 
             else -> error("Unknown outbox type ${entry.type}")
         }
@@ -118,6 +123,31 @@ data class OrderPayload(
 @kotlinx.serialization.Serializable
 data class OrderLinePayload(
     @SerialName("line_no") val lineNo: Int,
+    @SerialName("product_id") val productId: String,
+    @SerialName("uom_code") val uomCode: String,
+    val qty: Int,
+)
+
+/**
+ * A stock count on its way to `submit_stock_count`. Field names are the RPC's
+ * own, as for [OrderPayload].
+ *
+ * A count belongs in the outbox for the same reason a check-in does: the rep
+ * physically walked the shelves, and nothing on the device or the server can
+ * reconstruct what they saw once they have left the shop.
+ */
+@kotlinx.serialization.Serializable
+data class StockCountPayload(
+    val id: String,
+    @SerialName("visit_id") val visitId: String,
+    @SerialName("count_date") val countDate: String,
+    val note: String? = null,
+    @SerialName("client_created_at") val clientCreatedAt: String,
+    val lines: List<StockCountLinePayload>,
+)
+
+@kotlinx.serialization.Serializable
+data class StockCountLinePayload(
     @SerialName("product_id") val productId: String,
     @SerialName("uom_code") val uomCode: String,
     val qty: Int,

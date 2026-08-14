@@ -108,6 +108,114 @@ class AssembleWorkflowTest {
         assertTrue(workflow.canCheckOut)
     }
 
+    // -------------------------------------------------------------------------
+    // Prerequisites — "count the shelves before you write the order"
+    // -------------------------------------------------------------------------
+
+    private val stockBeforeOrder =
+        mapOf(SupportedSteps.TAKE_ORDER to SupportedSteps.STOCK_OUTLET)
+
+    private val bothSteps = listOf(
+        definition(SupportedSteps.STOCK_OUTLET, order = 2),
+        definition(SupportedSteps.TAKE_ORDER, order = 3),
+    )
+
+    @Test
+    fun `the order step is closed until the count is done`() {
+        val workflow = assembleWorkflow(
+            visitId = "v1",
+            definition = bothSteps,
+            completions = emptyList(),
+            titleOf = titleOf,
+            prerequisites = stockBeforeOrder,
+        )
+
+        val order = workflow.steps.single { it.step.formId == SupportedSteps.TAKE_ORDER }
+        assertFalse(order.canOpen)
+        assertEquals(SupportedSteps.STOCK_OUTLET, order.waitingOn?.formId)
+        // Named, so the screen can say what the rep has to do first.
+        assertEquals("Buoc stock_outlet", order.waitingOn?.title)
+
+        // The count itself has no prerequisite and opens immediately.
+        assertTrue(workflow.steps.single { it.step.formId == SupportedSteps.STOCK_OUTLET }.canOpen)
+    }
+
+    @Test
+    fun `completing the count opens the order step`() {
+        val workflow = assembleWorkflow(
+            visitId = "v1",
+            definition = bothSteps,
+            completions = listOf(
+                StepCompletion("v1", SupportedSteps.STOCK_OUTLET, 1_700_000_000_000),
+            ),
+            titleOf = titleOf,
+            prerequisites = stockBeforeOrder,
+        )
+
+        val order = workflow.steps.single { it.step.formId == SupportedSteps.TAKE_ORDER }
+        assertTrue(order.canOpen)
+        assertNull(order.waitingOn)
+    }
+
+    @Test
+    fun `a count queued offline opens the order step just as a delivered one does`() {
+        // The completion here is the kind that comes out of the outbox. A rep who
+        // counted in a dead spot must not then be refused the order.
+        val workflow = assembleWorkflow(
+            visitId = "v1",
+            definition = bothSteps,
+            completions = listOf(
+                StepCompletion("v1", SupportedSteps.STOCK_OUTLET, 1_700_000_500_000),
+            ),
+            titleOf = titleOf,
+            prerequisites = stockBeforeOrder,
+        )
+        assertTrue(workflow.steps.single { it.step.formId == SupportedSteps.TAKE_ORDER }.canOpen)
+    }
+
+    @Test
+    fun `a prerequisite this build cannot render does not close the step behind it`() {
+        // Holding the order back for a step the app has no screen for would leave
+        // the rep unable to sell, with no way to clear the block.
+        val workflow = assembleWorkflow(
+            visitId = "v1",
+            definition = listOf(
+                definition("posm_status", order = 1),
+                definition(SupportedSteps.TAKE_ORDER, order = 3),
+            ),
+            completions = emptyList(),
+            titleOf = titleOf,
+            prerequisites = mapOf(SupportedSteps.TAKE_ORDER to "posm_status"),
+        )
+        assertTrue(workflow.steps.single { it.step.formId == SupportedSteps.TAKE_ORDER }.canOpen)
+    }
+
+    @Test
+    fun `a prerequisite the server did not configure is ignored`() {
+        // The setting says count first, but this market's workflow has no count
+        // step at all. The order step still has to open.
+        val workflow = assembleWorkflow(
+            visitId = "v1",
+            definition = listOf(definition(SupportedSteps.TAKE_ORDER, order = 3)),
+            completions = emptyList(),
+            titleOf = titleOf,
+            prerequisites = stockBeforeOrder,
+        )
+        assertTrue(workflow.steps.single().canOpen)
+    }
+
+    @Test
+    fun `with no prerequisites configured every implemented step opens`() {
+        val workflow = assembleWorkflow(
+            visitId = "v1",
+            definition = bothSteps,
+            completions = emptyList(),
+            titleOf = titleOf,
+        )
+        assertTrue(workflow.steps.all { it.canOpen })
+        assertTrue(workflow.steps.all { it.waitingOn == null })
+    }
+
     @Test
     fun `titles are resolved through the supplied lookup`() {
         val workflow = assembleWorkflow(

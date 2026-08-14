@@ -4,6 +4,7 @@ import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.CheckInPolicy
 import com.tinhcd.myesalessfa.domain.model.CheckInRequest
 import com.tinhcd.myesalessfa.domain.model.DraftOrder
+import com.tinhcd.myesalessfa.domain.model.DraftStockCount
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
 import com.tinhcd.myesalessfa.domain.model.ReasonCode
 import com.tinhcd.myesalessfa.domain.model.ReasonKind
@@ -65,6 +66,12 @@ interface ConfigRepository {
     /** Translated label for [key], falling back to [key] itself. */
     suspend fun translate(key: String): String
 
+    /**
+     * Step form id -> the step that must be completed before it opens, derived
+     * from settings. Empty when the market imposes no ordering between steps.
+     */
+    suspend fun stepPrerequisites(): Map<String, String>
+
     /** Pulls settings, reason codes, workflow steps and translations locally. */
     suspend fun refresh(): DataResult<Unit>
 }
@@ -83,6 +90,23 @@ interface CatalogRepository {
         classId: String?,
         on: LocalDate,
     ): DataResult<List<PricedProduct>>
+}
+
+interface StockRepository {
+    /**
+     * This product's base-unit total at the customer's previous count, keyed by
+     * product id. Empty when the outlet has never been counted.
+     *
+     * Excludes [visitId] so a recount compares against the previous visit rather
+     * than against the attempt it is replacing.
+     */
+    suspend fun previousCount(customerId: String, visitId: String): DataResult<Map<String, Int>>
+
+    /**
+     * Queues [count] for delivery. The server fills each line's previous figure
+     * and marks the `stock_outlet` step done in the same transaction.
+     */
+    suspend fun submit(count: DraftStockCount): DataResult<SubmitOutcome>
 }
 
 interface OrderRepository {

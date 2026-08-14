@@ -6,6 +6,7 @@ import com.tinhcd.myesalessfa.data.repository.CheckInRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.ConfigRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.OrderRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.RouteRepositoryImpl
+import com.tinhcd.myesalessfa.data.repository.StockRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.WorkflowRepositoryImpl
 import com.tinhcd.myesalessfa.domain.repository.AuthRepository
 import com.tinhcd.myesalessfa.domain.repository.CatalogRepository
@@ -13,6 +14,7 @@ import com.tinhcd.myesalessfa.domain.repository.CheckInRepository
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository
 import com.tinhcd.myesalessfa.domain.repository.RouteRepository
+import com.tinhcd.myesalessfa.domain.repository.StockRepository
 import com.tinhcd.myesalessfa.domain.repository.WorkflowRepository
 import dagger.Binds
 import dagger.Module
@@ -55,4 +57,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindOrderRepository(impl: OrderRepositoryImpl): OrderRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindStockRepository(impl: StockRepositoryImpl): StockRepository
 }
