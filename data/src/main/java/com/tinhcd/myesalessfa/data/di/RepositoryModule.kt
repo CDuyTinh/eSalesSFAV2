@@ -1,8 +1,12 @@
 package com.tinhcd.myesalessfa.data.di
 
 import com.tinhcd.myesalessfa.data.repository.AuthRepositoryImpl
+import com.tinhcd.myesalessfa.data.repository.CheckInRepositoryImpl
+import com.tinhcd.myesalessfa.data.repository.ConfigRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.RouteRepositoryImpl
 import com.tinhcd.myesalessfa.domain.repository.AuthRepository
+import com.tinhcd.myesalessfa.domain.repository.CheckInRepository
+import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
 import com.tinhcd.myesalessfa.domain.repository.RouteRepository
 import dagger.Binds
 import dagger.Module
@@ -25,4 +29,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindRouteRepository(impl: RouteRepositoryImpl): RouteRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCheckInRepository(impl: CheckInRepositoryImpl): CheckInRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindConfigRepository(impl: ConfigRepositoryImpl): ConfigRepository
 }

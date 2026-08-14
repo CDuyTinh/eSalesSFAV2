@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.data.repository
 
 import com.tinhcd.myesalessfa.data.remote.SalespersonDto
+import com.tinhcd.myesalessfa.data.session.SessionStore
 import com.tinhcd.myesalessfa.domain.AppError
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.Salesperson
@@ -13,6 +14,7 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -29,12 +31,15 @@ private const val SALESPERSON_COLUMNS =
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val client: SupabaseClient,
+    private val session: SessionStore,
 ) : AuthRepository {
 
     override val currentUser: Flow<Salesperson?> =
-        client.auth.sessionStatus.map { status ->
-            if (status is SessionStatus.Authenticated) loadProfileOrNull() else null
-        }
+        client.auth.sessionStatus
+            .map { status ->
+                if (status is SessionStatus.Authenticated) loadProfileOrNull() else null
+            }
+            .onEach { session.current.value = it }
 
     override suspend fun signIn(username: String, password: String): DataResult<Salesperson> = try {
         client.auth.signInWith(Email) {
@@ -49,6 +54,7 @@ class AuthRepositoryImpl @Inject constructor(
             client.auth.signOut()
             DataResult.Failure(AppError.Auth("account_not_provisioned"))
         } else {
+            session.current.value = profile
             DataResult.Success(profile)
         }
     } catch (e: Exception) {
@@ -57,6 +63,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun signOut(): DataResult<Unit> = try {
         client.auth.signOut()
+        session.current.value = null
         DataResult.Success(Unit)
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())
