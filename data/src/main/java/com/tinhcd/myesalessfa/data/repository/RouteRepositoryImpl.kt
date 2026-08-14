@@ -66,6 +66,14 @@ class RouteRepositoryImpl @Inject constructor(
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())
     }
+
+    override suspend fun getStop(customerId: String, date: LocalDate): DataResult<RouteStop?> =
+        when (val all = getRoute(date)) {
+            is DataResult.Success ->
+                DataResult.Success(all.data.firstOrNull { it.customer.id == customerId })
+
+            is DataResult.Failure -> all
+        }
 }
 
 private fun CustomerDto.toDomain() = Customer(

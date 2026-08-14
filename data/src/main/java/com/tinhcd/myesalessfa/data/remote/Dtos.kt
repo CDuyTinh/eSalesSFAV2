@@ -1,17 +1,17 @@
-package com.tinhcd.myesalessfa.data.remote
+﻿package com.tinhcd.myesalessfa.data.remote
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-internal data class BranchDto(
+data class BranchDto(
     val id: String,
     val code: String,
     val name: String,
 )
 
 @Serializable
-internal data class SalespersonDto(
+data class SalespersonDto(
     val id: String,
     val code: String,
     @SerialName("full_name") val fullName: String,
@@ -20,7 +20,7 @@ internal data class SalespersonDto(
 )
 
 @Serializable
-internal data class CustomerDto(
+data class CustomerDto(
     val id: String,
     val code: String,
     val name: String,
@@ -33,13 +33,13 @@ internal data class CustomerDto(
 )
 
 @Serializable
-internal data class RouteCustomerDto(
+data class RouteCustomerDto(
     @SerialName("visit_order") val visitOrder: Int,
     val customer: CustomerDto,
 )
 
 @Serializable
-internal data class VisitDto(
+data class VisitDto(
     val id: String,
     @SerialName("customer_id") val customerId: String,
     val status: String,
@@ -47,9 +47,23 @@ internal data class VisitDto(
     @SerialName("check_out_at") val checkOutAt: String? = null,
 )
 
+@Serializable
+data class SettingDto(
+    val key: String,
+    val value: String,
+)
+
+@Serializable
+data class ReasonCodeDto(
+    val id: String,
+    val code: String,
+    val name: String,
+    val kind: String,
+)
+
 /** Payload for creating a visit row. Field names match the table columns. */
 @Serializable
-internal data class NewVisitDto(
+data class NewVisitDto(
     @SerialName("customer_id") val customerId: String,
     @SerialName("salesperson_id") val salespersonId: String,
     @SerialName("branch_id") val branchId: String,

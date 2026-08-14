@@ -4,22 +4,28 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
+import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
+import com.tinhcd.myesalessfa.domain.repository.AuthRepository
+import com.tinhcd.myesalessfa.navigation.AppNavHost
+import com.tinhcd.myesalessfa.navigation.Routes
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -29,29 +35,34 @@ class MainActivity : ComponentActivity() {
         setContent {
             MyeSalesTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
-                    StartupScreen(modifier = Modifier.padding(padding))
+                    val viewModel: RootViewModel = hiltViewModel()
+                    val start by viewModel.startDestination.collectAsStateWithLifecycle()
+
+                    // Null while the stored session is being restored. Showing
+                    // the login form first and yanking it away a moment later
+                    // is worse than a brief spinner.
+                    when (val destination = start) {
+                        null -> LoadingBox(Modifier.padding(padding))
+                        else -> AppNavHost(startDestination = destination)
+                    }
                 }
             }
         }
     }
 }
 
-/**
- * Placeholder while the Login -> Route -> Check-in slice is built. It exists to
- * prove the wiring end to end: Hilt builds the ViewModel, which reaches
- * :domain, which is backed by the Supabase implementation in :data.
- */
-@Composable
-private fun StartupScreen(modifier: Modifier = Modifier) {
-    val viewModel: StartupViewModel = hiltViewModel()
-    val state by viewModel.state.collectAsStateWithLifecycle()
+@HiltViewModel
+class RootViewModel @Inject constructor(
+    authRepository: AuthRepository,
+) : ViewModel() {
 
-    Column(
-        modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text("eSales SFA", style = MaterialTheme.typography.titleLarge)
-        Text(state.message, style = MaterialTheme.typography.bodyLarge)
+    private val _startDestination = MutableStateFlow<String?>(null)
+    val startDestination: StateFlow<String?> = _startDestination.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            val user = authRepository.currentUser.first()
+            _startDestination.value = if (user == null) Routes.LOGIN else Routes.ROUTE
+        }
     }
 }

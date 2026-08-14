@@ -68,6 +68,9 @@ dependencies {
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+    // @HiltWorker support for the outbox worker.
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
