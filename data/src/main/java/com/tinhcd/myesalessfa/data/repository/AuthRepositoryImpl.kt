@@ -6,12 +6,11 @@ import com.tinhcd.myesalessfa.domain.AppError
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.Salesperson
 import com.tinhcd.myesalessfa.domain.repository.AuthRepository
+import com.tinhcd.myesalessfa.data.remote.PostgrestService
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.status.SessionStatus
-import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -25,12 +24,15 @@ import javax.inject.Singleton
  */
 private const val EMAIL_DOMAIN = "@esales.local"
 
-private const val SALESPERSON_COLUMNS =
-    "id,code,full_name,branch_id,branch:branch_id(id,code,name)"
-
+/**
+ * Sign-in, sign-out and the session Flow stay on the Supabase SDK — it owns token
+ * refresh and session persistence, which is the part worth not hand-rolling. The
+ * profile read below is a data call like any other and goes through Retrofit.
+ */
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val client: SupabaseClient,
+    private val service: PostgrestService,
     private val session: SessionStore,
 ) : AuthRepository {
 
@@ -70,10 +72,8 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     private suspend fun loadProfileOrNull(): Salesperson? = try {
-        client.from("salesperson")
-            .select(Columns.raw(SALESPERSON_COLUMNS))
-            .decodeSingleOrNull<SalespersonDto>()
-            ?.toDomain()
+        // RLS returns at most the signed-in rep's own row, so first() is the row.
+        service.salesperson().firstOrNull()?.toDomain()
     } catch (e: Exception) {
         null
     }

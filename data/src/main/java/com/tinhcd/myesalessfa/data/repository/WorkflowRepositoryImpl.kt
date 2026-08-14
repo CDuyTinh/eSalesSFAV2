@@ -10,7 +10,8 @@ import com.tinhcd.myesalessfa.data.outbox.OutboxFlusher
 import com.tinhcd.myesalessfa.data.outbox.OutboxWorker
 import com.tinhcd.myesalessfa.data.outbox.StepResultPayload
 import com.tinhcd.myesalessfa.data.outbox.StockCountPayload
-import com.tinhcd.myesalessfa.data.remote.VisitStepResultDto
+import com.tinhcd.myesalessfa.data.remote.Filters
+import com.tinhcd.myesalessfa.data.remote.PostgrestService
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.SalesStep
 import com.tinhcd.myesalessfa.domain.model.StepCompletion
@@ -21,9 +22,6 @@ import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
 import com.tinhcd.myesalessfa.domain.repository.SubmitOutcome
 import com.tinhcd.myesalessfa.domain.repository.WorkflowRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
-import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.serialization.json.Json
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -35,7 +33,7 @@ private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 @Singleton
 class WorkflowRepositoryImpl @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val client: SupabaseClient,
+    private val service: PostgrestService,
     private val configDao: ConfigDao,
     private val outboxDao: OutboxDao,
     private val flusher: OutboxFlusher,
@@ -49,6 +47,7 @@ class WorkflowRepositoryImpl @Inject constructor(
         // locally queued ones below still count, and a step shown as undone can
         // be redone (the unique constraint makes the write idempotent).
         val remote = runCatching { remoteCompletions(visitId) }.getOrDefault(emptyList())
+
 
         // Resolved up front: assembly is a pure function and must not have to
         // reach back into the translation cache per row.
@@ -104,11 +103,7 @@ class WorkflowRepositoryImpl @Inject constructor(
     }
 
     private suspend fun remoteCompletions(visitId: String): List<StepCompletion> =
-        client.from("visit_step_result")
-            .select(Columns.raw("form_id,completed_at")) {
-                filter { eq("visit_id", visitId) }
-            }
-            .decodeList<VisitStepResultDto>()
+        service.stepResults(visitId = Filters.eq(visitId))
             .mapNotNull { dto ->
                 dto.completedAt.toEpochMillisOrNull()
                     ?.let { StepCompletion(visitId, dto.formId, it) }
