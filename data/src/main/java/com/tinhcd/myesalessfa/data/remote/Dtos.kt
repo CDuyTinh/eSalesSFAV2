@@ -2,6 +2,7 @@
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 
 @Serializable
 data class BranchDto(
@@ -59,6 +60,27 @@ data class ReasonCodeDto(
     val code: String,
     val name: String,
     val kind: String,
+)
+
+@Serializable
+data class SalesStepDto(
+    @SerialName("form_id") val formId: String,
+    val step: Int,
+    @SerialName("title_key") val titleKey: String,
+    @SerialName("is_required") val isRequired: Boolean,
+    val config: JsonObject = JsonObject(emptyMap()),
+)
+
+@Serializable
+data class TranslationDto(
+    val key: String,
+    val value: String,
+)
+
+@Serializable
+data class VisitStepResultDto(
+    @SerialName("form_id") val formId: String,
+    @SerialName("completed_at") val completedAt: String,
 )
 
 /** Payload for creating a visit row. Field names match the table columns. */

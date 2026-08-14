@@ -1,22 +1,31 @@
 package com.tinhcd.myesalessfa.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.tinhcd.myesalessfa.domain.model.SupportedSteps
+import com.tinhcd.myesalessfa.domain.model.VisitStatus
 import com.tinhcd.myesalessfa.feature.auth.LoginScreen
 import com.tinhcd.myesalessfa.feature.checkin.CheckInScreen
+import com.tinhcd.myesalessfa.feature.incall.InCallScreen
+import com.tinhcd.myesalessfa.feature.incall.steps.NoteStepScreen
 import com.tinhcd.myesalessfa.feature.route.RouteScreen
 
 object Routes {
     const val LOGIN = "login"
     const val ROUTE = "route"
     const val CHECK_IN = "checkin/{customerId}"
+    const val IN_CALL = "incall/{visitId}/{customerId}"
+    const val STEP = "step/{visitId}/{formId}"
 
     fun checkIn(customerId: String) = "checkin/$customerId"
+    fun inCall(visitId: String, customerId: String) = "incall/$visitId/$customerId"
+    fun step(visitId: String, formId: String) = "step/$visitId/$formId"
 }
 
 @Composable
@@ -40,8 +49,16 @@ fun AppNavHost(
 
         composable(Routes.ROUTE) {
             RouteScreen(
-                onOpenCheckIn = { customerId ->
-                    navController.navigate(Routes.checkIn(customerId))
+                onOpenStop = { stop ->
+                    // Where a tap goes depends on how far the visit has got.
+                    // Already checked in means the rep wants the work list, not
+                    // the check-in form again.
+                    val visitId = stop.visitId
+                    if (stop.status == VisitStatus.IN_PROGRESS && visitId != null) {
+                        navController.navigate(Routes.inCall(visitId, stop.customer.id))
+                    } else {
+                        navController.navigate(Routes.checkIn(stop.customer.id))
+                    }
                 },
                 onSignedOut = {
                     navController.navigate(Routes.LOGIN) {
@@ -55,7 +72,45 @@ fun AppNavHost(
             route = Routes.CHECK_IN,
             arguments = listOf(navArgument("customerId") { type = NavType.StringType }),
         ) {
+            // Back to the route list, which reloads and now shows the stop as
+            // in progress. Going straight into the workflow would need the new
+            // visit id, which a queued check-in does not have yet.
             CheckInScreen(onDone = { navController.popBackStack() })
+        }
+
+        composable(
+            route = Routes.IN_CALL,
+            arguments = listOf(
+                navArgument("visitId") { type = NavType.StringType },
+                navArgument("customerId") { type = NavType.StringType },
+            ),
+        ) { entry ->
+            val visitId = entry.arguments?.getString("visitId").orEmpty()
+            InCallScreen(
+                onOpenStep = { formId -> navController.navigate(Routes.step(visitId, formId)) },
+                onCheckedOut = { navController.popBackStack(Routes.ROUTE, inclusive = false) },
+            )
+        }
+
+        composable(
+            route = Routes.STEP,
+            arguments = listOf(
+                navArgument("visitId") { type = NavType.StringType },
+                navArgument("formId") { type = NavType.StringType },
+            ),
+        ) { entry ->
+            // One screen serves both implemented steps today. When a step needs
+            // its own form, add a branch here — the registry of what this build
+            // can render lives in SupportedSteps.
+            when (entry.arguments?.getString("formId")) {
+                SupportedSteps.OUTSIDE_CHECKING, SupportedSteps.FEEDBACK ->
+                    NoteStepScreen(onDone = { navController.popBackStack() })
+
+                // The step list already refuses to open these, but answering an
+                // unknown step with a note form would record the wrong shape of
+                // data under its name — worse than not opening at all.
+                else -> LaunchedEffect(Unit) { navController.popBackStack() }
+            }
         }
     }
 }

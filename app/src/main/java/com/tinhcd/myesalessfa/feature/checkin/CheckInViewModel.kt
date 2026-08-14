@@ -13,7 +13,6 @@ import com.tinhcd.myesalessfa.domain.model.GeoPoint
 import com.tinhcd.myesalessfa.domain.model.ReasonCode
 import com.tinhcd.myesalessfa.domain.model.ReasonKind
 import com.tinhcd.myesalessfa.domain.model.RouteStop
-import com.tinhcd.myesalessfa.domain.model.VisitStatus
 import com.tinhcd.myesalessfa.domain.repository.CheckInRepository
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
 import com.tinhcd.myesalessfa.domain.repository.RouteRepository
@@ -42,8 +41,6 @@ data class CheckInUiState(
     val finished: Boolean = false,
     val queuedOffline: Boolean = false,
 ) {
-    val alreadyCheckedIn: Boolean get() = stop?.status == VisitStatus.IN_PROGRESS
-
     /** A reason is required whenever the gate is not clean. */
     val needsReason: Boolean get() = gate is CheckInGate.NeedsReason
 
@@ -161,28 +158,6 @@ class CheckInViewModel @Inject constructor(
                 is DataResult.Failure ->
                     _state.update {
                         it.copy(submitting = false, error = "Khong luu duoc check-in")
-                    }
-            }
-        }
-    }
-
-    fun checkOut() {
-        val visitId = _state.value.stop?.visitId ?: return
-        _state.update { it.copy(submitting = true, error = null) }
-        viewModelScope.launch {
-            when (val result = checkInRepository.checkOut(visitId)) {
-                is DataResult.Success ->
-                    _state.update {
-                        it.copy(
-                            submitting = false,
-                            finished = true,
-                            queuedOffline = result.data == SubmitOutcome.QUEUED,
-                        )
-                    }
-
-                is DataResult.Failure ->
-                    _state.update {
-                        it.copy(submitting = false, error = "Khong luu duoc check-out")
                     }
             }
         }

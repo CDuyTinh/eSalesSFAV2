@@ -44,7 +44,7 @@ import com.tinhcd.myesalessfa.domain.model.VisitStatus
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RouteScreen(
-    onOpenCheckIn: (String) -> Unit,
+    onOpenStop: (RouteStop) -> Unit,
     onSignedOut: () -> Unit,
     viewModel: RouteViewModel = hiltViewModel(),
 ) {
@@ -96,7 +96,7 @@ fun RouteScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             items(state.stops, key = { it.customer.id }) { stop ->
-                                StopCard(stop = stop, onClick = { onOpenCheckIn(stop.customer.id) })
+                                StopCard(stop = stop, onClick = { onOpenStop(stop) })
                             }
                         }
                     }

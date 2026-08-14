@@ -36,6 +36,7 @@ data class OutboxEntity(
     companion object {
         const val TYPE_CHECK_IN = "check_in"
         const val TYPE_CHECK_OUT = "check_out"
+        const val TYPE_STEP_RESULT = "step_result"
     }
 }
 
@@ -55,6 +56,13 @@ interface OutboxDao {
 
     @Query("SELECT COUNT(*) FROM outbox")
     fun pendingCount(): Flow<Int>
+
+    /**
+     * Lets a read merge in writes that have not landed yet, so a step completed
+     * without signal still shows as done.
+     */
+    @Query("SELECT payload FROM outbox WHERE type = :type")
+    suspend fun payloadsOfType(type: String): List<String>
 }
 
 // -----------------------------------------------------------------------------
@@ -75,6 +83,26 @@ data class ReasonEntity(
     val kind: String,
 )
 
+/**
+ * The in-call workflow definition, cached so the step list renders instantly
+ * and still works in a shop with no signal.
+ */
+@Entity(tableName = "sales_step")
+data class SalesStepEntity(
+    @PrimaryKey val formId: String,
+    val step: Int,
+    val titleKey: String,
+    val isRequired: Boolean,
+    /** jsonb flattened to "key=value" pairs joined by newlines. */
+    val config: String,
+)
+
+@Entity(tableName = "translation")
+data class TranslationEntity(
+    @PrimaryKey val key: String,
+    val value: String,
+)
+
 @Dao
 interface ConfigDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -91,11 +119,35 @@ interface ConfigDao {
 
     @Query("SELECT * FROM reason_code WHERE kind = :kind ORDER BY name")
     suspend fun reasons(kind: String): List<ReasonEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertSteps(rows: List<SalesStepEntity>)
+
+    @Query("DELETE FROM sales_step")
+    suspend fun clearSteps()
+
+    @Query("SELECT * FROM sales_step ORDER BY step ASC")
+    suspend fun steps(): List<SalesStepEntity>
+
+    @Query("SELECT * FROM sales_step WHERE formId = :formId")
+    suspend fun step(formId: String): SalesStepEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertTranslations(rows: List<TranslationEntity>)
+
+    @Query("SELECT value FROM translation WHERE key = :key")
+    suspend fun translation(key: String): String?
 }
 
 @Database(
-    entities = [OutboxEntity::class, SettingEntity::class, ReasonEntity::class],
-    version = 1,
+    entities = [
+        OutboxEntity::class,
+        SettingEntity::class,
+        ReasonEntity::class,
+        SalesStepEntity::class,
+        TranslationEntity::class,
+    ],
+    version = 2,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
