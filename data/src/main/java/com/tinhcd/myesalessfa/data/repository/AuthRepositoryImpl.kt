@@ -6,7 +6,8 @@ import com.tinhcd.myesalessfa.domain.AppError
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.Salesperson
 import com.tinhcd.myesalessfa.domain.repository.AuthRepository
-import com.tinhcd.myesalessfa.data.remote.PostgrestService
+import com.tinhcd.myesalessfa.data.remote.FunctionsService
+import com.tinhcd.myesalessfa.data.remote.activeLanguage
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
@@ -32,7 +33,7 @@ private const val EMAIL_DOMAIN = "@esales.local"
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val client: SupabaseClient,
-    private val service: PostgrestService,
+    private val service: FunctionsService,
     private val session: SessionStore,
 ) : AuthRepository {
 
@@ -71,9 +72,15 @@ class AuthRepositoryImpl @Inject constructor(
         DataResult.Failure(e.toAppError())
     }
 
+    /**
+     * Read from /bootstrap, which also carries settings, reason codes and labels.
+     * Slightly more than is needed for a name in the app bar, but it is one small
+     * request on session change only, and it avoids a second endpoint existing
+     * purely to return one row. The catalogue is a separate call and not pulled
+     * here.
+     */
     private suspend fun loadProfileOrNull(): Salesperson? = try {
-        // RLS returns at most the signed-in rep's own row, so first() is the row.
-        service.salesperson().firstOrNull()?.toDomain()
+        service.bootstrap(lang = activeLanguage()).salesperson?.toDomain()
     } catch (e: Exception) {
         null
     }

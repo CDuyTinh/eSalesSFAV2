@@ -7,9 +7,12 @@ import retrofit2.Response
 private val json = Json { ignoreUnknownKeys = true }
 
 /**
- * PostgREST's error body. A failed `raise exception` inside one of the RPCs
- * arrives here as `code` P0001 with the message the function raised, which is how
- * "1 of 1 lines could not be priced" reaches the rep's screen.
+ * The error body both layers produce.
+ *
+ * A failed `raise exception` inside one of the database functions surfaces as
+ * `code` P0001 with the message the function raised; the Edge Functions re-emit
+ * that same message in the same field. So "1 of 1 lines could not be priced"
+ * reaches the rep whether it was raised in plpgsql or in Deno.
  */
 @Serializable
 data class PostgrestErrorDto(
@@ -20,9 +23,8 @@ data class PostgrestErrorDto(
 )
 
 /**
- * Carries PostgREST's own message as the exception message, so the existing
- * `Exception.toAppError()` mapping keeps working unchanged after the move off
- * the Supabase SDK.
+ * Carries the server's own message as the exception message, so the existing
+ * `Exception.toAppError()` mapping keeps working unchanged.
  */
 class PostgrestException(
     val status: Int,
@@ -31,14 +33,21 @@ class PostgrestException(
 ) : Exception(message)
 
 /**
- * Turns a non-2xx write into a [PostgrestException].
+ * Returns the decoded body of a successful write, or throws [PostgrestException].
  *
- * Writes are declared `Response<Unit>` because PostgREST returns an empty body
- * for them, and Retrofit would otherwise have nothing to decode. Reads decode
- * normally and Retrofit throws on failure by itself.
+ * Writes go through `Response<T>` rather than a bare `T` so the error body is
+ * still readable — Retrofit's own HttpException gives the status but discards the
+ * message the function took the trouble to raise.
  */
-fun Response<Unit>.orThrow() {
-    if (isSuccessful) return
+fun <T> Response<T>.orThrow(): T {
+    if (isSuccessful) {
+        // A 2xx with no body is a contract mismatch, not a success worth passing on.
+        return body() ?: throw PostgrestException(
+            status = code(),
+            code = null,
+            message = "empty body from a ${code()} response",
+        )
+    }
 
     val raw = errorBody()?.string().orEmpty()
     val parsed = runCatching { json.decodeFromString<PostgrestErrorDto>(raw) }.getOrNull()

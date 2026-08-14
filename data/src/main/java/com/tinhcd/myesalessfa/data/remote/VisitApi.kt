@@ -15,24 +15,29 @@ import javax.inject.Singleton
  */
 @Singleton
 class VisitApi @Inject constructor(
-    private val service: PostgrestService,
+    private val service: FunctionsService,
 ) {
     suspend fun insertVisit(visit: NewVisitDto) {
-        service.insertVisit(visit).orThrow()
+        service.submitVisit(visit).orThrow()
     }
 
+    /**
+     * The payload is rebuilt rather than sent as-is. [CheckOutPayload] is also the
+     * outbox's on-disk format, and renaming its fields to match the wire would make
+     * every already-queued entry undecodable — a queued check-out would then retry
+     * forever instead of being delivered.
+     */
     suspend fun markCheckedOut(payload: CheckOutPayload) {
-        service.updateVisit(
-            id = Filters.eq(payload.visitId),
-            patch = buildJsonObject {
+        service.submitCheckout(
+            buildJsonObject {
+                put("visit_id", payload.visitId)
                 put("check_out_at", payload.checkOutAt)
-                put("status", "completed")
             },
         ).orThrow()
     }
 
     /**
-     * Upsert rather than insert: the outbox may replay an entry that already
+     * Upsert on the server side: the outbox may replay an entry that already
      * landed, and a step is either done or not — recording it twice is not a
      * different fact.
      */
@@ -46,6 +51,6 @@ class VisitApi @Inject constructor(
                 buildJsonObject { payload.fields.forEach { (k, v) -> put(k, v) } },
             )
         }
-        service.upsertStepResult(row).orThrow()
+        service.submitStep(row).orThrow()
     }
 }

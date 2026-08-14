@@ -15,8 +15,8 @@ import com.tinhcd.myesalessfa.domain.model.ReasonCode
 import com.tinhcd.myesalessfa.domain.model.SupportedSteps
 import com.tinhcd.myesalessfa.domain.model.ReasonKind
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
-import com.tinhcd.myesalessfa.data.remote.Filters
-import com.tinhcd.myesalessfa.data.remote.PostgrestService
+import com.tinhcd.myesalessfa.data.remote.FunctionsService
+import com.tinhcd.myesalessfa.data.remote.activeLanguage
 import kotlinx.serialization.json.JsonPrimitive
 import java.util.Locale
 import javax.inject.Inject
@@ -29,7 +29,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class ConfigRepositoryImpl @Inject constructor(
-    private val service: PostgrestService,
+    private val service: FunctionsService,
     private val dao: ConfigDao,
 ) : ConfigRepository {
 
@@ -66,22 +66,26 @@ class ConfigRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * One call where there were four. Settings and translations arrive as maps
+     * rather than row lists — they are only ever read by key, and the
+     * list-to-map step used to happen here on every refresh.
+     */
     override suspend fun refresh(): DataResult<Unit> = try {
-        val settings = service.settings()
-        val reasons = service.reasonCodes()
-        val steps = service.salesSteps()
-        val translations = service.translations(langCode = Filters.eq(activeLanguage()))
+        val bootstrap = service.bootstrap(lang = activeLanguage())
 
-        dao.upsertSettings(settings.map { SettingEntity(it.key, it.value) })
+        dao.upsertSettings(bootstrap.settings.map { (key, value) -> SettingEntity(key, value) })
 
         dao.clearReasons()
-        dao.upsertReasons(reasons.map { ReasonEntity(it.id, it.code, it.name, it.kind) })
+        dao.upsertReasons(
+            bootstrap.reasonCodes.map { ReasonEntity(it.id, it.code, it.name, it.kind) },
+        )
 
         // Replaced wholesale: a step removed upstream must disappear here too,
         // otherwise the rep keeps seeing a step head office retired.
         dao.clearSteps()
         dao.upsertSteps(
-            steps.map { dto ->
+            bootstrap.salesSteps.map { dto ->
                 SalesStepEntity(
                     formId = dto.formId,
                     step = dto.step,
@@ -94,20 +98,13 @@ class ConfigRepositoryImpl @Inject constructor(
             },
         )
 
-        dao.upsertTranslations(translations.map { TranslationEntity(it.key, it.value) })
+        dao.upsertTranslations(
+            bootstrap.translations.map { (key, value) -> TranslationEntity(key, value) },
+        )
 
         DataResult.Success(Unit)
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())
-    }
-
-    /**
-     * Labels come from the server, not strings.xml, exactly as in the legacy
-     * app. Only the languages actually seeded are honoured.
-     */
-    private fun activeLanguage(): String {
-        val device = Locale.getDefault().language.lowercase()
-        return if (device in SUPPORTED_LANGUAGES) device else DEFAULT_LANGUAGE
     }
 
     private companion object {
@@ -115,9 +112,6 @@ class ConfigRepositoryImpl @Inject constructor(
         const val KEY_ACCURACY = "gps_max_accuracy_m"
         const val KEY_ALLOW_REASON = "allow_reason_when_far"
         const val KEY_STOCK_BEFORE_ORDER = "require_stock_before_order"
-
-        const val DEFAULT_LANGUAGE = "vi"
-        val SUPPORTED_LANGUAGES = setOf("vi", "en")
     }
 }
 
