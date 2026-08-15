@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
+import com.tinhcd.myesalessfa.domain.model.SessionState
 import com.tinhcd.myesalessfa.domain.repository.AuthRepository
 import com.tinhcd.myesalessfa.navigation.AppNavHost
 import com.tinhcd.myesalessfa.navigation.Routes
@@ -88,8 +89,16 @@ class RootViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val user = authRepository.currentUser.first()
-            _startDestination.value = if (user == null) Routes.LOGIN else Routes.ROUTE
+            // Keyed on whether a session exists, not on whether the rep's profile
+            // arrived. Those were the same question when this read a nullable rep,
+            // and a single failed /bootstrap at launch therefore looked identical to
+            // being signed out — a rep with a good session got the login screen and
+            // a wrong explanation. A session with no profile still belongs on the
+            // route screen, which says so and offers to retry.
+            _startDestination.value = when (authRepository.sessionState.first()) {
+                is SessionState.SignedOut -> Routes.LOGIN
+                is SessionState.SignedIn -> Routes.ROUTE
+            }
         }
     }
 }

@@ -1,10 +1,12 @@
 package com.tinhcd.myesalessfa.data.repository
 
+import com.tinhcd.myesalessfa.data.di.ApplicationScope
 import com.tinhcd.myesalessfa.data.remote.SalespersonDto
 import com.tinhcd.myesalessfa.data.session.SessionStore
 import com.tinhcd.myesalessfa.domain.AppError
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.Salesperson
+import com.tinhcd.myesalessfa.domain.model.SessionState
 import com.tinhcd.myesalessfa.domain.repository.AuthRepository
 import com.tinhcd.myesalessfa.data.remote.FunctionsService
 import com.tinhcd.myesalessfa.data.remote.activeLanguage
@@ -12,10 +14,14 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.status.SessionStatus
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -42,25 +48,44 @@ class AuthRepositoryImpl @Inject constructor(
     private val client: SupabaseClient,
     private val service: FunctionsService,
     private val session: SessionStore,
+    @ApplicationScope scope: CoroutineScope,
 ) : AuthRepository {
 
     /**
-     * Emits only once the SDK has settled on an answer.
+     * The one resolved answer, shared by everyone who asks.
      *
-     * `sessionStatus` starts at [SessionStatus.Initializing] while the stored session is
-     * being restored. Mapping that to null — as this did — means the first value a
-     * collector sees says "signed out" before anyone has looked, and a caller taking
-     * `first()` acts on it: a rep with a perfectly good session was sent back to the
-     * login screen on every cold start. Filtering it out makes the flow's contract
-     * "signed in as X, or definitely not signed in", which is what callers assume.
+     * Null means "not resolved yet" and is filtered out rather than exposed: the
+     * SDK reports [SessionStatus.Initializing] while it restores a stored session,
+     * and publishing that as a state would put the ambiguity straight back — a
+     * caller taking `first()` would act on "no session" before anyone had looked,
+     * which is precisely the bug this replaced.
      */
-    override val currentUser: Flow<Salesperson?> =
-        client.auth.sessionStatus
-            .filter { it !is SessionStatus.Initializing }
-            .map { status ->
-                if (status is SessionStatus.Authenticated) loadProfileOrNull() else null
-            }
-            .onEach { session.current.value = it }
+    private val resolved = MutableStateFlow<SessionState?>(null)
+
+    init {
+        // One collector for the process. The profile is fetched when the session
+        // changes, not once per screen that happens to be watching.
+        scope.launch {
+            client.auth.sessionStatus
+                .filter { it !is SessionStatus.Initializing }
+                .collect { status ->
+                    // The outcome is published by refreshProfile itself; there is
+                    // nothing for this collector to decide, and no second copy of
+                    // the three-outcome logic to keep in step with the first.
+                    if (status is SessionStatus.Authenticated) {
+                        refreshProfile()
+                    } else {
+                        publish(SessionState.SignedOut)
+                    }
+                }
+        }
+    }
+
+    override val sessionState: Flow<SessionState> = resolved.filterNotNull()
+
+    override val currentUser: Flow<Salesperson?> = sessionState
+        .map { state -> (state as? SessionState.SignedIn)?.rep }
+        .distinctUntilChanged()
 
     /**
      * Signing in has two steps that fail for unrelated reasons, and they are kept
@@ -68,11 +93,11 @@ class AuthRepositoryImpl @Inject constructor(
      *
      * The credentials are checked first. Then the profile is fetched, and that fetch
      * can fail on its own — no connection, a rejected token, a server error. It used
-     * to go through `loadProfileOrNull()`, which swallows everything into a null, and
-     * a null here reads as "no salesperson row exists": a dropped request told the rep
-     * their account was not provisioned and sent them to ring head office about a
-     * problem that was neither theirs nor permanent. Observed on a real device, so the
-     * two are now separate outcomes.
+     * to go through a helper that swallowed everything into a null, and a null read
+     * as "no salesperson row exists": a dropped request told the rep their account
+     * was not provisioned and sent them to ring head office about a problem that was
+     * neither theirs nor permanent. Observed on a real device, so the two are now
+     * separate outcomes.
      */
     override suspend fun signIn(username: String, password: String): DataResult<Salesperson> {
         try {
@@ -84,46 +109,64 @@ class AuthRepositoryImpl @Inject constructor(
             return DataResult.Failure(e.toAppError())
         }
 
+        // The session collector will also resolve this sign-in, but the caller is
+        // waiting on an answer now and wants the specific reason on failure.
+        return refreshProfile()
+    }
+
+    /**
+     * Fetches the profile for a session that already exists.
+     *
+     * Reached from three directions: the session collector above, straight after
+     * sign-in, and a screen offering to retry once an earlier fetch failed. All
+     * three want the same three outcomes, so they share one implementation rather
+     * than drifting apart.
+     *
+     * Read from /bootstrap, which also carries settings, reason codes and labels.
+     * Slightly more than is needed for a name in the app bar, but it is one small
+     * request on session change only, and it avoids a second endpoint existing
+     * purely to return one row. The catalogue is a separate call and not pulled here.
+     */
+    override suspend fun refreshProfile(): DataResult<Salesperson> {
         val profile = try {
             service.bootstrap(lang = activeLanguage()).salesperson?.toDomain()
         } catch (e: Exception) {
-            // The session is valid — the password was accepted — so it stays. The rep
-            // can retry without typing it again, and the message says what actually
-            // went wrong.
+            // The session is valid — it was accepted — so it stays, and the state
+            // says signed in without a profile. The rep can retry without typing a
+            // password again, and the message says what actually went wrong.
+            publish(SessionState.SignedIn(null))
             return DataResult.Failure(AppError.Auth(ERROR_PROFILE_UNAVAILABLE))
         }
 
         if (profile == null) {
-            // Authenticated, but genuinely no salesperson row points at this auth
-            // user. Treat as a failed login rather than dropping the rep into an app
-            // with no branch and no route.
+            // Authenticated, and the server answered plainly that no salesperson row
+            // points at this auth user. Permanent, so treat it as a failed session
+            // rather than dropping the rep into an app with no branch and no route.
             client.auth.signOut()
+            publish(SessionState.SignedOut)
             return DataResult.Failure(AppError.Auth(ERROR_NOT_PROVISIONED))
         }
 
-        session.current.value = profile
+        publish(SessionState.SignedIn(profile))
         return DataResult.Success(profile)
     }
 
     override suspend fun signOut(): DataResult<Unit> = try {
         client.auth.signOut()
-        session.current.value = null
+        publish(SessionState.SignedOut)
         DataResult.Success(Unit)
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())
     }
 
     /**
-     * Read from /bootstrap, which also carries settings, reason codes and labels.
-     * Slightly more than is needed for a name in the app bar, but it is one small
-     * request on session change only, and it avoids a second endpoint existing
-     * purely to return one row. The catalogue is a separate call and not pulled
-     * here.
+     * [SessionStore] is what stamps salesperson_id and branch_id onto writes, so it
+     * has to move in step with the state rather than be updated by whoever
+     * remembers to.
      */
-    private suspend fun loadProfileOrNull(): Salesperson? = try {
-        service.bootstrap(lang = activeLanguage()).salesperson?.toDomain()
-    } catch (e: Exception) {
-        null
+    private fun publish(next: SessionState) {
+        resolved.value = next
+        session.current.value = (next as? SessionState.SignedIn)?.rep
     }
 }
 
