@@ -136,4 +136,5 @@ internal fun ReasonKind.wireName(): String = when (this) {
     ReasonKind.GPS_LOW_ACCURACY -> "gps_low_accuracy"
     ReasonKind.GPS_UNAVAILABLE -> "gps_unavailable"
     ReasonKind.PHOTO_SKIPPED -> "photo_skipped"
+    ReasonKind.FEEDBACK_TOPIC -> "feedback_topic"
 }

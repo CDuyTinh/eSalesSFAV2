@@ -42,6 +42,13 @@ object StepConfig {
      * the client refuses exactly what the server would refuse.
      */
     const val PHOTO_MIN = "photo_min"
+
+    /**
+     * Whether a step offers voice recording. The seed has claimed this for `feedback`
+     * since the workflow was first built and nothing read it — a config key no build
+     * honours is a promise the data is making on the app's behalf.
+     */
+    const val ALLOW_AUDIO = "allow_audio"
 }
 
 /**

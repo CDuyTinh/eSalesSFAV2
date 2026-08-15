@@ -4,6 +4,7 @@ import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.CheckInPolicy
 import com.tinhcd.myesalessfa.domain.model.CheckInRequest
 import com.tinhcd.myesalessfa.domain.model.DraftDisplayAudit
+import com.tinhcd.myesalessfa.domain.model.DraftFeedback
 import com.tinhcd.myesalessfa.domain.model.DraftOrder
 import com.tinhcd.myesalessfa.domain.model.DraftStockCount
 import com.tinhcd.myesalessfa.domain.model.DraftSurvey
@@ -174,6 +175,15 @@ interface DisplayAuditRepository {
      * the row written second, so a delivered audit always has its evidence behind it.
      */
     suspend fun submit(audit: DraftDisplayAudit): DataResult<SubmitOutcome>
+}
+
+interface FeedbackRepository {
+    /**
+     * Queues [feedback] for delivery, audio and all. Any recording is uploaded first
+     * and the row written second, so a delivered row always has its audio behind it.
+     * The server marks the `feedback` step done in the same transaction.
+     */
+    suspend fun submit(feedback: DraftFeedback): DataResult<SubmitOutcome>
 }
 
 interface OrderRepository {

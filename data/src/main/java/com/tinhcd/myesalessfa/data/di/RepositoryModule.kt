@@ -4,6 +4,7 @@ import com.tinhcd.myesalessfa.data.repository.AuthRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.CatalogRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.CheckInRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.DisplayAuditRepositoryImpl
+import com.tinhcd.myesalessfa.data.repository.FeedbackRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.ConfigRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.OrderRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.RouteRepositoryImpl
@@ -14,6 +15,7 @@ import com.tinhcd.myesalessfa.domain.repository.AuthRepository
 import com.tinhcd.myesalessfa.domain.repository.CatalogRepository
 import com.tinhcd.myesalessfa.domain.repository.CheckInRepository
 import com.tinhcd.myesalessfa.domain.repository.DisplayAuditRepository
+import com.tinhcd.myesalessfa.domain.repository.FeedbackRepository
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository
 import com.tinhcd.myesalessfa.domain.repository.RouteRepository
@@ -75,4 +77,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSurveyRepository(impl: SurveyRepositoryImpl): SurveyRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindFeedbackRepository(impl: FeedbackRepositoryImpl): FeedbackRepository
 }

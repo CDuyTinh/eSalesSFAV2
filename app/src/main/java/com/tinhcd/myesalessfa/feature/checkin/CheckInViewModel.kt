@@ -171,4 +171,9 @@ internal fun ReasonKind.prompt(): String = when (this) {
     ReasonKind.OUTLET_CLOSED -> "Cua hang dong cua. Chon ly do:"
     ReasonKind.NO_ORDER -> "Khach khong dat hang. Chon ly do:"
     ReasonKind.PHOTO_SKIPPED -> "Khong chup duoc anh. Chon ly do:"
+
+    // Not a check-in gate at all — it classifies what feedback is about, and no gate
+    // resolves to it. A neutral string rather than an exception, because an
+    // unreachable branch is not worth crashing a rep's check-in over.
+    ReasonKind.FEEDBACK_TOPIC -> "Chon ly do:"
 }

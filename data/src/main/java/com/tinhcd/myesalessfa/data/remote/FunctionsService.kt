@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.data.remote
 
 import com.tinhcd.myesalessfa.data.outbox.DisplayAuditPayload
+import com.tinhcd.myesalessfa.data.outbox.FeedbackPayload
 import com.tinhcd.myesalessfa.data.outbox.OrderPayload
 import com.tinhcd.myesalessfa.data.outbox.StockCountPayload
 import com.tinhcd.myesalessfa.data.outbox.SurveyPayload
@@ -118,4 +119,11 @@ interface FunctionsService {
      */
     @POST("submit-survey")
     suspend fun submitSurvey(@Body survey: SurveyPayload): Response<WriteAckDto>
+
+    /**
+     * Forwards to `submit_feedback`. Any recording must already be in storage when
+     * this is called, for the same reason the display audit's photos must be.
+     */
+    @POST("submit-feedback")
+    suspend fun submitFeedback(@Body feedback: FeedbackPayload): Response<WriteAckDto>
 }

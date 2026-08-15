@@ -13,6 +13,7 @@ import androidx.work.WorkerParameters
 import com.tinhcd.myesalessfa.data.local.OutboxDao
 import com.tinhcd.myesalessfa.data.local.OutboxEntity
 import com.tinhcd.myesalessfa.data.remote.DisplayAuditApi
+import com.tinhcd.myesalessfa.data.remote.FeedbackApi
 import com.tinhcd.myesalessfa.data.remote.NewVisitDto
 import com.tinhcd.myesalessfa.data.remote.OrderApi
 import com.tinhcd.myesalessfa.data.remote.StockApi
@@ -41,6 +42,7 @@ class OutboxFlusher @Inject constructor(
     private val stockApi: StockApi,
     private val displayAuditApi: DisplayAuditApi,
     private val surveyApi: SurveyApi,
+    private val feedbackApi: FeedbackApi,
 ) {
     /** @return true if the queue is now empty. */
     suspend fun flush(): Boolean {
@@ -82,6 +84,9 @@ class OutboxFlusher @Inject constructor(
 
             OutboxEntity.TYPE_SURVEY ->
                 surveyApi.submit(json.decodeFromString<SurveyPayload>(entry.payload))
+
+            OutboxEntity.TYPE_FEEDBACK ->
+                feedbackApi.submit(json.decodeFromString<FeedbackPayload>(entry.payload))
 
             else -> error("Unknown outbox type ${entry.type}")
         }
@@ -204,6 +209,30 @@ data class AuditPhotoPayload(
  * question definitions, because a client that can name its own score is a client that
  * can pass an audit it failed.
  */
+/**
+ * Customer feedback on its way to `submit_feedback`.
+ *
+ * `audio_path` starts as a local file and is swapped for the storage object name by
+ * the flusher, exactly as the display audit does with its photos: bytes first, then
+ * the row, because the function refuses a path that is not in storage yet.
+ *
+ * No topic name travels, only its id. The server checks the id really is a feedback
+ * topic — filing a complaint under a GPS reason code would poison the one index that
+ * makes the table worth having.
+ */
+@kotlinx.serialization.Serializable
+data class FeedbackPayload(
+    val id: String,
+    @SerialName("visit_id") val visitId: String,
+    @SerialName("feedback_date") val feedbackDate: String,
+    @SerialName("topic_id") val topicId: String? = null,
+    val note: String,
+    @SerialName("local_audio_path") val localAudioPath: String? = null,
+    @SerialName("audio_path") val audioPath: String? = null,
+    @SerialName("audio_seconds") val audioSeconds: Int? = null,
+    @SerialName("client_created_at") val clientCreatedAt: String,
+)
+
 @kotlinx.serialization.Serializable
 data class SurveyPayload(
     val id: String,

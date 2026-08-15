@@ -1,0 +1,23 @@
+-- =============================================================================
+-- A reason_kind for what a piece of customer feedback is about.
+--
+-- Feedback arrives as free text, which is unroutable: a complaint about a leaking
+-- case and a request for a chiller go to different people at head office, and
+-- neither is findable in a pile of notes. A coded topic is what makes the step
+-- produce something anyone can act on.
+--
+-- Deliberately reason_code rather than a feedback_topic table of its own. The shape
+-- needed is exactly what reason_code already is — code, display name, kind, active
+-- flag — and reusing it means the topics arrive through /bootstrap, cache in Room,
+-- translate, and reach the screen through ConfigRepository.reasons() with nothing
+-- new written for any of it. A parallel table would have been a second copy of that
+-- pipeline to keep in step.
+--
+-- The name of the table reads slightly oddly for a topic, which is the price. It is
+-- worth less than a duplicated reference-data path.
+--
+-- Its own migration because Postgres will not let a new enum value be used in the
+-- transaction that adds it, and the seed inserts rows with this kind.
+-- =============================================================================
+
+alter type reason_kind add value if not exists 'feedback_topic';

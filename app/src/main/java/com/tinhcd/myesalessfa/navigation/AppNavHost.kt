@@ -14,6 +14,7 @@ import com.tinhcd.myesalessfa.feature.auth.LoginScreen
 import com.tinhcd.myesalessfa.feature.checkin.CheckInScreen
 import com.tinhcd.myesalessfa.feature.incall.InCallScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.DisplayAuditScreen
+import com.tinhcd.myesalessfa.feature.incall.steps.FeedbackScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.NoteStepScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.StockCountScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.SurveyScreen
@@ -112,12 +113,15 @@ fun AppNavHost(
                 navArgument("formId") { type = NavType.StringType },
             ),
         ) { entry ->
-            // One screen serves both implemented steps today. When a step needs
-            // its own form, add a branch here — the registry of what this build
-            // can render lives in SupportedSteps.
+            // The registry of what this build can render lives in SupportedSteps.
             when (entry.arguments?.getString("formId")) {
-                SupportedSteps.OUTSIDE_CHECKING, SupportedSteps.FEEDBACK ->
+                // The last step still served by the generic note form. Feedback used
+                // to share it and outgrew it: it needs a topic and a voice note.
+                SupportedSteps.OUTSIDE_CHECKING ->
                     NoteStepScreen(onDone = { navController.popBackStack() })
+
+                SupportedSteps.FEEDBACK ->
+                    FeedbackScreen(onDone = { navController.popBackStack() })
 
                 SupportedSteps.TAKE_ORDER ->
                     TakeOrderScreen(onDone = { navController.popBackStack() })

@@ -43,6 +43,7 @@ data class OutboxEntity(
         const val TYPE_STOCK_COUNT = "stock_count"
         const val TYPE_DISPLAY_AUDIT = "display_audit"
         const val TYPE_SURVEY = "survey"
+        const val TYPE_FEEDBACK = "feedback"
     }
 }
 
