@@ -20,9 +20,9 @@ import javax.inject.Singleton
  * Photos a rep has taken, held on the device until they reach storage.
  *
  * Files live in app-private storage, so nothing appears in the gallery and nothing
- * needs the media permissions. They survive process death and reboot, which they
- * have to: a display audit taken in a shop with no signal sits in the outbox until
- * there is some, and the bytes have to still be there when it flushes.
+ * needs the media permissions. They survive process death, which they have to: the
+ * rep may photograph a shelf, leave the screen, and come back to submit, and the
+ * bytes have to still be there when the audit is sent.
  */
 @Singleton
 class PhotoStore @Inject constructor(

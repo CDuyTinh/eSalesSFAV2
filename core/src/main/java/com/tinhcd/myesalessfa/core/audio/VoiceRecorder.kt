@@ -16,8 +16,8 @@ import javax.inject.Singleton
  *
  * Same arrangement as [com.tinhcd.myesalessfa.core.photo.PhotoStore] and for the same
  * reasons: app-private files, so nothing lands in the phone's media library and no
- * media permission is needed, and they survive process death because a recording made
- * in a shop with no signal waits in the outbox until there is some.
+ * media permission is needed, and they survive process death because the rep may
+ * record, navigate away, and come back to submit.
  *
  * AAC in an MP4 container. It is the one encoder every Android version here has, it
  * plays anywhere without a codec argument, and speech at [BIT_RATE] costs about

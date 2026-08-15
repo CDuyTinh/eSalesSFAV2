@@ -1,7 +1,5 @@
 package com.tinhcd.myesalessfa.data.remote
 
-import com.tinhcd.myesalessfa.data.outbox.OrderLinePayload
-import com.tinhcd.myesalessfa.data.outbox.OrderPayload
 import com.tinhcd.myesalessfa.data.remote.http.PostgrestException
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import kotlinx.coroutines.test.runTest
@@ -113,7 +111,7 @@ class FunctionsServiceTest {
 
     @Test
     fun `the order body uses the database function's own field names`() = runTest {
-        // The payload travels from the outbox through Deno into plpgsql untouched.
+        // The payload travels through Deno into plpgsql untouched.
         // A camelCase key here would be silently ignored by submit_order, which
         // would then reject the order as having no lines.
         enqueue("""{"order_id":"o1"}""")
@@ -351,7 +349,7 @@ class FunctionsServiceTest {
         ),
     )
 
-    private fun stockCount() = com.tinhcd.myesalessfa.data.outbox.StockCountPayload(
+    private fun stockCount() = StockCountPayload(
         id = "s1",
         visitId = "v1",
         countDate = "2026-08-14",

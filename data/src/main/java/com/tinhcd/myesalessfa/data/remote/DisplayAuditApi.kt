@@ -1,6 +1,5 @@
 package com.tinhcd.myesalessfa.data.remote
 
-import com.tinhcd.myesalessfa.data.outbox.DisplayAuditPayload
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import com.tinhcd.myesalessfa.data.session.SessionStore
 import javax.inject.Inject
@@ -11,7 +10,7 @@ import javax.inject.Singleton
  *
  * The order matters and is not interchangeable. `submit_display_audit` verifies that
  * every storage path it is given actually exists, so writing the row first would
- * simply be refused — which is the point. Storage and the database are separate
+ * simply be refused â€” which is the point. Storage and the database are separate
  * systems, and this sequence is what makes "the row exists" mean "the photo exists".
  *
  * Re-uploading on a replay is harmless: the upload upserts on the same path, and the

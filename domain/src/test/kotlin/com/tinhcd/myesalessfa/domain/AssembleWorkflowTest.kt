@@ -51,7 +51,7 @@ class AssembleWorkflowTest {
 
     @Test
     fun `a completion from another visit does not mark this visit's step done`() {
-        // The outbox is shared across visits, so its entries arrive unfiltered.
+        // Completions arrive unfiltered, so the assembler does the filtering.
         val workflow = assembleWorkflow(
             visitId = "v1",
             definition = listOf(definition(SupportedSteps.OUTSIDE_CHECKING, order = 1)),
@@ -105,7 +105,7 @@ class AssembleWorkflowTest {
 
     @Test
     fun `a queued completion unblocks check-out before it reaches the server`() {
-        // The whole point of merging the outbox in: otherwise a rep who finished
+        // A completion recorded during the visit unblocks check-out: otherwise a rep who finished
         // the mandatory step in a dead spot cannot close the visit.
         val workflow = assembleWorkflow(
             visitId = "v1",
@@ -169,7 +169,7 @@ class AssembleWorkflowTest {
 
     @Test
     fun `a count queued offline opens the order step just as a delivered one does`() {
-        // The completion here is the kind that comes out of the outbox. A rep who
+        // A rep who
         // counted in a dead spot must not then be refused the order.
         val workflow = assembleWorkflow(
             visitId = "v1",

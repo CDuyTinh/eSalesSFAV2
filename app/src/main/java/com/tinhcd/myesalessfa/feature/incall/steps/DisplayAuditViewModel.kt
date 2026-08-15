@@ -36,7 +36,7 @@ data class DisplayAuditUiState(
  *
  * How many photos are enough comes from the step's own `photo_min`, the same key
  * `submit_display_audit` reads. The client enforces it so the rep is stopped while
- * still in front of the shelf, rather than finding out when the outbox fails from
+ * still in front of the shelf, rather than finding out when the upload fails from
  * somewhere else entirely.
  */
 @HiltViewModel
@@ -92,7 +92,7 @@ class DisplayAuditViewModel @Inject constructor(
      * Records the photo the camera just wrote.
      *
      * Compression happens here rather than at upload time so the rep waits for it
-     * once, while looking at the shelf, instead of the outbox stalling on it later.
+     * once, while looking at the shelf, instead of the upload stalling on it later.
      * Position is stamped too — a display photo with no location is hard to dispute
      * and hard to trust.
      */

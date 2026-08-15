@@ -2,7 +2,7 @@
 <!--
   The one directory a camera app is allowed to write into. Scoped to
   files/visit-photos rather than to files/, so granting the camera write access to a
-  photo does not expose the outbox database sitting alongside it.
+  photo does not expose the reference-data database sitting alongside it.
 -->
 <paths>
     <files-path

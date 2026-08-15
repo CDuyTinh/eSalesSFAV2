@@ -25,7 +25,6 @@ data class RouteUiState(
     val stops: List<RouteStop> = emptyList(),
     val me: Salesperson? = null,
     val error: String? = null,
-    val pendingUploads: Int = 0,
     val signedOut: Boolean = false,
     /**
      * Signed in, but the rep's profile has not arrived. Worth saying out loud rather
@@ -41,13 +40,6 @@ data class RouteUiState(
      * act on.
      */
     val sync: SyncState = SyncState(),
-    /**
-     * These stops came off the device because the server could not be reached. Every
-     * one of them is still workable — that is the point — but the rep should know they
-     * are looking at a copy rather than this minute's plan.
-     */
-    val routeFromCache: Boolean = false,
-    val routeFetchedAtEpochMs: Long? = null,
 )
 
 @HiltViewModel
@@ -74,13 +66,6 @@ class RouteViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            // Surfaced in the app bar so a rep can see that work is still
-            // waiting to reach the server rather than assuming it is lost.
-            checkInRepository.pendingCount.collect { n ->
-                _state.update { it.copy(pendingUploads = n) }
-            }
-        }
-        viewModelScope.launch {
             referenceDataSync.state.collect { sync -> _state.update { it.copy(sync = sync) } }
         }
     }
@@ -90,16 +75,9 @@ class RouteViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = getTodayRoute()) {
                 is DataResult.Success -> _state.update {
-                    it.copy(
-                        loading = false,
-                        stops = result.data.stops,
-                        routeFromCache = result.data.fromCache,
-                        routeFetchedAtEpochMs = result.data.fetchedAtEpochMs,
-                    )
+                    it.copy(loading = false, stops = result.data)
                 }
 
-                // Only reachable for a date the device has never fetched, since
-                // anything seen once is served from the cache after that.
                 is DataResult.Failure ->
                     _state.update {
                         it.copy(loading = false, error = "Khong tai duoc tuyen hom nay")

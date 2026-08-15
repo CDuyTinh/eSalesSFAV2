@@ -3,74 +3,24 @@ package com.tinhcd.myesalessfa.data.local
 import androidx.room.AutoMigration
 import androidx.room.Dao
 import androidx.room.Database
+import androidx.room.DeleteTable
 import androidx.room.Entity
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.RoomDatabase
-import kotlinx.coroutines.flow.Flow
+import androidx.room.migration.AutoMigrationSpec
 
 /**
- * The local store is deliberately small. This app is online-first, so Room holds
- * only what cannot be fetched at the moment it is needed: the settings and
- * workflow definition a visit has to be judged against with no signal, the
- * product catalogue an order is built from, and the outbox.
+ * The local store holds one kind of thing: reference data that is read on nearly
+ * every screen and changes rarely — settings, the workflow definition, labels,
+ * reason codes, questionnaires, and the product catalogue an order is priced from.
+ *
+ * Nothing transactional lives here. The app is online-only: a route, a visit, an
+ * order and a stock count are all read from and written to the server as they
+ * happen, and a failed request is reported rather than queued.
  */
-
-// -----------------------------------------------------------------------------
-// Outbox
-// -----------------------------------------------------------------------------
-
-/**
- * A write that must not be lost. A rep standing in a shop with one bar of
- * signal has already done the work; failing the request must not undo it.
- */
-@Entity(tableName = "outbox")
-data class OutboxEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val type: String,
-    val payload: String,
-    val createdAt: Long,
-    val attempts: Int = 0,
-    val lastError: String? = null,
-) {
-    companion object {
-        const val TYPE_CHECK_IN = "check_in"
-        const val TYPE_CHECK_OUT = "check_out"
-        const val TYPE_STEP_RESULT = "step_result"
-        const val TYPE_ORDER = "order"
-        const val TYPE_STOCK_COUNT = "stock_count"
-        const val TYPE_DISPLAY_AUDIT = "display_audit"
-        const val TYPE_SURVEY = "survey"
-        const val TYPE_FEEDBACK = "feedback"
-    }
-}
-
-@Dao
-interface OutboxDao {
-    @Insert
-    suspend fun insert(entry: OutboxEntity): Long
-
-    @Query("SELECT * FROM outbox ORDER BY createdAt ASC LIMIT :limit")
-    suspend fun oldest(limit: Int = 50): List<OutboxEntity>
-
-    @Query("DELETE FROM outbox WHERE id = :id")
-    suspend fun delete(id: Long)
-
-    @Query("UPDATE outbox SET attempts = attempts + 1, lastError = :error WHERE id = :id")
-    suspend fun recordFailure(id: Long, error: String?)
-
-    @Query("SELECT COUNT(*) FROM outbox")
-    fun pendingCount(): Flow<Int>
-
-    /**
-     * Lets a read merge in writes that have not landed yet, so a step completed
-     * without signal still shows as done.
-     */
-    @Query("SELECT payload FROM outbox WHERE type = :type")
-    suspend fun payloadsOfType(type: String): List<String>
-}
 
 // -----------------------------------------------------------------------------
 // Config cache
@@ -291,47 +241,21 @@ interface CatalogDao {
 }
 
 /**
- * The last route the server gave us for one date, kept so the day's customers are
- * still there when the signal is not.
+ * Drops the two tables that existed to let the app work offline: the outbox of
+ * unsent writes, and the cached copy of a day's route.
  *
- * Until this existed the route screen needed a live connection to show anything at
- * all: a rep who opened the app in a shop with no bars got an error and could not
- * even see which outlet they were standing in, let alone check in — while every write
- * behind that screen had been carefully built to survive being offline.
- *
- * Stored as the JSON that arrived, like the questionnaires above. It is the endpoint's
- * own shape, so there is no second mapping to drift out of step with the wire format,
- * and a route is always read whole rather than queried across.
+ * Both are gone by decision rather than by accident. The app is online-only, so a
+ * write either reaches the server while the rep is standing there or is reported as
+ * failed, and a route is fetched fresh because it changes through the day.
  */
-@Entity(tableName = "route_cache")
-data class RouteCacheEntity(
-    /** ISO date, which is what the endpoint is keyed by. */
-    @PrimaryKey val date: String,
-    val json: String,
-    /** So the screen can say how old what it is showing is. */
-    val fetchedAt: Long,
+@DeleteTable.Entries(
+    DeleteTable(tableName = "outbox"),
+    DeleteTable(tableName = "route_cache"),
 )
-
-@Dao
-interface RouteDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsert(row: RouteCacheEntity)
-
-    @Query("SELECT * FROM route_cache WHERE date = :date")
-    suspend fun forDate(date: String): RouteCacheEntity?
-
-    /**
-     * Keeps a few days either side of today and drops the rest. Yesterday's route is
-     * worth having for a check-in that has not flushed yet; last month's is dead
-     * weight on a phone that never gets cleaned.
-     */
-    @Query("DELETE FROM route_cache WHERE date < :oldestToKeep")
-    suspend fun deleteBefore(oldestToKeep: String)
-}
+class DropOfflineTables : AutoMigrationSpec
 
 @Database(
     entities = [
-        OutboxEntity::class,
         SettingEntity::class,
         ReasonEntity::class,
         SalesStepEntity::class,
@@ -342,24 +266,21 @@ interface RouteDao {
         MslEntity::class,
         MslItemEntity::class,
         SurveyDefinitionEntity::class,
-        RouteCacheEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
-    // Every step only adds tables, so Room derives them. Spelled out rather than
-    // left to the destructive fallback because the outbox carries orders and stock
-    // counts: dropping it would throw away a sale already agreed with a customer,
-    // or a shelf count nobody can retake from memory.
+    // Everything in here is reference data the app re-fetches on launch, so these
+    // migrations are a courtesy rather than a safeguard — nothing kept locally is
+    // the only copy of anything any more.
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 5, to = 6),
+        AutoMigration(from = 6, to = 7, spec = DropOfflineTables::class),
     ],
 )
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun outboxDao(): OutboxDao
     abstract fun configDao(): ConfigDao
     abstract fun catalogDao(): CatalogDao
-    abstract fun routeDao(): RouteDao
 }

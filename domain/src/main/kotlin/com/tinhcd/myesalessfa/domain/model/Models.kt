@@ -61,35 +61,6 @@ data class RouteStop(
     val visitId: String?,
     val checkInAtEpochMs: Long?,
     val checkOutAtEpochMs: Long?,
-    /**
-     * A check-in for this stop is sitting in the outbox, unsent.
-     *
-     * Kept apart from [status], which says what the server believes. The distinction
-     * matters twice over: the rep must be able to see that they have already checked
-     * in here, and they must not be offered the check-in again, because `visit` is
-     * unique on (customer, salesperson, date) and a second one would be refused by the
-     * database and then retried out of the queue for ever.
-     */
-    val checkInPending: Boolean = false,
-) {
-    /** Nothing more can be done here until the queued check-in reaches the server. */
-    val isWaitingToSync: Boolean get() = checkInPending && visitId == null
-}
-
-/**
- * One day's stops, and how current they are.
- *
- * The freshness travels with the list rather than with each stop because it is a fact
- * about the fetch, not about a customer — and a rep looking at a route needs to know
- * whether they are seeing this morning's plan or a copy the phone kept from before
- * the signal went.
- */
-data class DayRoute(
-    val stops: List<RouteStop>,
-    /** When the server last answered for this date. */
-    val fetchedAtEpochMs: Long,
-    /** The server could not be reached; these stops came off the device. */
-    val fromCache: Boolean,
 )
 
 data class GeoPoint(

@@ -75,7 +75,7 @@ class PriceLookupTest {
 
     @Test
     fun `an order composed yesterday prices at its own date, not at submit time`() {
-        // The outbox may hold an order overnight through a price change. It must
+        // An order may be built either side of a price change. It must
         // still cost what the rep quoted.
         val rules = listOf(
             rule(228_000, from = LocalDate.of(2026, 1, 1), to = LocalDate.of(2026, 8, 13)),
