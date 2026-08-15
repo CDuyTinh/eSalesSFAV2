@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -85,6 +86,14 @@ fun RouteScreen(
                 state.loading -> LoadingBox()
                 state.error != null -> ErrorBox(state.error.orEmpty(), onRetry = viewModel::load)
                 else -> Column {
+                    // Above the pending banner: this one blocks checking in at all,
+                    // where that one only says work has yet to sync.
+                    if (state.profileMissing) {
+                        ProfileMissingBanner(
+                            retrying = state.profileRetrying,
+                            onRetry = viewModel::retryProfile,
+                        )
+                    }
                     if (state.pendingUploads > 0) {
                         PendingBanner(state.pendingUploads)
                     }
@@ -101,6 +110,37 @@ fun RouteScreen(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Says that the session is fine but the rep's details are missing, and offers the
+ * one action that helps.
+ *
+ * The rep is deliberately left on this screen rather than bounced to login: the
+ * session is valid, and signing in again would neither be necessary nor fix a
+ * failed request. Error colours because a check-in will be refused until it clears.
+ */
+@Composable
+private fun ProfileMissingBanner(retrying: Boolean, onRetry: () -> Unit) {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "Chua tai duoc thong tin nhan vien, chua the check-in",
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = onRetry, enabled = !retrying) {
+                Text(if (retrying) "Dang thu..." else "Thu lai")
             }
         }
     }
