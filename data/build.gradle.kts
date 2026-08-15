@@ -1,5 +1,5 @@
 // Implements the :domain contracts against Supabase (remote) and Room (the
-// small local cache: config, translations, and the outbox).
+// small local cache of reference data: settings, labels, steps and the catalogue).
 
 // Imported explicitly: inside a Gradle build script `java` resolves to the
 // JavaPluginExtension, so `java.util.Properties` does not compile.
@@ -70,13 +70,9 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.androidx.datastore.preferences)
-    implementation(libs.androidx.work.runtime.ktx)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    // @HiltWorker support for the outbox worker.
-    implementation(libs.androidx.hilt.work)
-    ksp(libs.androidx.hilt.compiler)
 
     testImplementation(libs.junit)
     // Asserts the requests Retrofit actually builds. Without a device to run the

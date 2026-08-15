@@ -16,7 +16,6 @@ import com.tinhcd.myesalessfa.domain.model.RouteStop
 import com.tinhcd.myesalessfa.domain.repository.CheckInRepository
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
 import com.tinhcd.myesalessfa.domain.repository.RouteRepository
-import com.tinhcd.myesalessfa.domain.repository.SubmitOutcome
 import com.tinhcd.myesalessfa.domain.usecase.EvaluateCheckInUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -148,11 +147,7 @@ class CheckInViewModel @Inject constructor(
             when (val result = checkInRepository.checkIn(request)) {
                 is DataResult.Success ->
                     _state.update {
-                        it.copy(
-                            submitting = false,
-                            finished = true,
-                            queuedOffline = result.data == SubmitOutcome.QUEUED,
-                        )
+                        it.copy(submitting = false, finished = true)
                     }
 
                 is DataResult.Failure ->

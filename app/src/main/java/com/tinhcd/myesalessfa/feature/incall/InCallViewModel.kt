@@ -25,8 +25,6 @@ data class InCallUiState(
     val submitting: Boolean = false,
     val error: String? = null,
     val checkedOut: Boolean = false,
-    /** Work recorded on the device but not yet delivered. */
-    val pendingUploads: Int = 0,
 )
 
 /**
@@ -48,15 +46,8 @@ class InCallViewModel @Inject constructor(
     private val _state = MutableStateFlow(InCallUiState())
     val state: StateFlow<InCallUiState> = _state.asStateFlow()
 
-    init {
-        // No initial load here: the screen calls load() on every entry, which
-        // covers the first one too. Loading in both places just fetched twice.
-        viewModelScope.launch {
-            checkInRepository.pendingCount.collect { n ->
-                _state.update { it.copy(pendingUploads = n) }
-            }
-        }
-    }
+    // No initial load in an init block: the screen calls load() on every entry,
+    // which covers the first one too. Loading in both places just fetched twice.
 
     /** Called again on return from a step so completions show immediately. */
     fun load() {

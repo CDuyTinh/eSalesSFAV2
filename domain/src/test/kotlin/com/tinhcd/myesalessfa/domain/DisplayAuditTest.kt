@@ -12,7 +12,7 @@ import org.junit.Test
  * same `sales_step.config`. Verified against the live function: an audit with no
  * photos was refused with "0 photos supplied, 1 required". These tests are the
  * client half of that agreement — the rep should be stopped while still in front of
- * the shelf, not after the outbox has failed somewhere else.
+ * the shelf, not after the upload has failed somewhere else.
  */
 class DisplayAuditTest {
 

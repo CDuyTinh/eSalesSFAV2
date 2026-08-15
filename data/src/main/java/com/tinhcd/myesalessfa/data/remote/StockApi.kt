@@ -1,6 +1,5 @@
 package com.tinhcd.myesalessfa.data.remote
 
-import com.tinhcd.myesalessfa.data.outbox.StockCountPayload
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import javax.inject.Inject
 import javax.inject.Singleton

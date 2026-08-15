@@ -125,11 +125,7 @@ data class VisitWorkflow(
     val doneCount: Int get() = steps.count { it.isDone }
 }
 
-/**
- * A step recorded as done — either read back from the server or still sitting in
- * the outbox waiting for signal. Both are the same fact as far as the rep is
- * concerned, so they are the same type here.
- */
+/** A step the server has recorded as done. */
 data class StepCompletion(
     val visitId: String,
     val formId: String,
@@ -142,7 +138,7 @@ data class StepCompletion(
  *
  * This lives in the domain rather than the data layer because the interesting
  * parts are rules, not plumbing: completions for other visits must not leak in,
- * a step redone offline counts at its latest time rather than its first, and the
+ * a step redone counts at its latest time rather than its first, and the
  * server's order field decides the sequence — not whatever order rows arrived
  * in.
  */
@@ -157,9 +153,8 @@ fun assembleWorkflow(
      */
     prerequisites: Map<String, String> = emptyMap(),
 ): VisitWorkflow {
-    // Latest wins. A locally queued completion is by construction newer than
-    // the server's copy, which is exactly the case that matters: a step redone
-    // in a dead spot must not appear undone because the old row came back.
+    // Latest wins, so a step redone during the visit counts at the time of the
+    // redo rather than the first attempt.
     val completedAt: Map<String, Long> = completions
         .filter { it.visitId == visitId }
         .groupBy { it.formId }

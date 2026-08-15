@@ -65,9 +65,6 @@ fun InCallScreen(
                         val workflow = state.workflow
                         val subtitle = listOfNotNull(
                             workflow?.let { "Da xong ${it.doneCount}/${it.steps.size} buoc" },
-                            // Reassures the rep that a step saved without signal
-                            // is stored, not lost.
-                            state.pendingUploads.takeIf { it > 0 }?.let { "$it cho gui" },
                         ).joinToString(" - ")
                         if (subtitle.isNotBlank()) {
                             Text(subtitle, style = MaterialTheme.typography.labelSmall)

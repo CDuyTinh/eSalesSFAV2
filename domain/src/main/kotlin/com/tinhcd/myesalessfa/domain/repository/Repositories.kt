@@ -3,7 +3,6 @@ package com.tinhcd.myesalessfa.domain.repository
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.CheckInPolicy
 import com.tinhcd.myesalessfa.domain.model.CheckInRequest
-import com.tinhcd.myesalessfa.domain.model.DayRoute
 import com.tinhcd.myesalessfa.domain.model.DraftDisplayAudit
 import com.tinhcd.myesalessfa.domain.model.DraftFeedback
 import com.tinhcd.myesalessfa.domain.model.DraftOrder
@@ -57,36 +56,23 @@ interface RouteRepository {
     /**
      * Stops scheduled for [date], in visit order.
      *
-     * Falls back to the copy the device kept when the server cannot be reached, so a
-     * rep standing in a shop with no bars can still see which outlet they are in and
-     * check into it. Only a date that has never been fetched can fail outright.
+     * Read straight from the server every time. The route changes through the day as
+     * visits are made, and a day's plan is not the sort of rarely-changing reference
+     * data the local cache is for.
      */
-    suspend fun getRoute(date: LocalDate): DataResult<DayRoute>
+    suspend fun getRoute(date: LocalDate): DataResult<List<RouteStop>>
 
     suspend fun getStop(customerId: String, date: LocalDate): DataResult<RouteStop?>
 }
 
-/** Outcome of handing a check-in to the data layer. */
-enum class SubmitOutcome {
-    /** Reached the server. */
-    SENT,
-
-    /** Stored locally; the outbox worker will retry. */
-    QUEUED,
-}
-
 interface CheckInRepository {
     /**
-     * Records a check-in. Succeeds even with no connection: the entry is
-     * queued locally and flushed later, because a rep standing in a shop with
-     * one bar of signal must not lose the visit.
+     * Records a check-in against the server. Fails if the request does not land, and
+     * the rep is expected to retry — this app is online-only by design.
      */
-    suspend fun checkIn(request: CheckInRequest): DataResult<SubmitOutcome>
+    suspend fun checkIn(request: CheckInRequest): DataResult<Unit>
 
-    suspend fun checkOut(visitId: String): DataResult<SubmitOutcome>
-
-    /** Entries still waiting to reach the server. */
-    val pendingCount: Flow<Int>
+    suspend fun checkOut(visitId: String): DataResult<Unit>
 }
 
 interface ConfigRepository {
@@ -179,19 +165,16 @@ interface StockRepository {
     suspend fun previousCount(customerId: String, visitId: String): DataResult<Map<String, Int>>
 
     /**
-     * What this visit's count found, as product id -> base units.
-     *
-     * Includes a count still sitting in the outbox: a rep who counted in a dead
-     * spot must still get order suggestions, and the server has not heard about it
-     * yet. Empty when nothing has been counted on this visit.
+     * What this visit's count found, as product id -> base units. Empty when
+     * nothing has been counted on this visit.
      */
     suspend fun countedBaseQty(visitId: String): DataResult<Map<String, Int>>
 
     /**
-     * Queues [count] for delivery. The server fills each line's previous figure
-     * and marks the `stock_outlet` step done in the same transaction.
+     * Sends [count]. The server fills each line's previous figure and marks the
+     * `stock_outlet` step done in the same transaction.
      */
-    suspend fun submit(count: DraftStockCount): DataResult<SubmitOutcome>
+    suspend fun submit(count: DraftStockCount): DataResult<Unit>
 }
 
 interface SurveyRepository {
@@ -203,43 +186,43 @@ interface SurveyRepository {
     suspend fun definition(formId: String): DataResult<SurveyDefinition?>
 
     /**
-     * Queues [survey]. The server recomputes the score from the question definitions
+     * Sends [survey]. The server recomputes the score from the question definitions
      * and marks the step done in the same transaction.
      */
-    suspend fun submit(survey: DraftSurvey): DataResult<SubmitOutcome>
+    suspend fun submit(survey: DraftSurvey): DataResult<Unit>
 }
 
 interface DisplayAuditRepository {
     /**
-     * Queues [audit] for delivery, photos and all. The photos are uploaded first and
-     * the row written second, so a delivered audit always has its evidence behind it.
+     * Sends [audit], photos and all. The photos are uploaded first and the row
+     * written second, so a stored audit always has its evidence behind it.
      */
-    suspend fun submit(audit: DraftDisplayAudit): DataResult<SubmitOutcome>
+    suspend fun submit(audit: DraftDisplayAudit): DataResult<Unit>
 }
 
 interface FeedbackRepository {
     /**
-     * Queues [feedback] for delivery, audio and all. Any recording is uploaded first
-     * and the row written second, so a delivered row always has its audio behind it.
-     * The server marks the `feedback` step done in the same transaction.
+     * Sends [feedback], audio and all. Any recording is uploaded first and the row
+     * written second, so a stored row always has its audio behind it. The server
+     * marks the `feedback` step done in the same transaction.
      */
-    suspend fun submit(feedback: DraftFeedback): DataResult<SubmitOutcome>
+    suspend fun submit(feedback: DraftFeedback): DataResult<Unit>
 }
 
 interface OrderRepository {
     /**
-     * Queues [order] for delivery. The server prices it and marks the
-     * `take_order` step done in the same transaction, so a delivered order can
-     * never leave the rep still owing the step.
+     * Sends [order]. The server prices it and marks the `take_order` step done in
+     * the same transaction, so a stored order can never leave the rep still owing
+     * the step.
      */
-    suspend fun submit(order: DraftOrder): DataResult<SubmitOutcome>
+    suspend fun submit(order: DraftOrder): DataResult<Unit>
 }
 
 interface WorkflowRepository {
     /**
      * The configured steps for this visit, merged with what the rep has already
-     * completed — including completions still sitting in the outbox, so a step
-     * finished without signal does not appear undone.
+     * completed. The definition comes from the local cache; the completions come
+     * from the server.
      */
     suspend fun workflow(visitId: String): DataResult<VisitWorkflow>
 
@@ -254,5 +237,5 @@ interface WorkflowRepository {
         visitId: String,
         formId: String,
         payload: Map<String, String>,
-    ): DataResult<SubmitOutcome>
+    ): DataResult<Unit>
 }

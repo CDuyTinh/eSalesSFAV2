@@ -57,21 +57,6 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!--
-          MyeSalesApp supplies its own WorkManager Configuration so the outbox
-          worker can be Hilt-injected. That requires switching off the default
-          on-startup initialiser.
-        -->
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:authorities="${applicationId}.androidx-startup"
-            android:exported="false"
-            tools:node="merge">
-            <meta-data
-                android:name="androidx.work.WorkManagerInitializer"
-                android:value="androidx.startup"
-                tools:node="remove" />
-        </provider>
     </application>
 
 </manifest>

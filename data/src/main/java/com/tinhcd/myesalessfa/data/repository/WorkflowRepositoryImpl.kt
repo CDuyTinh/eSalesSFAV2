@@ -1,52 +1,36 @@
 package com.tinhcd.myesalessfa.data.repository
 
-import android.content.Context
 import com.tinhcd.myesalessfa.data.local.ConfigDao
-import com.tinhcd.myesalessfa.data.local.OutboxDao
-import com.tinhcd.myesalessfa.data.local.OutboxEntity
 import com.tinhcd.myesalessfa.data.local.SalesStepEntity
-import com.tinhcd.myesalessfa.data.outbox.OrderPayload
-import com.tinhcd.myesalessfa.data.outbox.OutboxFlusher
-import com.tinhcd.myesalessfa.data.outbox.OutboxWorker
-import com.tinhcd.myesalessfa.data.outbox.StepResultPayload
-import com.tinhcd.myesalessfa.data.outbox.StockCountPayload
 import com.tinhcd.myesalessfa.data.remote.FunctionsService
+import com.tinhcd.myesalessfa.data.remote.VisitApi
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.SalesStep
 import com.tinhcd.myesalessfa.domain.model.StepCompletion
-import com.tinhcd.myesalessfa.domain.model.SupportedSteps
 import com.tinhcd.myesalessfa.domain.model.VisitWorkflow
 import com.tinhcd.myesalessfa.domain.model.assembleWorkflow
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
-import com.tinhcd.myesalessfa.domain.repository.SubmitOutcome
 import com.tinhcd.myesalessfa.domain.repository.WorkflowRepository
-import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.serialization.json.Json
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
-
 @Singleton
 class WorkflowRepositoryImpl @Inject constructor(
-    @param:ApplicationContext private val context: Context,
     private val service: FunctionsService,
+    private val visitApi: VisitApi,
     private val configDao: ConfigDao,
-    private val outboxDao: OutboxDao,
-    private val flusher: OutboxFlusher,
     private val configRepository: ConfigRepository,
 ) : WorkflowRepository {
 
+    /**
+     * The step list comes from the local cache — it is configuration, read on every
+     * visit and changed by head office now and then. What the rep has finished comes
+     * from the server, which is the only place it is recorded.
+     */
     override suspend fun workflow(visitId: String): DataResult<VisitWorkflow> = try {
         val definition = configDao.steps().map { it.toDomain() }
-
-        // Server-side completions. Failing to read them is not fatal — the
-        // locally queued ones below still count, and a step shown as undone can
-        // be redone (the unique constraint makes the write idempotent).
-        val remote = runCatching { remoteCompletions(visitId) }.getOrDefault(emptyList())
-
 
         // Resolved up front: assembly is a pure function and must not have to
         // reach back into the translation cache per row.
@@ -56,7 +40,7 @@ class WorkflowRepositoryImpl @Inject constructor(
             assembleWorkflow(
                 visitId = visitId,
                 definition = definition,
-                completions = remote + queuedCompletions(),
+                completions = remoteCompletions(visitId),
                 titleOf = { titles[it.titleKey] ?: it.titleKey },
                 prerequisites = configRepository.stepPrerequisites(),
             ),
@@ -75,28 +59,14 @@ class WorkflowRepositoryImpl @Inject constructor(
         visitId: String,
         formId: String,
         payload: Map<String, String>,
-    ): DataResult<SubmitOutcome> = try {
-        val entry = StepResultPayload(
+    ): DataResult<Unit> = try {
+        visitApi.saveStepResult(
             visitId = visitId,
             formId = formId,
             completedAt = OffsetDateTime.now(ZoneOffset.UTC).toString(),
             fields = payload,
         )
-        outboxDao.insert(
-            OutboxEntity(
-                type = OutboxEntity.TYPE_STEP_RESULT,
-                payload = json.encodeToString(entry),
-                createdAt = System.currentTimeMillis(),
-            ),
-        )
-
-        val drained = runCatching { flusher.flush() }.getOrDefault(false)
-        if (drained) {
-            DataResult.Success(SubmitOutcome.SENT)
-        } else {
-            OutboxWorker.enqueue(context)
-            DataResult.Success(SubmitOutcome.QUEUED)
-        }
+        DataResult.Success(Unit)
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())
     }
@@ -106,55 +76,6 @@ class WorkflowRepositoryImpl @Inject constructor(
             .mapNotNull { dto ->
                 dto.completedAt.toEpochMillisOrNull()
                     ?.let { StepCompletion(visitId, dto.formId, it) }
-            }
-
-    /**
-     * Completions written locally but not yet delivered. Without these a rep who
-     * finishes a step in a dead spot sees it flip back to "not done" and stays
-     * blocked from checking out.
-     *
-     * Entries for other visits are handed over as-is; filtering by visit is the
-     * assembler's job, so this stays a plain decode.
-     */
-    private suspend fun queuedCompletions(): List<StepCompletion> =
-        queuedStepResults() + queuedOrders() + queuedStockCounts()
-
-    private suspend fun queuedStepResults(): List<StepCompletion> =
-        outboxDao.payloadsOfType(OutboxEntity.TYPE_STEP_RESULT)
-            .mapNotNull { raw -> runCatching { json.decodeFromString<StepResultPayload>(raw) }.getOrNull() }
-            .mapNotNull { payload ->
-                payload.completedAt.toEpochMillisOrNull()
-                    ?.let { StepCompletion(payload.visitId, payload.formId, it) }
-            }
-
-    /**
-     * A queued order completes `take_order` too. The server writes that step
-     * result inside `submit_order`, so until the order is delivered there is no
-     * step result anywhere — and a rep who took an order with no signal would
-     * watch the step sit unticked and quite reasonably take it again.
-     */
-    private suspend fun queuedOrders(): List<StepCompletion> =
-        outboxDao.payloadsOfType(OutboxEntity.TYPE_ORDER)
-            .mapNotNull { raw -> runCatching { json.decodeFromString<OrderPayload>(raw) }.getOrNull() }
-            .mapNotNull { payload ->
-                payload.clientCreatedAt.toEpochMillisOrNull()
-                    ?.let { StepCompletion(payload.visitId, SupportedSteps.TAKE_ORDER, it) }
-            }
-
-    /**
-     * A queued count completes `stock_outlet`, for the same reason a queued order
-     * completes `take_order` — and with more at stake here, because the order step
-     * is gated behind this one. A rep who counted in a dead spot would otherwise
-     * be locked out of selling until they got signal back.
-     */
-    private suspend fun queuedStockCounts(): List<StepCompletion> =
-        outboxDao.payloadsOfType(OutboxEntity.TYPE_STOCK_COUNT)
-            .mapNotNull { raw ->
-                runCatching { json.decodeFromString<StockCountPayload>(raw) }.getOrNull()
-            }
-            .mapNotNull { payload ->
-                payload.clientCreatedAt.toEpochMillisOrNull()
-                    ?.let { StepCompletion(payload.visitId, SupportedSteps.STOCK_OUTLET, it) }
             }
 }
 

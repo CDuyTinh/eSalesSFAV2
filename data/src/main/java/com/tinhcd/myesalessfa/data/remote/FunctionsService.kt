@@ -1,10 +1,5 @@
 package com.tinhcd.myesalessfa.data.remote
 
-import com.tinhcd.myesalessfa.data.outbox.DisplayAuditPayload
-import com.tinhcd.myesalessfa.data.outbox.FeedbackPayload
-import com.tinhcd.myesalessfa.data.outbox.OrderPayload
-import com.tinhcd.myesalessfa.data.outbox.StockCountPayload
-import com.tinhcd.myesalessfa.data.outbox.SurveyPayload
 import kotlinx.serialization.json.JsonObject
 import retrofit2.Response
 import retrofit2.http.Body
@@ -49,7 +44,7 @@ interface FunctionsService {
     @GET("route")
     suspend fun route(@Query("date") date: String): RouteDto
 
-    /** Server-side step completions. The outbox's own are merged in :domain. */
+    /** Step completions for a visit, assembled against the step list in :domain. */
     @GET("visit-workflow")
     suspend fun visitWorkflow(@Query("visitId") visitId: String): VisitWorkflowDto
 
@@ -83,11 +78,7 @@ interface FunctionsService {
     @POST("submit-visit")
     suspend fun submitVisit(@Body visit: NewVisitDto): Response<WriteAckDto>
 
-    /**
-     * Takes a JsonObject rather than the outbox's own CheckOutPayload: that type is
-     * the on-disk format too, and renaming its fields to snake_case would make
-     * already-queued entries undecodable.
-     */
+    /** Two fields and no shared type worth declaring for them. */
     @POST("submit-checkout")
     suspend fun submitCheckout(@Body row: JsonObject): Response<WriteAckDto>
 

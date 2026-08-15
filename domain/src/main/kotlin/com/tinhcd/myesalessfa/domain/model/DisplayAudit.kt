@@ -7,7 +7,7 @@ package com.tinhcd.myesalessfa.domain.model
  * is something head office can act on. That is why the step's `photo_min` config is
  * enforced here as well as inside `submit_display_audit` — the client refuses to
  * submit what the server would reject, so the rep finds out while still standing in
- * front of the shelf rather than after the outbox has failed somewhere else.
+ * front of the shelf rather than after the upload has failed somewhere else.
  */
 data class AuditPhoto(
     /** Absolute path on the device. Uploaded, then replaced by a storage path. */

@@ -1,6 +1,5 @@
 package com.tinhcd.myesalessfa.data.remote
 
-import com.tinhcd.myesalessfa.data.outbox.FeedbackPayload
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import com.tinhcd.myesalessfa.data.session.SessionStore
 import javax.inject.Inject
@@ -11,7 +10,7 @@ import javax.inject.Singleton
  *
  * Same ordering as the display audit, for the same reason. `submit_feedback` checks
  * that the storage path it is handed actually exists, so writing the row first would
- * be refused — which is the point, since storage and the database are separate
+ * be refused â€” which is the point, since storage and the database are separate
  * systems and a row pointing at a missing object looks exactly like feedback with a
  * recording behind it.
  *

@@ -1,13 +1,9 @@
 package com.tinhcd.myesalessfa.data.repository
 
-import android.content.Context
 import com.tinhcd.myesalessfa.data.local.ConfigDao
-import com.tinhcd.myesalessfa.data.local.OutboxDao
-import com.tinhcd.myesalessfa.data.local.OutboxEntity
-import com.tinhcd.myesalessfa.data.outbox.OutboxFlusher
-import com.tinhcd.myesalessfa.data.outbox.OutboxWorker
-import com.tinhcd.myesalessfa.data.outbox.SurveyAnswerPayload
-import com.tinhcd.myesalessfa.data.outbox.SurveyPayload
+import com.tinhcd.myesalessfa.data.remote.SurveyAnswerPayload
+import com.tinhcd.myesalessfa.data.remote.SurveyApi
+import com.tinhcd.myesalessfa.data.remote.SurveyPayload
 import com.tinhcd.myesalessfa.data.remote.SurveyTypeDto
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.AnswerType
@@ -16,9 +12,7 @@ import com.tinhcd.myesalessfa.domain.model.QuestionGroup
 import com.tinhcd.myesalessfa.domain.model.QuestionOption
 import com.tinhcd.myesalessfa.domain.model.SurveyDefinition
 import com.tinhcd.myesalessfa.domain.model.SurveyQuestion
-import com.tinhcd.myesalessfa.domain.repository.SubmitOutcome
 import com.tinhcd.myesalessfa.domain.repository.SurveyRepository
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.json.Json
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -31,10 +25,8 @@ private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; expli
 
 @Singleton
 class SurveyRepositoryImpl @Inject constructor(
-    @param:ApplicationContext private val context: Context,
     private val configDao: ConfigDao,
-    private val outboxDao: OutboxDao,
-    private val flusher: OutboxFlusher,
+    private val surveyApi: SurveyApi,
 ) : SurveyRepository {
 
     /**
@@ -50,37 +42,22 @@ class SurveyRepositoryImpl @Inject constructor(
         DataResult.Failure(e.toAppError())
     }
 
-    override suspend fun submit(survey: DraftSurvey): DataResult<SubmitOutcome> = try {
-        // Minted before anything is sent: the idempotency key submit_survey conflicts
-        // on, so a replay after a timeout that in fact succeeded does not delete and
-        // rewrite the result.
-        val surveyId = UUID.randomUUID().toString()
-
-        val payload = SurveyPayload(
-            id = surveyId,
-            visitId = survey.visitId,
-            formId = survey.definition.formId,
-            surveyDate = LocalDate.now().toString(),
-            note = survey.note.trim().ifBlank { null },
-            clientCreatedAt = OffsetDateTime.now(ZoneOffset.UTC).toString(),
-            answers = survey.toAnswerPayloads(),
-        )
-
-        outboxDao.insert(
-            OutboxEntity(
-                type = OutboxEntity.TYPE_SURVEY,
-                payload = json.encodeToString(payload),
-                createdAt = System.currentTimeMillis(),
+    override suspend fun submit(survey: DraftSurvey): DataResult<Unit> = try {
+        surveyApi.submit(
+            SurveyPayload(
+                // The idempotency key `submit_survey` conflicts on, so a retry after
+                // a timeout that in fact succeeded does not delete and rewrite the
+                // result.
+                id = UUID.randomUUID().toString(),
+                visitId = survey.visitId,
+                formId = survey.definition.formId,
+                surveyDate = LocalDate.now().toString(),
+                note = survey.note.trim().ifBlank { null },
+                clientCreatedAt = OffsetDateTime.now(ZoneOffset.UTC).toString(),
+                answers = survey.toAnswerPayloads(),
             ),
         )
-
-        val drained = runCatching { flusher.flush() }.getOrDefault(false)
-        if (drained) {
-            DataResult.Success(SubmitOutcome.SENT)
-        } else {
-            OutboxWorker.enqueue(context)
-            DataResult.Success(SubmitOutcome.QUEUED)
-        }
+        DataResult.Success(Unit)
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())
     }
