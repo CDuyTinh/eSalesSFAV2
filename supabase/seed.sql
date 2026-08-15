@@ -141,7 +141,17 @@ insert into reason_code (code, name, kind) values
     ('GPS_FAR',       'Ngoai ban kinh cho phep',   'gps_out_of_range'),
     ('GPS_WEAK',      'Tin hieu GPS yeu',          'gps_low_accuracy'),
     ('GPS_OFF',       'Khong lay duoc vi tri',     'gps_unavailable'),
-    ('NO_CAMERA',     'Khong chup duoc anh',       'photo_skipped')
+    ('NO_CAMERA',     'Khong chup duoc anh',       'photo_skipped'),
+
+    -- What a piece of customer feedback is about. Coded so head office can route it:
+    -- a complaint about damaged stock and a request for a chiller go to different
+    -- people, and neither is findable in a pile of free text.
+    ('FB_QUALITY',    'Chat luong san pham',       'feedback_topic'),
+    ('FB_PRICE',      'Gia ca',                    'feedback_topic'),
+    ('FB_DELIVERY',   'Giao hang',                 'feedback_topic'),
+    ('FB_POSM',       'Yeu cau POSM / thiet bi',   'feedback_topic'),
+    ('FB_COMPETITOR', 'Thong tin doi thu',         'feedback_topic'),
+    ('FB_OTHER',      'Khac',                      'feedback_topic')
 on conflict (code) do nothing;
 
 -- -----------------------------------------------------------------------------

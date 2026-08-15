@@ -7,6 +7,14 @@ enum class ReasonKind {
     GPS_LOW_ACCURACY,
     GPS_UNAVAILABLE,
     PHOTO_SKIPPED,
+
+    /**
+     * What a piece of customer feedback is about, rather than a reason something did
+     * not happen. It lives in this enum because `reason_code` is already the coded
+     * reference table with delivery, caching and translation behind it — see the
+     * migration that added the kind.
+     */
+    FEEDBACK_TOPIC,
 }
 
 data class ReasonCode(
