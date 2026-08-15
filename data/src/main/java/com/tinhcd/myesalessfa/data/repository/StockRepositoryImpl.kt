@@ -1,8 +1,9 @@
 package com.tinhcd.myesalessfa.data.repository
 
-import com.tinhcd.myesalessfa.data.remote.api.StockApi
 import com.tinhcd.myesalessfa.data.remote.dto.StockCountLinePayload
 import com.tinhcd.myesalessfa.data.remote.dto.StockCountPayload
+import com.tinhcd.myesalessfa.data.remote.http.orThrow
+import com.tinhcd.myesalessfa.data.remote.service.StockService
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.DraftStockCount
 import com.tinhcd.myesalessfa.domain.repository.StockRepository
@@ -15,7 +16,7 @@ import javax.inject.Singleton
 
 @Singleton
 class StockRepositoryImpl @Inject constructor(
-    private val stockApi: StockApi,
+    private val service: StockService,
 ) : StockRepository {
 
     override suspend fun previousCount(
@@ -25,7 +26,9 @@ class StockRepositoryImpl @Inject constructor(
         // Already totalled per product in base units by the function; the same
         // product may have been counted loose and by the case, and only the
         // base-unit total compares.
-        DataResult.Success(stockApi.previousCount(customerId, visitId))
+        DataResult.Success(
+            service.previousCount(customerId = customerId, exceptVisitId = visitId).previous,
+        )
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())
     }
@@ -36,13 +39,18 @@ class StockRepositoryImpl @Inject constructor(
      * suggestions against it.
      */
     override suspend fun countedBaseQty(visitId: String): DataResult<Map<String, Int>> = try {
-        DataResult.Success(stockApi.visitCount(visitId))
+        DataResult.Success(service.visitCount(visitId).counted)
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())
     }
 
+    /**
+     * `submit_stock_count` writes the header, the lines and the `stock_outlet` step
+     * in one transaction, and fills each line's previous figure from the customer's
+     * last count.
+     */
     override suspend fun submit(count: DraftStockCount): DataResult<Unit> = try {
-        stockApi.submit(
+        service.submitStockCount(
             StockCountPayload(
                 // The idempotency key `submit_stock_count` conflicts on, so a retry
                 // after a timeout that in fact succeeded does not wipe and rewrite
@@ -62,7 +70,7 @@ class StockRepositoryImpl @Inject constructor(
                     )
                 },
             ),
-        )
+        ).orThrow()
         DataResult.Success(Unit)
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())

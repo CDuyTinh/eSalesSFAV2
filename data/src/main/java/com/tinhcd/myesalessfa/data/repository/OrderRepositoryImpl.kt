@@ -1,8 +1,9 @@
 package com.tinhcd.myesalessfa.data.repository
 
-import com.tinhcd.myesalessfa.data.remote.api.OrderApi
 import com.tinhcd.myesalessfa.data.remote.dto.OrderLinePayload
 import com.tinhcd.myesalessfa.data.remote.dto.OrderPayload
+import com.tinhcd.myesalessfa.data.remote.http.orThrow
+import com.tinhcd.myesalessfa.data.remote.service.OrderService
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.DraftOrder
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository
@@ -13,13 +14,20 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * `/submit-order` forwards to the `submit_order` database function, which prices the
+ * order, writes the header and lines, and records the `take_order` step in one
+ * transaction. Doing that from the client would mean three round trips that can each
+ * fail separately, leaving an order with no lines or a step marked done for an order
+ * that never landed.
+ */
 @Singleton
 class OrderRepositoryImpl @Inject constructor(
-    private val orderApi: OrderApi,
+    private val service: OrderService,
 ) : OrderRepository {
 
     override suspend fun submit(order: DraftOrder): DataResult<Unit> = try {
-        orderApi.submit(
+        service.submitOrder(
             OrderPayload(
                 // Minted here rather than by the server. It is the idempotency key
                 // `submit_order` conflicts on, so a retry after a timeout that in
@@ -40,7 +48,7 @@ class OrderRepositoryImpl @Inject constructor(
                     )
                 },
             ),
-        )
+        ).orThrow()
         DataResult.Success(Unit)
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())

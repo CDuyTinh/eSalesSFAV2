@@ -1,4 +1,4 @@
-package com.tinhcd.myesalessfa.data.remote.api
+package com.tinhcd.myesalessfa.data.remote.storage
 
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.storage.storage

@@ -2,9 +2,10 @@ package com.tinhcd.myesalessfa.data.repository
 
 import com.tinhcd.myesalessfa.data.local.ConfigDao
 import com.tinhcd.myesalessfa.data.remote.dto.SurveyAnswerPayload
-import com.tinhcd.myesalessfa.data.remote.api.SurveyApi
 import com.tinhcd.myesalessfa.data.remote.dto.SurveyPayload
 import com.tinhcd.myesalessfa.data.remote.dto.SurveyTypeDto
+import com.tinhcd.myesalessfa.data.remote.http.orThrow
+import com.tinhcd.myesalessfa.data.remote.service.SurveyService
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.AnswerType
 import com.tinhcd.myesalessfa.domain.model.DraftSurvey
@@ -23,10 +24,16 @@ import javax.inject.Singleton
 
 private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; explicitNulls = false }
 
+/**
+ * One endpoint for every questionnaire step: the payload's form id selects which
+ * questionnaire it is, so posm_status, market_info and anything added later all go
+ * through here. `submit_survey` recomputes the score from the question definitions —
+ * no score travels from the device — and marks the step done in the same transaction.
+ */
 @Singleton
 class SurveyRepositoryImpl @Inject constructor(
     private val configDao: ConfigDao,
-    private val surveyApi: SurveyApi,
+    private val service: SurveyService,
 ) : SurveyRepository {
 
     /**
@@ -43,7 +50,7 @@ class SurveyRepositoryImpl @Inject constructor(
     }
 
     override suspend fun submit(survey: DraftSurvey): DataResult<Unit> = try {
-        surveyApi.submit(
+        service.submitSurvey(
             SurveyPayload(
                 // The idempotency key `submit_survey` conflicts on, so a retry after
                 // a timeout that in fact succeeded does not delete and rewrite the
@@ -56,7 +63,7 @@ class SurveyRepositoryImpl @Inject constructor(
                 clientCreatedAt = OffsetDateTime.now(ZoneOffset.UTC).toString(),
                 answers = survey.toAnswerPayloads(),
             ),
-        )
+        ).orThrow()
         DataResult.Success(Unit)
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())

@@ -2,8 +2,8 @@ package com.tinhcd.myesalessfa.data.repository
 
 import com.tinhcd.myesalessfa.data.local.ConfigDao
 import com.tinhcd.myesalessfa.data.local.SalesStepEntity
+import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import com.tinhcd.myesalessfa.data.remote.service.WorkflowService
-import com.tinhcd.myesalessfa.data.remote.api.VisitApi
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.SalesStep
 import com.tinhcd.myesalessfa.domain.model.StepCompletion
@@ -11,6 +11,8 @@ import com.tinhcd.myesalessfa.domain.model.VisitWorkflow
 import com.tinhcd.myesalessfa.domain.model.assembleWorkflow
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
 import com.tinhcd.myesalessfa.domain.repository.WorkflowRepository
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import javax.inject.Inject
@@ -19,7 +21,6 @@ import javax.inject.Singleton
 @Singleton
 class WorkflowRepositoryImpl @Inject constructor(
     private val service: WorkflowService,
-    private val visitApi: VisitApi,
     private val configDao: ConfigDao,
     private val configRepository: ConfigRepository,
 ) : WorkflowRepository {
@@ -60,12 +61,16 @@ class WorkflowRepositoryImpl @Inject constructor(
         formId: String,
         payload: Map<String, String>,
     ): DataResult<Unit> = try {
-        visitApi.saveStepResult(
-            visitId = visitId,
-            formId = formId,
-            completedAt = OffsetDateTime.now(ZoneOffset.UTC).toString(),
-            fields = payload,
-        )
+        // Upserted server side: a rep may redo a step during the same visit, and a
+        // step is either done or not — recording it twice is not a different fact.
+        service.submitStep(
+            buildJsonObject {
+                put("visit_id", visitId)
+                put("form_id", formId)
+                put("completed_at", OffsetDateTime.now(ZoneOffset.UTC).toString())
+                put("payload", buildJsonObject { payload.forEach { (k, v) -> put(k, v) } })
+            },
+        ).orThrow()
         DataResult.Success(Unit)
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())
