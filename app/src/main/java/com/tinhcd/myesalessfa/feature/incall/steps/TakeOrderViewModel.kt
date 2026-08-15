@@ -45,6 +45,18 @@ data class TakeOrderUiState(
     fun suggestionFor(productId: String): OrderSuggestion? =
         suggestions.firstOrNull { it.productId == productId }
 
+    /**
+     * Every line on this product, biggest unit first.
+     *
+     * The row used to show only the line matching the unit picker, which was fine
+     * while one product meant one line. Applying a split suggestion writes two — a
+     * case and a few loose pieces — and the second would have been invisible and
+     * un-editable while still counting towards the total the rep reads out.
+     */
+    fun linesOf(productId: String): List<OrderLine> = order.lines
+        .filter { it.productId == productId }
+        .sortedByDescending { it.conversionRate }
+
     val visible: List<PricedProduct>
         get() = if (query.isBlank()) {
             catalogue
@@ -170,13 +182,19 @@ class TakeOrderViewModel @Inject constructor(
         for (suggestion in current.suggestions) {
             val product = current.catalogue
                 .firstOrNull { it.product.id == suggestion.productId } ?: continue
-            val unit = product.units
-                .firstOrNull { it.unit.uomCode == suggestion.uomCode } ?: continue
 
-            // Move the picker onto the unit the suggestion is expressed in, or the
-            // rep would see a case quantity sitting under a "piece" selection.
-            chosen = chosen + (suggestion.productId to suggestion.uomCode)
-            order = order.withLine(lineFor(product, unit, suggestion.suggestedQty))
+            // A suggestion can span units — one case plus two loose pieces — and each
+            // part is its own line, which the order keys by product *and* unit.
+            for (part in suggestion.parts) {
+                val unit = product.units
+                    .firstOrNull { it.unit.uomCode == part.uomCode } ?: continue
+                order = order.withLine(lineFor(product, unit, part.qty))
+            }
+
+            // Move the picker onto the biggest part's unit, or the rep would see a
+            // case quantity sitting under a "piece" selection. The smaller parts are
+            // still listed on the row, so nothing applied here is hidden.
+            suggestion.primaryPart?.let { chosen = chosen + (suggestion.productId to it.uomCode) }
         }
 
         _state.update {
@@ -192,25 +210,25 @@ class TakeOrderViewModel @Inject constructor(
     fun onQueryChange(value: String) = _state.update { it.copy(query = value) }
 
     /**
-     * Switching unit moves the quantity onto the new unit rather than leaving a
-     * line behind on the old one — 5 cases becoming 5 cases *and* 5 pieces is
-     * never what the rep meant.
+     * Switching unit changes which unit the stepper edits, and moves nothing.
+     *
+     * It used to carry the quantity across and delete the old line, to stop 5 cases
+     * turning into 5 cases *and* 5 pieces when a rep changed their mind. That was the
+     * right trade while the row could only show one line, but it destroys quantities
+     * now that a suggestion can legitimately put a case and a few loose pieces on the
+     * same product: switching the picker to pieces would have overwritten the two
+     * suggested pieces with the one case's quantity, losing both.
+     *
+     * Every line on the product is now listed on the row, so the hazard it was
+     * guarding against is visible instead of hidden, and a rep who did mean to change
+     * unit can zero the line they no longer want.
      */
     fun onUnitChange(product: PricedProduct, uomCode: String) {
-        val current = _state.value
-        val previous = current.unitFor(product)
-        if (previous.unit.uomCode == uomCode) return
-
-        val qty = current.order.quantityOf(product.product.id, previous.unit.uomCode)
-        val next = product.units.firstOrNull { it.unit.uomCode == uomCode } ?: return
-
-        var order = current.order.withoutLine(product.product.id, previous.unit.uomCode)
-        if (qty > 0) order = order.withLine(lineFor(product, next, qty))
+        if (product.units.none { it.unit.uomCode == uomCode }) return
 
         _state.update {
             it.copy(
                 chosenUnit = it.chosenUnit + (product.product.id to uomCode),
-                order = order,
                 error = null,
             )
         }

@@ -45,6 +45,7 @@ import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.core.ui.formatDong
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
+import com.tinhcd.myesalessfa.domain.model.SuggestedPart
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -153,7 +154,10 @@ private fun SuggestionBanner(
 ) {
     if (state.suggestions.isEmpty()) return
 
-    val totalUnits = state.suggestions.sumOf { it.suggestedQty }
+    // Counted in lines, not in "units". Adding a case to three loose pieces and
+    // calling the answer four of anything was meaningless even before a suggestion
+    // could span two units; now it would be actively wrong.
+    val totalLines = state.suggestions.sumOf { it.parts.size }
 
     Surface(
         color = MaterialTheme.colorScheme.secondaryContainer,
@@ -171,9 +175,9 @@ private fun SuggestionBanner(
                 )
                 Text(
                     if (state.suggestionsApplied) {
-                        "Da dien $totalUnits don vi - sua lai truoc khi gui neu can"
+                        "Da dien $totalLines dong - sua lai truoc khi gui neu can"
                     } else {
-                        "Tong $totalUnits don vi"
+                        "Se them $totalLines dong"
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -196,9 +200,7 @@ private fun ProductRow(
 ) {
     val unit = state.unitFor(product)
     val qty = state.order.quantityOf(product.product.id, unit.unit.uomCode)
-    val line = state.order.lines.firstOrNull {
-        it.productId == product.product.id && it.uomCode == unit.unit.uomCode
-    }
+    val lines = state.linesOf(product.product.id)
 
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
@@ -263,7 +265,7 @@ private fun ProductRow(
                 Text(
                     "Thieu ${suggestion.shortfallBaseQty} " +
                         "${product.product.baseUomCode.lowercase()} so voi dinh muc " +
-                        "- goi y ${suggestion.suggestedQty} ${suggestion.uomName}" +
+                        "- goi y ${suggestion.parts.describe()}" +
                         if (suggestion.overshootBaseQty > 0) {
                             " (thua ${suggestion.overshootBaseQty})"
                         } else {
@@ -275,10 +277,15 @@ private fun ProductRow(
                 )
             }
 
-            if (line != null) {
+            // Every line on this product, not just the one under the picker: a split
+            // suggestion writes a case and a few loose pieces, and a line the rep
+            // cannot see is one they cannot correct before it goes to the customer.
+            lines.forEach { orderLine ->
                 Text(
-                    "${line.qty} x ${formatDong(line.unitPrice)} = " +
-                        "${formatDong(line.grossAmount)} (+VAT ${formatDong(line.vatAmount)})",
+                    "${orderLine.qty} ${orderLine.uomName} x " +
+                        "${formatDong(orderLine.unitPrice)} = " +
+                        "${formatDong(orderLine.grossAmount)} " +
+                        "(+VAT ${formatDong(orderLine.vatAmount)})",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(top = 6.dp),
@@ -383,3 +390,10 @@ private fun AmountRow(label: String, value: String, emphasise: Boolean = false) 
         )
     }
 }
+
+/**
+ * "1 thung + 2 chai" — a suggestion spanning several sale units, read in the order
+ * the rep would pick it: biggest first.
+ */
+private fun List<SuggestedPart>.describe(): String =
+    joinToString(" + ") { "${it.qty} ${it.uomName}" }

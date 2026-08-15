@@ -8,6 +8,26 @@ package com.tinhcd.myesalessfa.domain.model
  * last step of the chain that started with must-stock lists, and it is the reason
  * a par level of 48 pieces can be acted on rather than merely reported.
  */
+
+/**
+ * One orderable piece of a suggestion: so many of one sale unit.
+ *
+ * A suggestion is a list of these rather than a single quantity because a shortfall
+ * rarely lands on a case boundary. Twenty-six pieces short of par is one case and
+ * two loose pieces, not two cases — and the order can say so, since a line is keyed
+ * by product *and* unit on both the client and the server.
+ */
+data class SuggestedPart(
+    val uomCode: String,
+    val uomName: String,
+    val conversionRate: Int,
+    /** Whole [uomCode] units to order. Advisory: the rep edits it. */
+    val qty: Int,
+    val unitPrice: Long,
+) {
+    val baseQty: Int get() = qty * conversionRate
+}
+
 data class OrderSuggestion(
     val productId: String,
     val productCode: String,
@@ -16,40 +36,89 @@ data class OrderSuggestion(
     val parBaseQty: Int,
     /** What this visit's count found, in base units. */
     val countedBaseQty: Int,
-    val uomCode: String,
-    val uomName: String,
-    val conversionRate: Int,
-    /** Whole [uomCode] units to order. Advisory: the rep edits it. */
-    val suggestedQty: Int,
-    val unitPrice: Long,
+    /** Largest unit first, so "1 case + 2 pieces" reads in that order. */
+    val parts: List<SuggestedPart>,
 ) {
     val shortfallBaseQty: Int get() = (parBaseQty - countedBaseQty).coerceAtLeast(0)
 
+    val suggestedBaseQty: Int get() = parts.sumOf { it.baseQty }
+
     /**
-     * Base units the suggestion overshoots par by, because sale units do not divide
-     * the shortfall evenly. Worth showing: a rep asked to order a whole case to
-     * cover a two-piece gap should be able to see that is what is happening.
+     * The unit the rep's picker should land on when the suggestion is applied — the
+     * biggest part, since that is the bulk of the order. The smaller parts are still
+     * real lines; the product row lists every line it has, so none of them is
+     * invisible just because the picker is elsewhere.
+     */
+    val primaryPart: SuggestedPart? get() = parts.firstOrNull()
+
+    /**
+     * Base units the suggestion overshoots par by, because sale units do not always
+     * divide the shortfall evenly. Worth showing: a rep asked to order a whole case
+     * to cover a two-piece gap should be able to see that is what is happening.
+     *
+     * Splitting into smaller units drives this to zero whenever the product is sold
+     * loose, so what is left is a genuine constraint of the pack sizes on offer
+     * rather than arithmetic the app could not be bothered to do.
      */
     val overshootBaseQty: Int
-        get() = (suggestedQty * conversionRate - shortfallBaseQty).coerceAtLeast(0)
+        get() = (suggestedBaseQty - shortfallBaseQty).coerceAtLeast(0)
 }
 
 /**
- * Whole sale units needed to cover [shortfallBaseQty].
+ * Splits [shortfallBaseQty] across the sale units the customer may actually buy,
+ * biggest first.
  *
- * Rounds up. Ordering a fraction of a case is not possible, and rounding down would
- * leave the shelf below the par level the whole exercise exists to restore. That
- * does mean a two-piece gap can suggest a full case — which is why the suggestion
- * is offered rather than applied, and why [OrderSuggestion.overshootBaseQty] makes
- * the rounding visible instead of burying it.
+ * Every unit but the smallest takes whole ones only; the smallest rounds up. That
+ * combination is what makes the total the least that still reaches par: rounding up
+ * anywhere else would buy a surplus the next unit down could have covered exactly,
+ * and rounding down on the smallest would leave the shelf below the par level this
+ * whole exercise exists to restore.
  *
- * A non-positive conversion rate would be corrupt catalogue data; treated as one
- * base unit per sale unit rather than dividing by zero mid-visit.
+ * So a 26-piece gap on a product sold by the 24-case and singly comes back as one
+ * case and two pieces. The same gap on a product sold only by the case is still one
+ * case with 22 to spare — the pack sizes leave nothing better, which is exactly what
+ * [OrderSuggestion.overshootBaseQty] then reports.
+ *
+ * Units are deduplicated by conversion rate: two units of the same size are
+ * contradictory catalogue data, and offering both would produce two lines for one
+ * intention. A non-positive rate would be corrupt data too and is dropped rather
+ * than divided by mid-visit.
  */
-fun suggestedSaleQty(shortfallBaseQty: Int, conversionRate: Int): Int {
-    if (shortfallBaseQty <= 0) return 0
-    val rate = if (conversionRate > 0) conversionRate else 1
-    return (shortfallBaseQty + rate - 1) / rate
+fun splitShortfall(shortfallBaseQty: Int, units: List<PricedUnit>): List<SuggestedPart> {
+    if (shortfallBaseQty <= 0) return emptyList()
+
+    val usable = units
+        .filter { it.unit.conversionRate > 0 }
+        .distinctBy { it.unit.conversionRate }
+        .sortedByDescending { it.unit.conversionRate }
+    if (usable.isEmpty()) return emptyList()
+
+    val parts = mutableListOf<SuggestedPart>()
+    var remaining = shortfallBaseQty
+
+    usable.forEachIndexed { index, priced ->
+        if (remaining <= 0) return@forEachIndexed
+        val rate = priced.unit.conversionRate
+
+        val qty = if (index == usable.lastIndex) {
+            // The last chance to reach par, so this one rounds up.
+            (remaining + rate - 1) / rate
+        } else {
+            remaining / rate
+        }
+        if (qty <= 0) return@forEachIndexed
+
+        parts += SuggestedPart(
+            uomCode = priced.unit.uomCode,
+            uomName = priced.unit.uomName,
+            conversionRate = rate,
+            qty = qty,
+            unitPrice = priced.price,
+        )
+        remaining -= qty * rate
+    }
+
+    return parts
 }
 
 /**
@@ -77,7 +146,8 @@ fun orderSuggestions(
         if (shortfall <= 0) return@mapNotNull null
 
         val priced = byProductId[productId] ?: return@mapNotNull null
-        val unit = priced.defaultUnit
+        val parts = splitShortfall(shortfall, priced.units)
+        if (parts.isEmpty()) return@mapNotNull null
 
         OrderSuggestion(
             productId = productId,
@@ -85,11 +155,7 @@ fun orderSuggestions(
             productName = priced.product.name,
             parBaseQty = parBaseQty,
             countedBaseQty = counted,
-            uomCode = unit.unit.uomCode,
-            uomName = unit.unit.uomName,
-            conversionRate = unit.unit.conversionRate,
-            suggestedQty = suggestedSaleQty(shortfall, unit.unit.conversionRate),
-            unitPrice = unit.price,
+            parts = parts,
         )
     }.sortedBy { it.productCode }
 }
