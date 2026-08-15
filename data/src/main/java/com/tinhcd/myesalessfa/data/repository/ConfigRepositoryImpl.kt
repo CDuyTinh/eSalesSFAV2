@@ -6,18 +6,18 @@ import com.tinhcd.myesalessfa.data.local.SalesStepEntity
 import com.tinhcd.myesalessfa.data.local.SettingEntity
 import com.tinhcd.myesalessfa.data.local.SurveyDefinitionEntity
 import com.tinhcd.myesalessfa.data.local.TranslationEntity
-import com.tinhcd.myesalessfa.data.remote.ReasonCodeDto
-import com.tinhcd.myesalessfa.data.remote.SalesStepDto
-import com.tinhcd.myesalessfa.data.remote.SettingDto
-import com.tinhcd.myesalessfa.data.remote.TranslationDto
+import com.tinhcd.myesalessfa.data.remote.dto.ReasonCodeDto
+import com.tinhcd.myesalessfa.data.remote.dto.SalesStepDto
+import com.tinhcd.myesalessfa.data.remote.dto.SettingDto
+import com.tinhcd.myesalessfa.data.remote.dto.TranslationDto
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.CheckInPolicy
 import com.tinhcd.myesalessfa.domain.model.ReasonCode
 import com.tinhcd.myesalessfa.domain.model.SupportedSteps
 import com.tinhcd.myesalessfa.domain.model.ReasonKind
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
-import com.tinhcd.myesalessfa.data.remote.FunctionsService
-import com.tinhcd.myesalessfa.data.remote.activeLanguage
+import com.tinhcd.myesalessfa.data.remote.service.BootstrapService
+import com.tinhcd.myesalessfa.data.remote.dto.activeLanguage
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import javax.inject.Inject
@@ -32,7 +32,7 @@ private val json = Json { encodeDefaults = true; explicitNulls = false }
  */
 @Singleton
 class ConfigRepositoryImpl @Inject constructor(
-    private val service: FunctionsService,
+    private val service: BootstrapService,
     private val dao: ConfigDao,
 ) : ConfigRepository {
 

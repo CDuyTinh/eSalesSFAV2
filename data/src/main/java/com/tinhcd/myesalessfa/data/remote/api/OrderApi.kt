@@ -1,4 +1,7 @@
-package com.tinhcd.myesalessfa.data.remote
+package com.tinhcd.myesalessfa.data.remote.api
+
+import com.tinhcd.myesalessfa.data.remote.dto.OrderPayload
+import com.tinhcd.myesalessfa.data.remote.service.OrderService
 
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import javax.inject.Inject
@@ -19,7 +22,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class OrderApi @Inject constructor(
-    private val service: FunctionsService,
+    private val service: OrderService,
 ) {
     suspend fun submit(payload: OrderPayload) {
         service.submitOrder(payload).orThrow()

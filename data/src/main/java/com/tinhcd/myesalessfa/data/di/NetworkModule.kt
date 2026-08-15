@@ -1,7 +1,16 @@
 package com.tinhcd.myesalessfa.data.di
 
 import com.tinhcd.myesalessfa.data.BuildConfig
-import com.tinhcd.myesalessfa.data.remote.FunctionsService
+import com.tinhcd.myesalessfa.data.remote.service.BootstrapService
+import com.tinhcd.myesalessfa.data.remote.service.CatalogueService
+import com.tinhcd.myesalessfa.data.remote.service.DisplayAuditService
+import com.tinhcd.myesalessfa.data.remote.service.FeedbackService
+import com.tinhcd.myesalessfa.data.remote.service.OrderService
+import com.tinhcd.myesalessfa.data.remote.service.RouteService
+import com.tinhcd.myesalessfa.data.remote.service.StockService
+import com.tinhcd.myesalessfa.data.remote.service.SurveyService
+import com.tinhcd.myesalessfa.data.remote.service.VisitService
+import com.tinhcd.myesalessfa.data.remote.service.WorkflowService
 import com.tinhcd.myesalessfa.data.remote.http.SessionTokens
 import com.tinhcd.myesalessfa.data.remote.http.SupabaseApiKey
 import com.tinhcd.myesalessfa.data.remote.http.SupabaseAuthInterceptor
@@ -101,8 +110,57 @@ object NetworkModule {
             .build()
     }
 
+    // One Retrofit, one proxy per service. Each is a thin interface over the same
+    // client, so splitting them costs nothing at runtime and lets a repository ask
+    // for only the calls it makes.
+
     @Provides
     @Singleton
-    fun provideFunctionsService(retrofit: Retrofit): FunctionsService =
-        retrofit.create(FunctionsService::class.java)
+    fun provideBootstrapService(retrofit: Retrofit): BootstrapService =
+        retrofit.create(BootstrapService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideCatalogueService(retrofit: Retrofit): CatalogueService =
+        retrofit.create(CatalogueService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideRouteService(retrofit: Retrofit): RouteService =
+        retrofit.create(RouteService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideVisitService(retrofit: Retrofit): VisitService =
+        retrofit.create(VisitService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideWorkflowService(retrofit: Retrofit): WorkflowService =
+        retrofit.create(WorkflowService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideStockService(retrofit: Retrofit): StockService =
+        retrofit.create(StockService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideOrderService(retrofit: Retrofit): OrderService =
+        retrofit.create(OrderService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideDisplayAuditService(retrofit: Retrofit): DisplayAuditService =
+        retrofit.create(DisplayAuditService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideSurveyService(retrofit: Retrofit): SurveyService =
+        retrofit.create(SurveyService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideFeedbackService(retrofit: Retrofit): FeedbackService =
+        retrofit.create(FeedbackService::class.java)
 }

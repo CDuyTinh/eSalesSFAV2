@@ -1,8 +1,8 @@
 package com.tinhcd.myesalessfa.data.repository
 
-import com.tinhcd.myesalessfa.data.remote.OrderApi
-import com.tinhcd.myesalessfa.data.remote.OrderLinePayload
-import com.tinhcd.myesalessfa.data.remote.OrderPayload
+import com.tinhcd.myesalessfa.data.remote.api.OrderApi
+import com.tinhcd.myesalessfa.data.remote.dto.OrderLinePayload
+import com.tinhcd.myesalessfa.data.remote.dto.OrderPayload
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.DraftOrder
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository

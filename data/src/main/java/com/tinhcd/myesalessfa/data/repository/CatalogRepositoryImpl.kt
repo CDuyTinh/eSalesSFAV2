@@ -6,7 +6,7 @@ import com.tinhcd.myesalessfa.data.local.MslItemEntity
 import com.tinhcd.myesalessfa.data.local.PriceRuleEntity
 import com.tinhcd.myesalessfa.data.local.ProductEntity
 import com.tinhcd.myesalessfa.data.local.SaleUnitEntity
-import com.tinhcd.myesalessfa.data.remote.FunctionsService
+import com.tinhcd.myesalessfa.data.remote.service.CatalogueService
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.MslDefinition
 import com.tinhcd.myesalessfa.domain.model.MslItem
@@ -29,7 +29,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class CatalogRepositoryImpl @Inject constructor(
-    private val service: FunctionsService,
+    private val service: CatalogueService,
     private val dao: CatalogDao,
 ) : CatalogRepository {
 

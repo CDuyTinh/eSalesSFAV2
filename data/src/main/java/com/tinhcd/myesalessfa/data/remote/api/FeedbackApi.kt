@@ -1,4 +1,7 @@
-package com.tinhcd.myesalessfa.data.remote
+package com.tinhcd.myesalessfa.data.remote.api
+
+import com.tinhcd.myesalessfa.data.remote.dto.FeedbackPayload
+import com.tinhcd.myesalessfa.data.remote.service.FeedbackService
 
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import com.tinhcd.myesalessfa.data.session.SessionStore
@@ -19,7 +22,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class FeedbackApi @Inject constructor(
-    private val service: FunctionsService,
+    private val service: FeedbackService,
     private val uploader: PhotoUploader,
     private val session: SessionStore,
 ) {

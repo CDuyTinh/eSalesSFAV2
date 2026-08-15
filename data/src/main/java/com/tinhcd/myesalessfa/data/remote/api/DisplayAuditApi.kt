@@ -1,4 +1,7 @@
-package com.tinhcd.myesalessfa.data.remote
+package com.tinhcd.myesalessfa.data.remote.api
+
+import com.tinhcd.myesalessfa.data.remote.dto.DisplayAuditPayload
+import com.tinhcd.myesalessfa.data.remote.service.DisplayAuditService
 
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import com.tinhcd.myesalessfa.data.session.SessionStore
@@ -18,7 +21,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class DisplayAuditApi @Inject constructor(
-    private val service: FunctionsService,
+    private val service: DisplayAuditService,
     private val uploader: PhotoUploader,
     private val session: SessionStore,
 ) {

@@ -1,4 +1,7 @@
-package com.tinhcd.myesalessfa.data.remote
+package com.tinhcd.myesalessfa.data.remote.api
+
+import com.tinhcd.myesalessfa.data.remote.dto.SurveyPayload
+import com.tinhcd.myesalessfa.data.remote.service.SurveyService
 
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import javax.inject.Inject
@@ -14,7 +17,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class SurveyApi @Inject constructor(
-    private val service: FunctionsService,
+    private val service: SurveyService,
 ) {
     suspend fun submit(payload: SurveyPayload) {
         service.submitSurvey(payload).orThrow()
