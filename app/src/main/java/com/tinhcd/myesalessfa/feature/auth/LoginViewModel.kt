@@ -4,8 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.AppError
 import com.tinhcd.myesalessfa.domain.DataResult
-import com.tinhcd.myesalessfa.domain.repository.CatalogRepository
-import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
+import com.tinhcd.myesalessfa.domain.repository.ReferenceDataSync
 import com.tinhcd.myesalessfa.domain.usecase.SignInUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,8 +27,7 @@ data class LoginUiState(
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val signIn: SignInUseCase,
-    private val configRepository: ConfigRepository,
-    private val catalogRepository: CatalogRepository,
+    private val referenceDataSync: ReferenceDataSync,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginUiState())
@@ -47,16 +45,18 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = signIn(current.username, current.password)) {
                 is DataResult.Success -> {
-                    // Settings and reason codes have to be in the local cache
-                    // before the first check-in, which may happen out of
-                    // signal. Failure here is not fatal — the policy falls
-                    // back to strict defaults.
-                    configRepository.refresh()
-                    // The catalogue likewise: an order is built inside a shop,
-                    // and the take_order step has nothing to show without it. A
-                    // failure here leaves the step showing an empty catalogue
-                    // rather than blocking sign-in.
-                    catalogRepository.refresh()
+                    // Settings, reason codes and the catalogue have to be cached
+                    // before the first check-in, which may happen out of signal.
+                    //
+                    // Through the shared sync rather than by calling each repository:
+                    // it records that a refresh has happened, so the foreground event
+                    // moments later does not immediately fetch everything again.
+                    //
+                    // Failure is not fatal and is not surfaced here. The policy falls
+                    // back to strict defaults and the catalogue screens say they are
+                    // empty; refusing the sign-in would be a worse answer than a rep
+                    // who is signed in with yesterday's data.
+                    referenceDataSync.syncNow()
                     _state.update { it.copy(loading = false, signedIn = true) }
                 }
 

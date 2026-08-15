@@ -15,8 +15,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -74,6 +76,24 @@ fun RouteScreen(
                     }
                 },
                 actions = {
+                    // The escape hatch for "head office says they changed it". The
+                    // spinner replaces the button rather than sitting beside it, so a
+                    // second tap cannot start a second fetch.
+                    if (state.sync.syncing) {
+                        CircularProgressIndicator(
+                            strokeWidth = 2.dp,
+                            modifier = Modifier
+                                .padding(horizontal = 12.dp)
+                                .size(20.dp),
+                        )
+                    } else {
+                        IconButton(onClick = viewModel::refreshReferenceData) {
+                            Icon(
+                                Icons.Default.Refresh,
+                                contentDescription = "Cap nhat du lieu",
+                            )
+                        }
+                    }
                     IconButton(onClick = viewModel::signOut) {
                         Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Dang xuat")
                     }
@@ -96,6 +116,17 @@ fun RouteScreen(
                     }
                     if (state.pendingUploads > 0) {
                         PendingBanner(state.pendingUploads)
+                    }
+                    // Below both of those: the cache being a day old is the mildest of
+                    // the three things this screen can have to report, and every screen
+                    // still works while it is true.
+                    if (state.sync.lastAttemptFailed && !state.sync.syncing) {
+                        Text(
+                            "Chua cap nhat duoc du lieu moi nhat. Dang dung du lieu da tai truoc do.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                        )
                     }
                     if (state.stops.isEmpty()) {
                         ErrorBox("Khong co khach hang nao trong tuyen hom nay")
