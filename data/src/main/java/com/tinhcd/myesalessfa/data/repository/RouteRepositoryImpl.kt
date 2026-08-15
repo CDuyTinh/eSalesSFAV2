@@ -1,8 +1,8 @@
 package com.tinhcd.myesalessfa.data.repository
 
-import com.tinhcd.myesalessfa.data.remote.CustomerDto
-import com.tinhcd.myesalessfa.data.remote.FunctionsService
-import com.tinhcd.myesalessfa.data.remote.RouteStopDto
+import com.tinhcd.myesalessfa.data.remote.dto.CustomerDto
+import com.tinhcd.myesalessfa.data.remote.service.RouteService
+import com.tinhcd.myesalessfa.data.remote.dto.RouteStopDto
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.Customer
 import com.tinhcd.myesalessfa.domain.model.RouteStop
@@ -15,7 +15,7 @@ import javax.inject.Singleton
 
 @Singleton
 class RouteRepositoryImpl @Inject constructor(
-    private val service: FunctionsService,
+    private val service: RouteService,
 ) : RouteRepository {
 
     /**

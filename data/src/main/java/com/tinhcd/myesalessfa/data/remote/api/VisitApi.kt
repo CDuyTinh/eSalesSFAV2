@@ -1,6 +1,9 @@
-package com.tinhcd.myesalessfa.data.remote
+package com.tinhcd.myesalessfa.data.remote.api
 
+import com.tinhcd.myesalessfa.data.remote.dto.NewVisitDto
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
+import com.tinhcd.myesalessfa.data.remote.service.VisitService
+import com.tinhcd.myesalessfa.data.remote.service.WorkflowService
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import javax.inject.Inject
@@ -11,17 +14,21 @@ import javax.inject.Singleton
  *
  * Kept apart from the repositories so the wire shape lives in one place and the
  * repositories stay about behaviour rather than field names.
+ *
+ * Two services, because a step result is a workflow fact rather than part of the
+ * visit's own lifecycle — the same split the repositories make.
  */
 @Singleton
 class VisitApi @Inject constructor(
-    private val service: FunctionsService,
+    private val visitService: VisitService,
+    private val workflowService: WorkflowService,
 ) {
     suspend fun insertVisit(visit: NewVisitDto) {
-        service.submitVisit(visit).orThrow()
+        visitService.submitVisit(visit).orThrow()
     }
 
     suspend fun markCheckedOut(visitId: String, checkOutAt: String) {
-        service.submitCheckout(
+        visitService.submitCheckout(
             buildJsonObject {
                 put("visit_id", visitId)
                 put("check_out_at", checkOutAt)
@@ -45,6 +52,6 @@ class VisitApi @Inject constructor(
             put("completed_at", completedAt)
             put("payload", buildJsonObject { fields.forEach { (k, v) -> put(k, v) } })
         }
-        service.submitStep(row).orThrow()
+        workflowService.submitStep(row).orThrow()
     }
 }

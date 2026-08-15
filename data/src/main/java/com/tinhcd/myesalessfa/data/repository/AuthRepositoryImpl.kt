@@ -1,15 +1,15 @@
 package com.tinhcd.myesalessfa.data.repository
 
 import com.tinhcd.myesalessfa.data.di.ApplicationScope
-import com.tinhcd.myesalessfa.data.remote.SalespersonDto
+import com.tinhcd.myesalessfa.data.remote.dto.SalespersonDto
 import com.tinhcd.myesalessfa.data.session.SessionStore
 import com.tinhcd.myesalessfa.domain.AppError
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.Salesperson
 import com.tinhcd.myesalessfa.domain.model.SessionState
 import com.tinhcd.myesalessfa.domain.repository.AuthRepository
-import com.tinhcd.myesalessfa.data.remote.FunctionsService
-import com.tinhcd.myesalessfa.data.remote.activeLanguage
+import com.tinhcd.myesalessfa.data.remote.service.BootstrapService
+import com.tinhcd.myesalessfa.data.remote.dto.activeLanguage
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
@@ -46,7 +46,7 @@ const val ERROR_PROFILE_UNAVAILABLE = "profile_unavailable"
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val client: SupabaseClient,
-    private val service: FunctionsService,
+    private val service: BootstrapService,
     private val session: SessionStore,
     @ApplicationScope scope: CoroutineScope,
 ) : AuthRepository {

@@ -1,8 +1,8 @@
 package com.tinhcd.myesalessfa.data.repository
 
-import com.tinhcd.myesalessfa.data.remote.StockApi
-import com.tinhcd.myesalessfa.data.remote.StockCountLinePayload
-import com.tinhcd.myesalessfa.data.remote.StockCountPayload
+import com.tinhcd.myesalessfa.data.remote.api.StockApi
+import com.tinhcd.myesalessfa.data.remote.dto.StockCountLinePayload
+import com.tinhcd.myesalessfa.data.remote.dto.StockCountPayload
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.DraftStockCount
 import com.tinhcd.myesalessfa.domain.repository.StockRepository

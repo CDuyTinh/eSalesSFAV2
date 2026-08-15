@@ -1,7 +1,7 @@
 package com.tinhcd.myesalessfa.data.repository
 
-import com.tinhcd.myesalessfa.data.remote.NewVisitDto
-import com.tinhcd.myesalessfa.data.remote.VisitApi
+import com.tinhcd.myesalessfa.data.remote.dto.NewVisitDto
+import com.tinhcd.myesalessfa.data.remote.api.VisitApi
 import com.tinhcd.myesalessfa.data.session.SessionStore
 import com.tinhcd.myesalessfa.domain.AppError
 import com.tinhcd.myesalessfa.domain.DataResult

@@ -1,6 +1,16 @@
 package com.tinhcd.myesalessfa.data.remote
 
+import com.tinhcd.myesalessfa.data.remote.dto.OrderLinePayload
+import com.tinhcd.myesalessfa.data.remote.dto.OrderPayload
+import com.tinhcd.myesalessfa.data.remote.dto.StockCountPayload
 import com.tinhcd.myesalessfa.data.remote.http.PostgrestException
+import com.tinhcd.myesalessfa.data.remote.service.BootstrapService
+import com.tinhcd.myesalessfa.data.remote.service.CatalogueService
+import com.tinhcd.myesalessfa.data.remote.service.OrderService
+import com.tinhcd.myesalessfa.data.remote.service.RouteService
+import com.tinhcd.myesalessfa.data.remote.service.StockService
+import com.tinhcd.myesalessfa.data.remote.service.VisitService
+import com.tinhcd.myesalessfa.data.remote.service.WorkflowService
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -27,21 +37,33 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
  * them worth having: the app cannot be run on this machine, so a rename on either
  * side of this boundary would otherwise only surface on a device.
  */
-class FunctionsServiceTest {
+class FunctionServicesTest {
 
     private lateinit var server: MockWebServer
-    private lateinit var service: FunctionsService
+    private lateinit var bootstrap: BootstrapService
+    private lateinit var catalogue: CatalogueService
+    private lateinit var route: RouteService
+    private lateinit var visit: VisitService
+    private lateinit var workflow: WorkflowService
+    private lateinit var stock: StockService
+    private lateinit var order: OrderService
 
     @Before
     fun setUp() {
         server = MockWebServer()
         server.start()
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; explicitNulls = false }
-        service = Retrofit.Builder()
+        val retrofit = Retrofit.Builder()
             .baseUrl(server.url("/functions/v1/"))
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
-            .create(FunctionsService::class.java)
+        bootstrap = retrofit.create(BootstrapService::class.java)
+        catalogue = retrofit.create(CatalogueService::class.java)
+        route = retrofit.create(RouteService::class.java)
+        visit = retrofit.create(VisitService::class.java)
+        workflow = retrofit.create(WorkflowService::class.java)
+        stock = retrofit.create(StockService::class.java)
+        order = retrofit.create(OrderService::class.java)
     }
 
     @After
@@ -64,19 +86,19 @@ class FunctionsServiceTest {
     @Test
     fun `reads hit their function with the parameters the function requires`() = runTest {
         enqueue("""{"settings":{},"translations":{}}""")
-        service.bootstrap("vi")
+        bootstrap.bootstrap("vi")
         assertEquals("/functions/v1/bootstrap?lang=vi", server.takeRequest().target)
 
         enqueue("""{"generated_at":"now","products":[],"price_rules":[]}""")
-        service.catalogue()
+        catalogue.catalogue()
         assertEquals("/functions/v1/catalogue", server.takeRequest().target)
 
         enqueue("""{"date":"2026-08-14","stops":[]}""")
-        service.route("2026-08-14")
+        route.route("2026-08-14")
         assertEquals("/functions/v1/route?date=2026-08-14", server.takeRequest().target)
 
         enqueue("""{"visit_id":"v1","completions":[]}""")
-        service.visitWorkflow("v1")
+        workflow.visitWorkflow("v1")
         assertEquals("/functions/v1/visit-workflow?visitId=v1", server.takeRequest().target)
     }
 
@@ -85,7 +107,7 @@ class FunctionsServiceTest {
         // Comparing against the attempt being replaced would report roughly zero
         // sales every time a rep recounted, so exceptVisitId is not optional.
         enqueue("""{"count_date":null,"previous":{}}""")
-        service.previousCount(customerId = "c1", exceptVisitId = "v1")
+        stock.previousCount(customerId = "c1", exceptVisitId = "v1")
 
         val target = server.takeRequest().target
         assertTrue(target.contains("customerId=c1"))
@@ -95,17 +117,17 @@ class FunctionsServiceTest {
     @Test
     fun `writes post to their own function`() = runTest {
         enqueue("""{"ok":true}""")
-        service.submitStep(buildJsonObject { put("form_id", "feedback") })
+        workflow.submitStep(buildJsonObject { put("form_id", "feedback") })
         val step = server.takeRequest()
         assertEquals("POST", step.method)
         assertEquals("/functions/v1/submit-step", step.target)
 
         enqueue("""{"ok":true}""")
-        service.submitCheckout(buildJsonObject { put("visit_id", "v1") })
+        visit.submitCheckout(buildJsonObject { put("visit_id", "v1") })
         assertEquals("/functions/v1/submit-checkout", server.takeRequest().target)
 
         enqueue("""{"order_id":"o1"}""")
-        service.submitOrder(order())
+        order.submitOrder(order())
         assertEquals("/functions/v1/submit-order", server.takeRequest().target)
     }
 
@@ -115,7 +137,7 @@ class FunctionsServiceTest {
         // A camelCase key here would be silently ignored by submit_order, which
         // would then reject the order as having no lines.
         enqueue("""{"order_id":"o1"}""")
-        service.submitOrder(order())
+        order.submitOrder(order())
 
         val body = server.takeRequest().body?.utf8().orEmpty()
         assertTrue("missing visit_id in $body", body.contains("\"visit_id\""))
@@ -141,7 +163,7 @@ class FunctionsServiceTest {
                  "lang":"vi","translations":{"step_take_order":"Dat hang"}}""",
         )
 
-        val boot = service.bootstrap("vi")
+        val boot = bootstrap.bootstrap("vi")
 
         assertEquals("nvbh01", boot.salesperson?.code)
         assertEquals("BR01", boot.salesperson?.branch?.code)
@@ -158,7 +180,7 @@ class FunctionsServiceTest {
         // Authenticated but with no salesperson row. The app treats this as a
         // failed login rather than dropping the rep into an app with no branch.
         enqueue("""{"salesperson":null,"settings":{},"translations":{}}""")
-        assertNull(service.bootstrap("vi").salesperson)
+        assertNull(bootstrap.bootstrap("vi").salesperson)
     }
 
     @Test
@@ -181,7 +203,7 @@ class FunctionsServiceTest {
                     "from_date":"2026-01-01","to_date":"2099-12-31"}]}""",
         )
 
-        val catalogue = service.catalogue()
+        val catalogue = catalogue.catalogue()
         val product = catalogue.products.single()
 
         assertEquals(800, product.vatBasisPoints)
@@ -212,7 +234,7 @@ class FunctionsServiceTest {
                   "items":[{"product_id":"c01","min_base_qty":48}]}]}""",
         )
 
-        val lists = service.catalogue().msl
+        val lists = catalogue.catalogue().msl
         assertEquals(listOf("CORE", "GT"), lists.map { it.code })
 
         val core = lists.first()
@@ -229,7 +251,7 @@ class FunctionsServiceTest {
     @Test
     fun `a project with no must-stock lists decodes as none, not as a failure`() = runTest {
         enqueue("""{"generated_at":"now","products":[],"price_rules":[]}""")
-        assertTrue(service.catalogue().msl.isEmpty())
+        assertTrue(catalogue.catalogue().msl.isEmpty())
     }
 
     @Test
@@ -241,7 +263,7 @@ class FunctionsServiceTest {
                  "visit_id":null,"status":"planned"}]}""",
         )
 
-        val customer = service.route("2026-08-14").stops.single().customer
+        val customer = route.route("2026-08-14").stops.single().customer
         assertEquals("ch-gt", customer.channelId)
         assertEquals("shop-th", customer.shopTypeId)
     }
@@ -255,7 +277,7 @@ class FunctionsServiceTest {
                  {"id":"p1","code":"X","name":"X","base_uom":"PCS","vat_basis_points":1000}],
                  "price_rules":[]}""",
         )
-        val product = service.catalogue().products.single()
+        val product = catalogue.catalogue().products.single()
         assertEquals(9999, product.categorySort)
         assertNull(product.categoryName)
         assertTrue(product.units.isEmpty())
@@ -270,7 +292,7 @@ class FunctionsServiceTest {
                   "check_in_at":null,"check_out_at":null}]}""",
         )
 
-        val stop = service.route("2026-08-14").stops.single()
+        val stop = route.route("2026-08-14").stops.single()
         assertEquals(1, stop.visitOrder)
         assertEquals("KH001", stop.customer.code)
         // The class drives which price list applies once an order is written.
@@ -282,7 +304,7 @@ class FunctionsServiceTest {
     @Test
     fun `previous count decodes the per-product totals`() = runTest {
         enqueue("""{"count_date":"2026-08-13","previous":{"c01":120,"c03":3}}""")
-        val previous = service.previousCount("c1", "v1")
+        val previous = stock.previousCount("c1", "v1")
 
         assertEquals("2026-08-13", previous.countDate)
         assertEquals(mapOf("c01" to 120, "c03" to 3), previous.previous)
@@ -291,7 +313,7 @@ class FunctionsServiceTest {
     @Test
     fun `a never-counted outlet is distinguishable from an all-zero count`() = runTest {
         enqueue("""{"count_date":null,"previous":{}}""")
-        assertNull(service.previousCount("c1", "v1").countDate)
+        assertNull(stock.previousCount("c1", "v1").countDate)
     }
 
     // -------------------------------------------------------------------------
@@ -307,7 +329,7 @@ class FunctionsServiceTest {
             code = 400,
         )
 
-        val thrown = runCatching { service.submitOrder(order()).orThrow() }
+        val thrown = runCatching { order.submitOrder(order()).orThrow() }
             .exceptionOrNull() as? PostgrestException
 
         assertEquals(400, thrown?.status)
@@ -319,7 +341,7 @@ class FunctionsServiceTest {
         enqueue("""{"message":"visit v9 is not a visit of this salesperson"}""", code = 404)
 
         val thrown = runCatching {
-            service.submitCheckout(buildJsonObject { put("visit_id", "v9") }).orThrow()
+            visit.submitCheckout(buildJsonObject { put("visit_id", "v9") }).orThrow()
         }.exceptionOrNull() as? PostgrestException
 
         assertEquals(404, thrown?.status)
@@ -331,7 +353,7 @@ class FunctionsServiceTest {
         server.enqueue(MockResponse.Builder().code(502).body("<html>bad gateway</html>").build())
 
         val thrown = runCatching {
-            service.submitStockCount(stockCount()).orThrow()
+            stock.submitStockCount(stockCount()).orThrow()
         }.exceptionOrNull() as? PostgrestException
 
         assertEquals(502, thrown?.status)

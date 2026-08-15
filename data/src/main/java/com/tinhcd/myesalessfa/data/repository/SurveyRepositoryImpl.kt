@@ -1,10 +1,10 @@
 package com.tinhcd.myesalessfa.data.repository
 
 import com.tinhcd.myesalessfa.data.local.ConfigDao
-import com.tinhcd.myesalessfa.data.remote.SurveyAnswerPayload
-import com.tinhcd.myesalessfa.data.remote.SurveyApi
-import com.tinhcd.myesalessfa.data.remote.SurveyPayload
-import com.tinhcd.myesalessfa.data.remote.SurveyTypeDto
+import com.tinhcd.myesalessfa.data.remote.dto.SurveyAnswerPayload
+import com.tinhcd.myesalessfa.data.remote.api.SurveyApi
+import com.tinhcd.myesalessfa.data.remote.dto.SurveyPayload
+import com.tinhcd.myesalessfa.data.remote.dto.SurveyTypeDto
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.AnswerType
 import com.tinhcd.myesalessfa.domain.model.DraftSurvey

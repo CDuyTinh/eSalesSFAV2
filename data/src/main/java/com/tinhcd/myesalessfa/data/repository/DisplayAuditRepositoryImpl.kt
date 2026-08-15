@@ -1,8 +1,8 @@
 package com.tinhcd.myesalessfa.data.repository
 
-import com.tinhcd.myesalessfa.data.remote.AuditPhotoPayload
-import com.tinhcd.myesalessfa.data.remote.DisplayAuditApi
-import com.tinhcd.myesalessfa.data.remote.DisplayAuditPayload
+import com.tinhcd.myesalessfa.data.remote.dto.AuditPhotoPayload
+import com.tinhcd.myesalessfa.data.remote.api.DisplayAuditApi
+import com.tinhcd.myesalessfa.data.remote.dto.DisplayAuditPayload
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.DraftDisplayAudit
 import com.tinhcd.myesalessfa.domain.repository.DisplayAuditRepository

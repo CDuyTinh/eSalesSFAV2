@@ -1,4 +1,4 @@
-package com.tinhcd.myesalessfa.data.remote
+package com.tinhcd.myesalessfa.data.remote.dto
 
 import java.util.Locale
 

@@ -1,7 +1,7 @@
 package com.tinhcd.myesalessfa.data.repository
 
-import com.tinhcd.myesalessfa.data.remote.FeedbackApi
-import com.tinhcd.myesalessfa.data.remote.FeedbackPayload
+import com.tinhcd.myesalessfa.data.remote.api.FeedbackApi
+import com.tinhcd.myesalessfa.data.remote.dto.FeedbackPayload
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.DraftFeedback
 import com.tinhcd.myesalessfa.domain.repository.FeedbackRepository

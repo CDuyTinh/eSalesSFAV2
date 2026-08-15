@@ -1,4 +1,7 @@
-package com.tinhcd.myesalessfa.data.remote
+package com.tinhcd.myesalessfa.data.remote.api
+
+import com.tinhcd.myesalessfa.data.remote.dto.StockCountPayload
+import com.tinhcd.myesalessfa.data.remote.service.StockService
 
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import javax.inject.Inject
@@ -14,7 +17,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class StockApi @Inject constructor(
-    private val service: FunctionsService,
+    private val service: StockService,
 ) {
     suspend fun submit(payload: StockCountPayload) {
         service.submitStockCount(payload).orThrow()
