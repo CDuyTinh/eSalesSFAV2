@@ -3,6 +3,7 @@ package com.tinhcd.myesalessfa.domain.repository
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.CheckInPolicy
 import com.tinhcd.myesalessfa.domain.model.CheckInRequest
+import com.tinhcd.myesalessfa.domain.model.DayRoute
 import com.tinhcd.myesalessfa.domain.model.DraftDisplayAudit
 import com.tinhcd.myesalessfa.domain.model.DraftFeedback
 import com.tinhcd.myesalessfa.domain.model.DraftOrder
@@ -53,8 +54,14 @@ interface AuthRepository {
 }
 
 interface RouteRepository {
-    /** Stops scheduled for [date], in visit order. */
-    suspend fun getRoute(date: LocalDate): DataResult<List<RouteStop>>
+    /**
+     * Stops scheduled for [date], in visit order.
+     *
+     * Falls back to the copy the device kept when the server cannot be reached, so a
+     * rep standing in a shop with no bars can still see which outlet they are in and
+     * check into it. Only a date that has never been fetched can fail outright.
+     */
+    suspend fun getRoute(date: LocalDate): DataResult<DayRoute>
 
     suspend fun getStop(customerId: String, date: LocalDate): DataResult<RouteStop?>
 }

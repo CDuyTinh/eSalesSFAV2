@@ -41,6 +41,13 @@ data class RouteUiState(
      * act on.
      */
     val sync: SyncState = SyncState(),
+    /**
+     * These stops came off the device because the server could not be reached. Every
+     * one of them is still workable — that is the point — but the rep should know they
+     * are looking at a copy rather than this minute's plan.
+     */
+    val routeFromCache: Boolean = false,
+    val routeFetchedAtEpochMs: Long? = null,
 )
 
 @HiltViewModel
@@ -82,9 +89,17 @@ class RouteViewModel @Inject constructor(
         _state.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             when (val result = getTodayRoute()) {
-                is DataResult.Success ->
-                    _state.update { it.copy(loading = false, stops = result.data) }
+                is DataResult.Success -> _state.update {
+                    it.copy(
+                        loading = false,
+                        stops = result.data.stops,
+                        routeFromCache = result.data.fromCache,
+                        routeFetchedAtEpochMs = result.data.fetchedAtEpochMs,
+                    )
+                }
 
+                // Only reachable for a date the device has never fetched, since
+                // anything seen once is served from the cache after that.
                 is DataResult.Failure ->
                     _state.update {
                         it.copy(loading = false, error = "Khong tai duoc tuyen hom nay")

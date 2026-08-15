@@ -290,6 +290,45 @@ interface CatalogDao {
     suspend fun mslItems(): List<MslItemEntity>
 }
 
+/**
+ * The last route the server gave us for one date, kept so the day's customers are
+ * still there when the signal is not.
+ *
+ * Until this existed the route screen needed a live connection to show anything at
+ * all: a rep who opened the app in a shop with no bars got an error and could not
+ * even see which outlet they were standing in, let alone check in — while every write
+ * behind that screen had been carefully built to survive being offline.
+ *
+ * Stored as the JSON that arrived, like the questionnaires above. It is the endpoint's
+ * own shape, so there is no second mapping to drift out of step with the wire format,
+ * and a route is always read whole rather than queried across.
+ */
+@Entity(tableName = "route_cache")
+data class RouteCacheEntity(
+    /** ISO date, which is what the endpoint is keyed by. */
+    @PrimaryKey val date: String,
+    val json: String,
+    /** So the screen can say how old what it is showing is. */
+    val fetchedAt: Long,
+)
+
+@Dao
+interface RouteDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(row: RouteCacheEntity)
+
+    @Query("SELECT * FROM route_cache WHERE date = :date")
+    suspend fun forDate(date: String): RouteCacheEntity?
+
+    /**
+     * Keeps a few days either side of today and drops the rest. Yesterday's route is
+     * worth having for a check-in that has not flushed yet; last month's is dead
+     * weight on a phone that never gets cleaned.
+     */
+    @Query("DELETE FROM route_cache WHERE date < :oldestToKeep")
+    suspend fun deleteBefore(oldestToKeep: String)
+}
+
 @Database(
     entities = [
         OutboxEntity::class,
@@ -303,10 +342,11 @@ interface CatalogDao {
         MslEntity::class,
         MslItemEntity::class,
         SurveyDefinitionEntity::class,
+        RouteCacheEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
-    // Both steps only add tables, so Room derives them. Spelled out rather than
+    // Every step only adds tables, so Room derives them. Spelled out rather than
     // left to the destructive fallback because the outbox carries orders and stock
     // counts: dropping it would throw away a sale already agreed with a customer,
     // or a shelf count nobody can retake from memory.
@@ -314,10 +354,12 @@ interface CatalogDao {
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5),
+        AutoMigration(from = 5, to = 6),
     ],
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun outboxDao(): OutboxDao
     abstract fun configDao(): ConfigDao
     abstract fun catalogDao(): CatalogDao
+    abstract fun routeDao(): RouteDao
 }

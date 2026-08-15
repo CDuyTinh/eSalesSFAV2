@@ -39,6 +39,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
 import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.domain.model.RouteStop
@@ -120,6 +123,16 @@ fun RouteScreen(
                     // Below both of those: the cache being a day old is the mildest of
                     // the three things this screen can have to report, and every screen
                     // still works while it is true.
+                    if (state.routeFromCache) {
+                        Text(
+                            "Dang xem tuyen luu tren may" +
+                                (state.routeFetchedAtEpochMs?.let { " (tai luc ${clockOf(it)})" } ?: "") +
+                                ". Van check-in duoc, du lieu se gui sau.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                        )
+                    }
                     if (state.sync.lastAttemptFailed && !state.sync.syncing) {
                         Text(
                             "Chua cap nhat duoc du lieu moi nhat. Dang dung du lieu da tai truoc do.",
@@ -192,14 +205,24 @@ private fun PendingBanner(count: Int) {
     }
 }
 
+/** Wall-clock time, which is what a rep compares against their own watch. */
+private fun clockOf(epochMs: Long): String = DateTimeFormatter
+    .ofPattern("HH:mm")
+    .format(Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()))
+
 @Composable
 private fun StopCard(stop: RouteStop, onClick: () -> Unit) {
     val done = stop.status == VisitStatus.COMPLETED
 
+    // A check-in still in the outbox has no visit id, so there is no workflow to open —
+    // and offering the check-in again would queue a duplicate the database is bound to
+    // refuse. Locked until it lands.
+    val openable = !done && !stop.isWaitingToSync
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = !done, onClick = onClick),
+            .clickable(enabled = openable, onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
         ),
@@ -227,12 +250,16 @@ private fun StopCard(stop: RouteStop, onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = stop.status.label(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (done) {
-                        MaterialTheme.colorScheme.primary
+                    text = if (stop.isWaitingToSync) {
+                        "Da check-in, cho dong bo"
                     } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
+                        stop.status.label()
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = when {
+                        done -> MaterialTheme.colorScheme.primary
+                        stop.isWaitingToSync -> MaterialTheme.colorScheme.secondary
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant
                     },
                 )
             }

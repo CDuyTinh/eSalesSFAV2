@@ -6,6 +6,7 @@ import com.tinhcd.myesalessfa.data.local.AppDatabase
 import com.tinhcd.myesalessfa.data.local.CatalogDao
 import com.tinhcd.myesalessfa.data.local.ConfigDao
 import com.tinhcd.myesalessfa.data.local.OutboxDao
+import com.tinhcd.myesalessfa.data.local.RouteDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -35,4 +36,7 @@ object DatabaseModule {
 
     @Provides
     fun provideCatalogDao(db: AppDatabase): CatalogDao = db.catalogDao()
+
+    @Provides
+    fun provideRouteDao(db: AppDatabase): RouteDao = db.routeDao()
 }
