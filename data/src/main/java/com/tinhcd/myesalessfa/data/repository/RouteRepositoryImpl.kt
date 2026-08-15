@@ -73,6 +73,7 @@ private fun String.toVisitStatus(): VisitStatus = when (this) {
     "completed" -> VisitStatus.COMPLETED
     "no_order" -> VisitStatus.NO_ORDER
     "closed" -> VisitStatus.CLOSED
+    "abandoned" -> VisitStatus.ABANDONED
     else -> VisitStatus.PLANNED
 }
 

@@ -34,7 +34,24 @@ data class Customer(
     val shopTypeId: String? = null,
 )
 
-enum class VisitStatus { PLANNED, IN_PROGRESS, COMPLETED, NO_ORDER, CLOSED }
+enum class VisitStatus {
+    PLANNED,
+    IN_PROGRESS,
+    COMPLETED,
+    NO_ORDER,
+
+    /** The outlet was shut when the rep arrived — reported by the rep. */
+    CLOSED,
+
+    /**
+     * Checked into on an earlier day and never checked out of, so the server closed
+     * it. Not the same as [CLOSED], which is a fact about the shop; this is a fact
+     * about the visit. A rep cannot reach one of these — a previous day's visit is
+     * not resumable, because checking out of it now would stamp a time long after
+     * the rep left.
+     */
+    ABANDONED,
+}
 
 /** One stop on today's route: the customer plus how the visit is going. */
 data class RouteStop(
