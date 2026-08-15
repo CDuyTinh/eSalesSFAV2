@@ -54,6 +54,21 @@ Deno.serve(handler(async (req, db) => {
   }
   const isoWeekday = parsed.getUTCDay() === 0 ? 7 : parsed.getUTCDay();
 
+  // Reconcile before reading, so the route the rep is shown is already true.
+  //
+  // A visit checked into on an earlier day and never checked out of used to stay
+  // 'in_progress' for ever: this endpoint only returns the requested day's stops,
+  // so the row became unreachable from the app the moment the date rolled over
+  // while still counting as an open visit everywhere else. Start of day is the
+  // natural moment to settle that, and it is the one moment the app is certain to
+  // ask for. The date is forwarded because the rep's "yesterday" is a question
+  // about their timezone, not this server's.
+  //
+  // Failing here must not cost the rep their route, so the outcome is not checked:
+  // the reconciliation is housekeeping, and it will get another chance on the next
+  // load. RLS confines it to the caller's own visits either way.
+  await db.rpc("close_abandoned_visits", { p_before: date });
+
   const [stops, visits] = await Promise.all([
     db
       .from("route_customer")

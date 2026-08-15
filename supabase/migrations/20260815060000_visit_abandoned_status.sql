@@ -1,0 +1,23 @@
+-- =============================================================================
+-- A status for a visit that was checked into and never checked out.
+--
+-- Until now such a visit stayed 'in_progress' for ever. Nothing closed it and
+-- nothing could reach it: /route only returns the requested day's stops, so once
+-- the date rolled over the row was invisible to the rep who owned it and still
+-- counted as an open visit in the database. Two of them accumulated in three days
+-- of manual testing, which is a fair indication of how a real route would look
+-- after a month of flat batteries and force-quits.
+--
+-- 'closed' already exists but means something else entirely — the outlet was shut
+-- when the rep arrived, which is a fact the rep reported about the shop. Reusing
+-- it would have overwritten a business outcome with a housekeeping one, and the
+-- route screen would have labelled these visits "Dong cua" to the rep who knows
+-- perfectly well the shop was open.
+--
+-- Deliberately its own migration: Postgres will not let a new enum value be used
+-- in the same transaction that adds it, and `supabase db push` runs one
+-- transaction per file. The function that writes this value lives in the next
+-- migration for exactly that reason.
+-- =============================================================================
+
+alter type visit_status add value if not exists 'abandoned';

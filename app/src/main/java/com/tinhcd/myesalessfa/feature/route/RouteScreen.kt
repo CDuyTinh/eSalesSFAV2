@@ -204,4 +204,7 @@ private fun VisitStatus.label(): String = when (this) {
     VisitStatus.COMPLETED -> "Da hoan thanh"
     VisitStatus.NO_ORDER -> "Khong dat hang"
     VisitStatus.CLOSED -> "Dong cua"
+    // Defensive only: abandonment applies to earlier dates than the one asked for,
+    // and this list is one day's stops, so a stop should never arrive in this state.
+    VisitStatus.ABANDONED -> "Bo do - khong check-out"
 }
