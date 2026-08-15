@@ -171,7 +171,19 @@ insert into sales_step (form_id, step, title_key, is_required, needs_visit, conf
     ('posm_status',      5, 'step_posm_status',      false, true, '{}'),
     ('market_info',      6, 'step_market_info',      false, true, '{}'),
     ('feedback',         7, 'step_feedback',         false, true, '{"allow_audio": true, "note_min_length": 5}')
-on conflict (form_id) do nothing;
+-- Converges rather than inserting once. `do nothing` is not the same as idempotent:
+-- these rows were seeded before note_min_length existed, so re-running the seed left
+-- the old empty config in place and the app read a minimum of nothing. Found by
+-- opening the step on a device and seeing it ask for 1 character instead of 10.
+--
+-- Overwriting is right for the workflow definition specifically: it is the data the
+-- app's behaviour keys off, and a dev seed exists to produce a known state.
+on conflict (form_id) do update set
+    step        = excluded.step,
+    title_key   = excluded.title_key,
+    is_required = excluded.is_required,
+    needs_visit = excluded.needs_visit,
+    config      = excluded.config;
 
 -- -----------------------------------------------------------------------------
 -- Translations
