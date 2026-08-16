@@ -3,6 +3,7 @@ package com.tinhcd.myesalessfa.data.di
 import com.tinhcd.myesalessfa.data.BuildConfig
 import com.tinhcd.myesalessfa.data.remote.service.BootstrapService
 import com.tinhcd.myesalessfa.data.remote.service.CatalogueService
+import com.tinhcd.myesalessfa.data.remote.service.DashboardService
 import com.tinhcd.myesalessfa.data.remote.service.DisplayAuditService
 import com.tinhcd.myesalessfa.data.remote.service.FeedbackService
 import com.tinhcd.myesalessfa.data.remote.service.OrderService
@@ -128,6 +129,11 @@ object NetworkModule {
     @Singleton
     fun provideCatalogueService(retrofit: Retrofit): CatalogueService =
         retrofit.create(CatalogueService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideDashboardService(retrofit: Retrofit): DashboardService =
+        retrofit.create(DashboardService::class.java)
 
     @Provides
     @Singleton
