@@ -19,11 +19,16 @@ import com.tinhcd.myesalessfa.feature.incall.steps.NoteStepScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.StockCountScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.SurveyScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.TakeOrderScreen
-import com.tinhcd.myesalessfa.feature.route.RouteScreen
+import com.tinhcd.myesalessfa.feature.shell.MainShell
 
 object Routes {
     const val LOGIN = "login"
-    const val ROUTE = "route"
+
+    /**
+     * Everything after sign-in lives inside the shell. Its tabs are not routes:
+     * they are configuration, and the bar is built from whatever the server sent.
+     */
+    const val SHELL = "shell"
     const val CHECK_IN = "checkin/{customerId}"
     const val IN_CALL = "incall/{visitId}/{customerId}"
     // The customer travels with the step, not just the visit: take_order prices
@@ -48,7 +53,7 @@ fun AppNavHost(
         composable(Routes.LOGIN) {
             LoginScreen(
                 onSignedIn = {
-                    navController.navigate(Routes.ROUTE) {
+                    navController.navigate(Routes.SHELL) {
                         // No going back to the login form with the hardware
                         // button once a session exists.
                         popUpTo(Routes.LOGIN) { inclusive = true }
@@ -57,8 +62,8 @@ fun AppNavHost(
             )
         }
 
-        composable(Routes.ROUTE) {
-            RouteScreen(
+        composable(Routes.SHELL) {
+            MainShell(
                 onOpenStop = { stop ->
                     // Where a tap goes depends on how far the visit has got.
                     // Already checked in means the rep wants the work list, not
@@ -101,7 +106,7 @@ fun AppNavHost(
                 onOpenStep = { formId ->
                     navController.navigate(Routes.step(visitId, customerId, formId))
                 },
-                onCheckedOut = { navController.popBackStack(Routes.ROUTE, inclusive = false) },
+                onCheckedOut = { navController.popBackStack(Routes.SHELL, inclusive = false) },
             )
         }
 

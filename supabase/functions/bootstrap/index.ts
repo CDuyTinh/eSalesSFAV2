@@ -38,20 +38,34 @@ Deno.serve(handler(async (req, db) => {
   const requested = new URL(req.url).searchParams.get("lang") ?? "vi";
   const lang = requested === "en" ? "en" : "vi";
 
-  const [salesperson, settings, reasonCodes, salesSteps, translations, surveys] =
-    await Promise.all([
-      db.from("salesperson").select(SALESPERSON_COLUMNS).then(unwrap),
-      db.from("app_setting").select("key,value").then(unwrap),
-      db.from("reason_code").select("id,code,name,kind").eq("is_active", true)
-        .order("name").then(unwrap),
-      db.from("sales_step")
-        .select("form_id,step,title_key,is_required,config")
-        .eq("is_active", true).order("step").then(unwrap),
-      db.from("translation").select("key,value").eq("lang_code", lang)
-        .then(unwrap),
-      db.from("survey_type").select(SURVEY_COLUMNS).eq("is_active", true)
-        .order("code").then(unwrap),
-    ]);
+  const [
+    salesperson,
+    settings,
+    reasonCodes,
+    salesSteps,
+    translations,
+    surveys,
+    menu,
+  ] = await Promise.all([
+    db.from("salesperson").select(SALESPERSON_COLUMNS).then(unwrap),
+    db.from("app_setting").select("key,value").then(unwrap),
+    db.from("reason_code").select("id,code,name,kind").eq("is_active", true)
+      .order("name").then(unwrap),
+    db.from("sales_step")
+      .select("form_id,step,title_key,is_required,config")
+      .eq("is_active", true).order("step").then(unwrap),
+    db.from("translation").select("key,value").eq("lang_code", lang)
+      .then(unwrap),
+    db.from("survey_type").select(SURVEY_COLUMNS).eq("is_active", true)
+      .order("code").then(unwrap),
+    // Flat, with parent_code carrying the nesting. The client is going to key it
+    // by parent anyway to render a bar and three sheets, and a nested shape here
+    // would only be flattened again on arrival.
+    db.from("menu_item")
+      .select("code,parent_code,title_key,sort_order")
+      .eq("is_active", true)
+      .order("sort_order").then(unwrap),
+  ]);
 
   const toMap = (rows: KeyValue[]) =>
     Object.fromEntries(rows.map((r) => [r.key, r.value]));
@@ -70,6 +84,7 @@ Deno.serve(handler(async (req, db) => {
     // and a questionnaire whose questions shuffle between screen loads is one no rep
     // can work through.
     surveys: sortSurveys(surveys as SurveyType[]),
+    menu,
   });
 }));
 

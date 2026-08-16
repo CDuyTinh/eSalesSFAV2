@@ -1,5 +1,11 @@
 package com.tinhcd.myesalessfa.data.repository
 
+import com.tinhcd.myesalessfa.data.local.MenuItemEntity
+import com.tinhcd.myesalessfa.domain.model.AppMenu
+import com.tinhcd.myesalessfa.domain.model.MenuEntry
+import com.tinhcd.myesalessfa.domain.model.MenuKind
+import com.tinhcd.myesalessfa.domain.model.SupportedMenu
+
 import com.tinhcd.myesalessfa.data.local.ConfigDao
 import com.tinhcd.myesalessfa.data.local.ReasonEntity
 import com.tinhcd.myesalessfa.data.local.SalesStepEntity
@@ -53,6 +59,49 @@ class ConfigRepositoryImpl @Inject constructor(
 
     /** Falls back to the key so a missing label is visible rather than blank. */
     override suspend fun translate(key: String): String = dao.translation(key) ?: key
+
+    /**
+     * Assembled from the flat rows the server sent: tabs are the ones with no
+     * parent, and everything else hangs off its parent's code.
+     *
+     * A tab the server enabled that this build has no screen for still appears,
+     * marked unimplemented. Hiding it would leave a rep who was told the feature
+     * exists hunting for a tab that silently is not there.
+     */
+    override suspend fun menu(): AppMenu {
+        val rows = dao.menu()
+        if (rows.isEmpty()) return AppMenu.Fallback
+
+        val childrenByParent = rows.filter { it.parentCode != null }.groupBy { it.parentCode }
+
+        val tabs = rows
+            .filter { it.parentCode == null }
+            .sortedBy { it.sortOrder }
+            .map { tab ->
+                MenuEntry(
+                    code = tab.code,
+                    titleKey = tab.titleKey,
+                    title = translate(tab.titleKey),
+                    order = tab.sortOrder,
+                    kind = if (tab.code in SupportedMenu.pages) MenuKind.PAGE else MenuKind.SHEET,
+                    implemented = tab.code in SupportedMenu.implemented,
+                    children = childrenByParent[tab.code].orEmpty()
+                        .sortedBy { it.sortOrder }
+                        .map { child ->
+                            MenuEntry(
+                                code = child.code,
+                                titleKey = child.titleKey,
+                                title = translate(child.titleKey),
+                                order = child.sortOrder,
+                                kind = MenuKind.PAGE,
+                                implemented = child.code in SupportedMenu.implemented,
+                            )
+                        },
+                )
+            }
+
+        return AppMenu(tabs = tabs)
+    }
 
     /**
      * Currently one rule, the legacy REQUIRE_STOCK_BEFORE_ORDER: count the
@@ -112,6 +161,18 @@ class ConfigRepositoryImpl @Inject constructor(
         dao.upsertSurveyDefinitions(
             bootstrap.surveys.map {
                 SurveyDefinitionEntity(formId = it.formId, json = json.encodeToString(it))
+            },
+        )
+
+        dao.clearMenu()
+        dao.upsertMenu(
+            bootstrap.menu.map {
+                MenuItemEntity(
+                    code = it.code,
+                    parentCode = it.parentCode,
+                    titleKey = it.titleKey,
+                    sortOrder = it.sortOrder,
+                )
             },
         )
 

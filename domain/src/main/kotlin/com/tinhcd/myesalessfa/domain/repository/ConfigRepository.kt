@@ -1,12 +1,20 @@
 package com.tinhcd.myesalessfa.domain.repository
 
 import com.tinhcd.myesalessfa.domain.DataResult
+import com.tinhcd.myesalessfa.domain.model.AppMenu
 import com.tinhcd.myesalessfa.domain.model.CheckInPolicy
 import com.tinhcd.myesalessfa.domain.model.ReasonCode
 import com.tinhcd.myesalessfa.domain.model.ReasonKind
 
 interface ConfigRepository {
     suspend fun checkInPolicy(): CheckInPolicy
+
+    /**
+     * The shell's tabs and their sheet entries, already translated and ordered.
+     * Falls back to [AppMenu.Fallback] rather than an empty bar when the cache
+     * has not been filled yet.
+     */
+    suspend fun menu(): AppMenu
 
     suspend fun reasons(kind: ReasonKind): List<ReasonCode>
 

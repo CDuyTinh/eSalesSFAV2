@@ -25,7 +25,6 @@ data class RouteUiState(
     val stops: List<RouteStop> = emptyList(),
     val me: Salesperson? = null,
     val error: String? = null,
-    val signedOut: Boolean = false,
     /**
      * Signed in, but the rep's profile has not arrived. Worth saying out loud rather
      * than just leaving the app bar subtitle blank: a check-in stamps salesperson_id
@@ -113,10 +112,4 @@ class RouteViewModel @Inject constructor(
         }
     }
 
-    fun signOut() {
-        viewModelScope.launch {
-            authRepository.signOut()
-            _state.update { it.copy(signedOut = true) }
-        }
-    }
 }
