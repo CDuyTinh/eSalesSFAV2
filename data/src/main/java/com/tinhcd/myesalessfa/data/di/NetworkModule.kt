@@ -11,6 +11,7 @@ import com.tinhcd.myesalessfa.data.remote.service.StockService
 import com.tinhcd.myesalessfa.data.remote.service.SurveyService
 import com.tinhcd.myesalessfa.data.remote.service.VisitService
 import com.tinhcd.myesalessfa.data.remote.service.WorkflowService
+import com.tinhcd.myesalessfa.data.remote.http.ClockSkewRetryInterceptor
 import com.tinhcd.myesalessfa.data.remote.http.SessionTokens
 import com.tinhcd.myesalessfa.data.remote.http.SupabaseApiKey
 import com.tinhcd.myesalessfa.data.remote.http.SupabaseAuthInterceptor
@@ -77,9 +78,13 @@ object NetworkModule {
     @Singleton
     fun provideOkHttp(
         authInterceptor: SupabaseAuthInterceptor,
+        clockSkewRetry: ClockSkewRetryInterceptor,
         authenticator: SupabaseTokenAuthenticator,
     ): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(authInterceptor)
+        // After the auth interceptor, so the retry carries the same token — the
+        // token is not the problem, the clock is.
+        .addInterceptor(clockSkewRetry)
         .authenticator(authenticator)
         .apply {
             if (BuildConfig.DEBUG) {

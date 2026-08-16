@@ -1,9 +1,12 @@
 package com.tinhcd.myesalessfa.data.repository
 
+import android.util.Log
+
 import com.tinhcd.myesalessfa.data.di.ApplicationScope
 import com.tinhcd.myesalessfa.data.remote.dto.SalespersonDto
 import com.tinhcd.myesalessfa.data.session.SessionStore
 import com.tinhcd.myesalessfa.domain.AppError
+import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.Salesperson
 import com.tinhcd.myesalessfa.domain.model.SessionState
@@ -14,6 +17,7 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.status.SessionStatus
+import com.tinhcd.myesalessfa.data.util.SingleFlight
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,7 +52,9 @@ class AuthRepositoryImpl @Inject constructor(
     private val client: SupabaseClient,
     private val service: BootstrapService,
     private val session: SessionStore,
-    @ApplicationScope scope: CoroutineScope,
+    // `@param:` keeps the qualifier on the constructor parameter, which is where
+    // Dagger looks, now that the scope is also held as a property.
+    @param:ApplicationScope private val scope: CoroutineScope,
 ) : AuthRepository {
 
     /**
@@ -61,6 +67,8 @@ class AuthRepositoryImpl @Inject constructor(
      * which is precisely the bug this replaced.
      */
     private val resolved = MutableStateFlow<SessionState?>(null)
+
+    private val profileFlight = SingleFlight<DataResult<Salesperson>>(scope)
 
     init {
         // One collector for the process. The profile is fetched when the session
@@ -109,8 +117,9 @@ class AuthRepositoryImpl @Inject constructor(
             return DataResult.Failure(e.toAppError())
         }
 
-        // The session collector will also resolve this sign-in, but the caller is
-        // waiting on an answer now and wants the specific reason on failure.
+        // The session collector resolves this sign-in too. Both land on the same
+        // single-flight call, so the collector joins this one rather than issuing
+        // a second — and the caller still gets the specific reason on failure.
         return refreshProfile()
     }
 
@@ -126,11 +135,27 @@ class AuthRepositoryImpl @Inject constructor(
      * Slightly more than is needed for a name in the app bar, but it is one small
      * request on session change only, and it avoids a second endpoint existing
      * purely to return one row. The catalogue is a separate call and not pulled here.
+     *
+     * Single-flight. Signing in reaches this twice at once — once from [signIn],
+     * once from the collector reacting to the very same event — and on a real
+     * device the two racing requests produced a 400 on one of them, which surfaced
+     * to the rep as "signed in but no profile" on an otherwise good login. A second
+     * caller now joins the request already in the air instead of starting another.
+     *
+     * Deliberately not a cache: the entry is cleared as soon as the call settles,
+     * so a later retry after a failure really does go back to the server.
      */
-    override suspend fun refreshProfile(): DataResult<Salesperson> {
+    override suspend fun refreshProfile(): DataResult<Salesperson> =
+        profileFlight.run { fetchProfile() }
+
+    private suspend fun fetchProfile(): DataResult<Salesperson> {
         val profile = try {
-            service.bootstrap(lang = activeLanguage()).salesperson?.toDomain()
+            service.bootstrap(lang = activeLanguage()).orThrow().salesperson?.toDomain()
         } catch (e: Exception) {
+            // Logged because the rep is shown a fixed sentence, and without this a
+            // failed bootstrap left no record anywhere of what the server said.
+            Log.w("AuthRepository", "bootstrap failed: ${e.message}", e)
+
             // The session is valid — it was accepted — so it stays, and the state
             // says signed in without a profile. The rep can retry without typing a
             // password again, and the message says what actually went wrong.

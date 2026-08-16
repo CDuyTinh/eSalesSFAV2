@@ -86,7 +86,7 @@ class FunctionServicesTest {
     @Test
     fun `reads hit their function with the parameters the function requires`() = runTest {
         enqueue("""{"settings":{},"translations":{}}""")
-        bootstrap.bootstrap("vi")
+        bootstrap.bootstrap("vi").orThrow()
         assertEquals("/functions/v1/bootstrap?lang=vi", server.takeRequest().target)
 
         enqueue("""{"generated_at":"now","products":[],"price_rules":[]}""")
@@ -163,7 +163,7 @@ class FunctionServicesTest {
                  "lang":"vi","translations":{"step_take_order":"Dat hang"}}""",
         )
 
-        val boot = bootstrap.bootstrap("vi")
+        val boot = bootstrap.bootstrap("vi").orThrow()
 
         assertEquals("nvbh01", boot.salesperson?.code)
         assertEquals("BR01", boot.salesperson?.branch?.code)
@@ -180,7 +180,7 @@ class FunctionServicesTest {
         // Authenticated but with no salesperson row. The app treats this as a
         // failed login rather than dropping the rep into an app with no branch.
         enqueue("""{"salesperson":null,"settings":{},"translations":{}}""")
-        assertNull(bootstrap.bootstrap("vi").salesperson)
+        assertNull(bootstrap.bootstrap("vi").orThrow().salesperson)
     }
 
     @Test

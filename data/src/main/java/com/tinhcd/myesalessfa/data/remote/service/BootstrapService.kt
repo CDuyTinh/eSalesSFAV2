@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.data.remote.service
 
 import com.tinhcd.myesalessfa.data.remote.dto.BootstrapDto
+import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -24,6 +25,12 @@ interface BootstrapService {
      * Profile, settings, reason codes, workflow definition and labels in one
      * response. Called after sign-in, before the first check-in can need any of it.
      */
+    /**
+     * Returns [Response] rather than the body so a failure keeps the message the
+     * function raised. Retrofit's own HttpException reports the status and throws
+     * the body away, which is how a bootstrap failure reached a rep as nothing
+     * more useful than "could not load".
+     */
     @GET("bootstrap")
-    suspend fun bootstrap(@Query("lang") lang: String): BootstrapDto
+    suspend fun bootstrap(@Query("lang") lang: String): Response<BootstrapDto>
 }
