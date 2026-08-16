@@ -67,6 +67,17 @@ data class BootstrapDto(
     val translations: Map<String, String> = emptyMap(),
     /** One per questionnaire step; cached whole and read whole. */
     val surveys: List<SurveyTypeDto> = emptyList(),
+    /** Flat, with [MenuItemDto.parentCode] carrying the nesting. */
+    val menu: List<MenuItemDto> = emptyList(),
+)
+
+@Serializable
+data class MenuItemDto(
+    val code: String,
+    /** Null for a bottom-bar tab; set for an entry inside a tab's sheet. */
+    @SerialName("parent_code") val parentCode: String? = null,
+    @SerialName("title_key") val titleKey: String,
+    @SerialName("sort_order") val sortOrder: Int = 0,
 )
 
 @Serializable

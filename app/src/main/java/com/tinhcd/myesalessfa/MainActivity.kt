@@ -97,7 +97,7 @@ class RootViewModel @Inject constructor(
             // route screen, which says so and offers to retry.
             _startDestination.value = when (authRepository.sessionState.first()) {
                 is SessionState.SignedOut -> Routes.LOGIN
-                is SessionState.SignedIn -> Routes.ROUTE
+                is SessionState.SignedIn -> Routes.SHELL
             }
         }
     }

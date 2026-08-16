@@ -13,8 +13,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -51,17 +51,22 @@ import com.tinhcd.myesalessfa.domain.model.VisitStatus
 @Composable
 fun RouteScreen(
     onOpenStop: (RouteStop) -> Unit,
-    onSignedOut: () -> Unit,
+    onOpenDrawer: () -> Unit,
+    /**
+     * Head office may have added a tab in the same refresh that brought new
+     * prices, and the shell has to re-read its menu to show it.
+     */
+    onReferenceDataRefreshed: () -> Unit = {},
     viewModel: RouteViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    LaunchedEffect(state.signedOut) {
-        if (state.signedOut) onSignedOut()
-    }
-
     // Coming back from a check-in, the list must reflect it.
     LaunchedEffect(Unit) { viewModel.load() }
+
+    LaunchedEffect(state.sync.syncing) {
+        if (!state.sync.syncing) onReferenceDataRefreshed()
+    }
 
     Scaffold(
         topBar = {
@@ -76,6 +81,11 @@ fun RouteScreen(
                         if (subtitle.isNotBlank()) {
                             Text(subtitle, style = MaterialTheme.typography.labelSmall)
                         }
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onOpenDrawer) {
+                        Icon(Icons.Default.Menu, contentDescription = "Mo menu")
                     }
                 },
                 actions = {
@@ -96,9 +106,6 @@ fun RouteScreen(
                                 contentDescription = "Cap nhat du lieu",
                             )
                         }
-                    }
-                    IconButton(onClick = viewModel::signOut) {
-                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Dang xuat")
                     }
                 },
             )

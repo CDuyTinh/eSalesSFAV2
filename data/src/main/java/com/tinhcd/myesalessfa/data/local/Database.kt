@@ -54,6 +54,18 @@ data class SalesStepEntity(
     val config: String,
 )
 
+/**
+ * The shell's tab list. Flat, with [parentCode] carrying the nesting, matching
+ * both the table it came from and the shape the shell renders.
+ */
+@Entity(tableName = "menu_item")
+data class MenuItemEntity(
+    @PrimaryKey val code: String,
+    val parentCode: String?,
+    val titleKey: String,
+    val sortOrder: Int,
+)
+
 @Entity(tableName = "translation")
 data class TranslationEntity(
     @PrimaryKey val key: String,
@@ -108,6 +120,16 @@ interface ConfigDao {
 
     @Query("SELECT value FROM translation WHERE key = :key")
     suspend fun translation(key: String): String?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertMenu(rows: List<MenuItemEntity>)
+
+    /** Replaced wholesale, so a tab head office retired stops being rendered. */
+    @Query("DELETE FROM menu_item")
+    suspend fun clearMenu()
+
+    @Query("SELECT * FROM menu_item ORDER BY sortOrder ASC")
+    suspend fun menu(): List<MenuItemEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertSurveyDefinitions(rows: List<SurveyDefinitionEntity>)
@@ -266,8 +288,9 @@ class DropOfflineTables : AutoMigrationSpec
         MslEntity::class,
         MslItemEntity::class,
         SurveyDefinitionEntity::class,
+        MenuItemEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = true,
     // Everything in here is reference data the app re-fetches on launch, so these
     // migrations are a courtesy rather than a safeguard — nothing kept locally is
@@ -278,6 +301,7 @@ class DropOfflineTables : AutoMigrationSpec
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 5, to = 6),
         AutoMigration(from = 6, to = 7, spec = DropOfflineTables::class),
+        AutoMigration(from = 7, to = 8),
     ],
 )
 abstract class AppDatabase : RoomDatabase() {
