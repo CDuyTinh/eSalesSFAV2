@@ -16,6 +16,7 @@ import com.tinhcd.myesalessfa.data.remote.dto.ReasonCodeDto
 import com.tinhcd.myesalessfa.data.remote.dto.SalesStepDto
 import com.tinhcd.myesalessfa.data.remote.dto.SettingDto
 import com.tinhcd.myesalessfa.data.remote.dto.TranslationDto
+import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.CheckInPolicy
 import com.tinhcd.myesalessfa.domain.model.ReasonCode
@@ -124,7 +125,7 @@ class ConfigRepositoryImpl @Inject constructor(
      * list-to-map step used to happen here on every refresh.
      */
     override suspend fun refresh(): DataResult<Unit> = try {
-        val bootstrap = service.bootstrap(lang = activeLanguage())
+        val bootstrap = service.bootstrap(lang = activeLanguage()).orThrow()
 
         dao.upsertSettings(bootstrap.settings.map { (key, value) -> SettingEntity(key, value) })
 
