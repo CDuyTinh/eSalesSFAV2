@@ -32,6 +32,9 @@ android {
     }
     buildFeatures {
         compose = true
+        // The sign-in screen shows the build number, which is the first thing
+        // support asks a rep for.
+        buildConfig = true
     }
 }
 
