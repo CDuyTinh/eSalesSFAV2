@@ -76,6 +76,8 @@ import kotlinx.coroutines.launch
 fun MainShell(
     onOpenStop: (RouteStop) -> Unit,
     onOpenWorkDay: () -> Unit,
+    /** A sheet entry this build has a screen for. The code, not the label. */
+    onOpenMenuEntry: (String) -> Unit,
     onSignedOut: () -> Unit,
     viewModel: ShellViewModel = hiltViewModel(),
 ) {
@@ -150,7 +152,12 @@ fun MainShell(
             onDismissRequest = viewModel::dismissSheet,
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         ) {
-            SheetMenu(tab = sheet, onSelect = viewModel::onSheetEntrySelected)
+            SheetMenu(
+                tab = sheet,
+                onSelect = { entry ->
+                    if (viewModel.onSheetEntrySelected(entry)) onOpenMenuEntry(entry.code)
+                },
+            )
         }
     }
 

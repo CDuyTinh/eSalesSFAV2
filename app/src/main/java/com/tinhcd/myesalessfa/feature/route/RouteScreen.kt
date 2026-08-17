@@ -488,6 +488,12 @@ private fun StopCard(
                             modifier = Modifier.weight(1f),
                         )
                         Spacer(Modifier.width(8.dp))
+                        // Before the code, because it changes what the code means:
+                        // this outlet is provisional and could still be rejected.
+                        if (stop.unplanned) {
+                            CodeChip(code = "Mới", color = UnplannedViolet)
+                            Spacer(Modifier.width(4.dp))
+                        }
                         CodeChip(code = stop.customer.code, color = stop.status.chipColor())
                     }
 
@@ -819,6 +825,9 @@ private val StatusAmber = Color(0xFFF5A202)
 private val StatusGrey = Color(0xFF8A8A93)
 private val ActionRed = Color(0xFFD5262B)
 private val CallBlue = Color(0xFF2D2DFE)
+
+/** Not one of the status colours: being off-MCP is not a stage of a visit. */
+private val UnplannedViolet = Color(0xFF5C00D4)
 private val FilterActive = Color(0xFFF5A202)
 
 private fun VisitStatus.chipColor(): Color = when (this) {

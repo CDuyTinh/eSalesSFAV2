@@ -61,6 +61,13 @@ data class RouteStop(
     val visitId: String?,
     val checkInAtEpochMs: Long?,
     val checkOutAtEpochMs: Long?,
+    /**
+     * The rep registered this outlet themselves and head office has not ruled on
+     * it yet, so it is on today's list without being in any MCP route. Worth
+     * saying on the card: the rep is looking at a stop nobody assigned them, and
+     * an order taken there is against an outlet that could still be rejected.
+     */
+    val unplanned: Boolean = false,
 )
 
 data class GeoPoint(

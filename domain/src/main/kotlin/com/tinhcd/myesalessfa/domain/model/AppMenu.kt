@@ -79,12 +79,16 @@ object SupportedMenu {
     const val TASKS = "TASKS"
     const val OTHER = "OTHER"
 
+    /** Entries inside a sheet. The first one this build actually has a screen for. */
+    const val NEW_CUSTOMER = "NEW_CUSTOMER"
+
     /** Tabs that swap the content area. Everything else opens a sheet. */
     val pages: Set<String> = setOf(DASH_BOARD, CHECK_IN)
 
     /**
      * Codes with a screen behind them today. The three sheet tabs are here
-     * because the sheet itself is the screen; their children are not, yet.
+     * because the sheet itself is the screen; of their children, only
+     * [NEW_CUSTOMER] has one so far.
      */
     val implemented: Set<String> = setOf(
         DASH_BOARD,
@@ -92,5 +96,6 @@ object SupportedMenu {
         CHECK_IN,
         TASKS,
         OTHER,
+        NEW_CUSTOMER,
     )
 }

@@ -19,9 +19,11 @@ import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
 // by them: the stock screen resolves which SKUs are required from the outlet's own
 // segment, and re-fetching the customer to learn it would be a second round trip
 // inside a screen that already has one.
-const ROUTE_COLUMNS =
-  "visit_order,customer:customer_id(id,code,name,address,phone,lat,lng," +
-  "avatar_url,checkin_radius_m,class_id,channel_id,shop_type_id)";
+const CUSTOMER_COLUMNS =
+  "id,code,name,address,phone,lat,lng," +
+  "avatar_url,checkin_radius_m,class_id,channel_id,shop_type_id";
+
+const ROUTE_COLUMNS = `visit_order,customer:customer_id(${CUSTOMER_COLUMNS})`;
 
 const VISIT_COLUMNS = "id,customer_id,status,check_in_at,check_out_at";
 
@@ -69,7 +71,16 @@ Deno.serve(handler(async (req, db) => {
   // load. RLS confines it to the caller's own visits either way.
   await db.rpc("close_abandoned_visits", { p_before: date });
 
-  const [stops, visits] = await Promise.all([
+  // Needed only to scope the registered outlets below. RLS answers every other
+  // query here without being told who is asking.
+  const me = (unwrap(
+    await db.from("salesperson").select("id"),
+  ) as { id: string }[])[0];
+
+  if (!me) throw new HttpError(403, "no salesperson is linked to this account");
+  const meId = me.id;
+
+  const [stops, visits, registered] = await Promise.all([
     db
       .from("route_customer")
       .select(ROUTE_COLUMNS)
@@ -82,27 +93,56 @@ Deno.serve(handler(async (req, db) => {
       .select(VISIT_COLUMNS)
       .eq("visit_date", date)
       .then((r) => unwrap(r) as VisitRow[]),
+    // Outlets this rep registered in the field and head office has not ruled on.
+    //
+    // They belong on the route or the registration is inert: the rep met the
+    // shop, and everything they might do there — check in, take an order, count
+    // the shelves — hangs off a stop. They stay until the decision comes: once
+    // approved, head office puts the outlet in an MCP route and it arrives above
+    // through the normal join; once rejected, it stops appearing at all.
+    //
+    // Filtered to the caller explicitly. RLS scopes `customer` to the branch,
+    // which is right for reading and wrong here: an unapproved outlet is the
+    // errand of the rep who walked into it, and a colleague's provisional shop
+    // on this list would be work nobody assigned.
+    db
+      .from("customer")
+      .select(CUSTOMER_COLUMNS)
+      .eq("approval_status", "pending")
+      .eq("is_active", true)
+      .eq("created_by_salesperson_id", meId)
+      .order("created_at", { ascending: true })
+      .then((r) => unwrap(r) as Customer[]),
   ]);
 
   const byCustomer = new Map(visits.map((v) => [v.customer_id, v]));
 
-  return json({
-    date,
-    stops: stops
-      // A route row whose customer is not readable — another branch's, say —
-      // arrives with a null embed. Dropping it beats emitting a stop the rep
-      // cannot open.
-      .filter((row) => row.customer !== null)
-      .map((row) => {
-        const visit = byCustomer.get(row.customer!.id) ?? null;
-        return {
-          visit_order: row.visit_order,
-          customer: row.customer,
-          visit_id: visit?.id ?? null,
-          status: visit?.status ?? "planned",
-          check_in_at: visit?.check_in_at ?? null,
-          check_out_at: visit?.check_out_at ?? null,
-        };
-      }),
-  });
+  const asStop = (customer: Customer, order: number, unplanned: boolean) => {
+    const visit = byCustomer.get(customer.id) ?? null;
+    return {
+      visit_order: order,
+      customer,
+      unplanned,
+      visit_id: visit?.id ?? null,
+      status: visit?.status ?? "planned",
+      check_in_at: visit?.check_in_at ?? null,
+      check_out_at: visit?.check_out_at ?? null,
+    };
+  };
+
+  const planned = stops
+    // A route row whose customer is not readable — another branch's, say —
+    // arrives with a null embed. Dropping it beats emitting a stop the rep
+    // cannot open.
+    .filter((row) => row.customer !== null)
+    .map((row) => asStop(row.customer!, row.visit_order, false));
+
+  // A registered outlet that has since been added to today's MCP route is
+  // already above; it must not appear twice.
+  const plannedIds = new Set(planned.map((s) => s.customer.id));
+  const extra = registered
+    .filter((c) => !plannedIds.has(c.id))
+    .map((c, i) => asStop(c, planned.length + i + 1, true));
+
+  return json({ date, stops: [...planned, ...extra] });
 }));

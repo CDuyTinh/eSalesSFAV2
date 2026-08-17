@@ -54,6 +54,7 @@ private fun RouteStopDto.toDomain() = RouteStop(
     visitId = visitId,
     checkInAtEpochMs = checkInAt?.toEpochMillisOrNull(),
     checkOutAtEpochMs = checkOutAt?.toEpochMillisOrNull(),
+    unplanned = unplanned,
 )
 
 private fun CustomerDto.toDomain() = Customer(
