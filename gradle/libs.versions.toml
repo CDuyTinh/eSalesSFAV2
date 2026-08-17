@@ -47,6 +47,11 @@ coil = "3.5.0"
 # for a display audit.
 exifinterface = "1.4.1"
 playServicesLocation = "21.4.0"
+# The route map. maps-compose wraps the same MapView the legacy app used through
+# google_maps_flutter, so the tiles, the key and the restrictions are all the
+# ones that project already had.
+playServicesMaps = "19.2.0"
+mapsCompose = "6.6.0"
 javaxInject = "1"
 
 junit = "4.13.2"
@@ -113,6 +118,8 @@ coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref 
 coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
 androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
+maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }
 
 # --- Test ---
 junit = { group = "junit", name = "junit", version.ref = "junit" }

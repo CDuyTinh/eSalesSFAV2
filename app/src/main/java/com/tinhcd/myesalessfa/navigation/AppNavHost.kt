@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.tinhcd.myesalessfa.domain.model.RouteStop
 import com.tinhcd.myesalessfa.domain.model.SupportedMenu
 import com.tinhcd.myesalessfa.domain.model.SupportedSteps
 import com.tinhcd.myesalessfa.domain.model.VisitStatus
@@ -22,6 +23,7 @@ import com.tinhcd.myesalessfa.feature.incall.steps.SurveyScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.TakeOrderScreen
 import com.tinhcd.myesalessfa.feature.newcustomer.NewCustomerScreen
 import com.tinhcd.myesalessfa.feature.receivables.ReceivablesScreen
+import com.tinhcd.myesalessfa.feature.routemap.RouteMapScreen
 import com.tinhcd.myesalessfa.feature.reports.ReportsScreen
 import com.tinhcd.myesalessfa.feature.shell.MainShell
 import com.tinhcd.myesalessfa.feature.workday.WorkDayScreen
@@ -40,6 +42,7 @@ object Routes {
     const val NEW_CUSTOMER = "newcustomer"
     const val REPORTS = "reports"
     const val RECEIVABLES = "receivables"
+    const val ROUTE_MAP = "routemap"
     const val CHECK_IN = "checkin/{customerId}"
     const val IN_CALL = "incall/{visitId}/{customerId}"
     // The customer travels with the step, not just the visit: take_order prices
@@ -75,6 +78,7 @@ fun AppNavHost(
 
         composable(Routes.SHELL) {
             MainShell(
+                onOpenMap = { navController.navigate(Routes.ROUTE_MAP) },
                 onOpenWorkDay = { navController.navigate(Routes.WORK_DAY) },
                 onOpenMenuEntry = { code ->
                     // The shell has already refused anything not in SupportedMenu,
@@ -86,22 +90,22 @@ fun AppNavHost(
                         SupportedMenu.RECEIVABLE -> navController.navigate(Routes.RECEIVABLES)
                     }
                 },
-                onOpenStop = { stop ->
-                    // Where a tap goes depends on how far the visit has got.
-                    // Already checked in means the rep wants the work list, not
-                    // the check-in form again.
-                    val visitId = stop.visitId
-                    if (stop.status == VisitStatus.IN_PROGRESS && visitId != null) {
-                        navController.navigate(Routes.inCall(visitId, stop.customer.id))
-                    } else {
-                        navController.navigate(Routes.checkIn(stop.customer.id))
-                    }
-                },
+                onOpenStop = { stop -> navController.navigateToStop(stop) },
                 onSignedOut = {
                     navController.navigate(Routes.LOGIN) {
                         popUpTo(0) { inclusive = true }
                     }
                 },
+            )
+        }
+
+        composable(Routes.ROUTE_MAP) {
+            RouteMapScreen(
+                // Same destination rule as the list: how far the visit has got
+                // decides whether a tap opens the check-in or the work list. It
+                // lives in one place so the two screens cannot diverge.
+                onOpenStop = { stop -> navController.navigateToStop(stop) },
+                onBack = { navController.popBackStack() },
             )
         }
 
@@ -191,5 +195,21 @@ fun AppNavHost(
                 else -> LaunchedEffect(Unit) { navController.popBackStack() }
             }
         }
+    }
+}
+
+/**
+ * Where tapping a stop goes, wherever it was tapped.
+ *
+ * How far the visit has got decides it: already checked in means the rep wants
+ * the work list, not the check-in form again. Shared by the route list and the
+ * map so the two cannot come to different conclusions about the same stop.
+ */
+private fun NavHostController.navigateToStop(stop: RouteStop) {
+    val visitId = stop.visitId
+    if (stop.status == VisitStatus.IN_PROGRESS && visitId != null) {
+        navigate(Routes.inCall(visitId, stop.customer.id))
+    } else {
+        navigate(Routes.checkIn(stop.customer.id))
     }
 }
