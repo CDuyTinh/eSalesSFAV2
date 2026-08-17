@@ -487,3 +487,41 @@ insert into survey_question_option
     ('00000000-0000-0000-0000-000000000e36', '00000000-0000-0000-0000-000000000e24',
      'HET_HAN', 'Co hang gan het han tren ke', 0, 3)
 on conflict (id) do nothing;
+
+-- -----------------------------------------------------------------------------
+-- Receivables — a deliberate spread, so the screen has every case to render
+--
+-- Dates are relative to the day this is seeded: an invoice that is overdue only
+-- until a fixed date in 2026 stops testing anything the moment that date passes.
+--
+-- The last one is fully settled and must NOT appear in the app. Both report
+-- functions filter on outstanding > 0, and a seed with only open invoices would
+-- never have shown it if that filter were missing.
+-- -----------------------------------------------------------------------------
+
+insert into ar_invoice (id, branch_id, customer_id, invoice_no, issued_on, due_on,
+                        total_amount, note) values
+    -- Overdue, part paid: the case where the balance is neither the total nor zero.
+    ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-000000000010',
+     '00000000-0000-0000-0000-000000000091', 'HD2026-0001',
+     current_date - 45, current_date - 15, 8000000, 'Dot giao hang thang truoc'),
+    -- Not due yet: shows without the overdue chip.
+    ('00000000-0000-0000-0000-0000000000f2', '00000000-0000-0000-0000-000000000010',
+     '00000000-0000-0000-0000-000000000091', 'HD2026-0002',
+     current_date - 10, current_date + 20, 4500000, null),
+    -- Long overdue, untouched: the largest single debt on the list.
+    ('00000000-0000-0000-0000-0000000000f3', '00000000-0000-0000-0000-000000000010',
+     '00000000-0000-0000-0000-000000000092', 'HD2026-0003',
+     current_date - 60, current_date - 30, 12400000, null),
+    -- Settled in full below; present so the outstanding filter is exercised.
+    ('00000000-0000-0000-0000-0000000000f4', '00000000-0000-0000-0000-000000000010',
+     '00000000-0000-0000-0000-000000000093', 'HD2026-0004',
+     current_date - 20, current_date + 10, 2000000, null)
+on conflict (id) do nothing;
+
+insert into ar_payment (id, invoice_id, salesperson_id, amount, collected_on, note) values
+    ('00000000-0000-0000-0000-0000000000fa', '00000000-0000-0000-0000-0000000000f1',
+     '00000000-0000-0000-0000-000000000081', 3000000, current_date - 5, 'Thu mot phan'),
+    ('00000000-0000-0000-0000-0000000000fb', '00000000-0000-0000-0000-0000000000f4',
+     '00000000-0000-0000-0000-000000000081', 2000000, current_date - 3, null)
+on conflict (id) do nothing;
