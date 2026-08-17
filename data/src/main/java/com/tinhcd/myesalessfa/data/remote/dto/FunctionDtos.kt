@@ -259,6 +259,70 @@ data class RegisteredCustomerAckDto(
     val customer: RegisteredCustomerDto,
 )
 
+// -----------------------------------------------------------------------------
+// Reports
+// -----------------------------------------------------------------------------
+
+@Serializable
+data class ActivitySummaryDto(
+    val planned: Int = 0,
+    val visited: Int = 0,
+    val unplanned: Int = 0,
+    val strike: Int = 0,
+    @SerialName("non_strike") val nonStrike: Int = 0,
+    val closed: Int = 0,
+    @SerialName("order_amount") val orderAmount: Long = 0,
+)
+
+@Serializable
+data class ActivityRowDto(
+    @SerialName("visit_id") val visitId: String,
+    @SerialName("customer_code") val customerCode: String,
+    @SerialName("customer_name") val customerName: String,
+    val address: String? = null,
+    val planned: Boolean = true,
+    val status: String = "planned",
+    @SerialName("check_in_at") val checkInAt: String? = null,
+    @SerialName("check_out_at") val checkOutAt: String? = null,
+    val minutes: Int? = null,
+    @SerialName("order_amount") val orderAmount: Long = 0,
+)
+
+@Serializable
+data class ActivityReportDto(
+    val date: String,
+    val summary: ActivitySummaryDto = ActivitySummaryDto(),
+    val rows: List<ActivityRowDto> = emptyList(),
+)
+
+@Serializable
+data class CustomerSalesDto(
+    @SerialName("customer_code") val customerCode: String,
+    @SerialName("customer_name") val customerName: String,
+    val orders: Int = 0,
+    val revenue: Long = 0,
+)
+
+@Serializable
+data class ProductSalesDto(
+    @SerialName("product_code") val productCode: String,
+    @SerialName("product_name") val productName: String,
+    @SerialName("base_uom") val baseUom: String = "",
+    @SerialName("base_qty") val baseQty: Int = 0,
+    val revenue: Long = 0,
+)
+
+@Serializable
+data class SalesReportDto(
+    val month: String,
+    val revenue: Long = 0,
+    @SerialName("order_count") val orderCount: Int = 0,
+    /** Absent when head office set none. Not the same as zero. */
+    val target: Long? = null,
+    val customers: List<CustomerSalesDto> = emptyList(),
+    val products: List<ProductSalesDto> = emptyList(),
+)
+
 /** Every write function answers with this, or with an error body carrying `message`. */
 @Serializable
 data class WriteAckDto(
