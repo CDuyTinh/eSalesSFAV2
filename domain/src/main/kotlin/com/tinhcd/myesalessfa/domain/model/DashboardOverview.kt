@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.domain.model
 
 import java.time.LocalDate
+import kotlin.math.roundToInt
 
 /** One day on the sell-out line: a short axis label and what was sold. */
 data class SalesPoint(
@@ -49,10 +50,27 @@ data class MonthFigures(
 
     val orderProgress: Float? = progress(orderCount.toLong(), orderTarget?.toLong())
 
+    /**
+     * Attainment as written, which the progress values cannot carry.
+     *
+     * A bar has nowhere to put a figure over full, so it stops at the end. The
+     * number does not: a rep who has beaten the month deserves to be told by how
+     * much, and a screen that shows a maxed-out bar and calls it 100% is quietly
+     * taking the surplus off them.
+     */
+    val revenuePercent: Int? = percent(revenue, revenueTarget)
+
+    val orderPercent: Int? = percent(orderCount.toLong(), orderTarget?.toLong())
+
     private companion object {
         fun progress(actual: Long, target: Long?): Float? {
             if (target == null || target <= 0L) return null
             return (actual.toDouble() / target.toDouble()).coerceIn(0.0, 1.0).toFloat()
+        }
+
+        fun percent(actual: Long, target: Long?): Int? {
+            if (target == null || target <= 0L) return null
+            return ((actual.toDouble() / target.toDouble()) * 100).roundToInt()
         }
     }
 }

@@ -7,11 +7,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -25,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -32,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -223,6 +228,17 @@ private val VisitTile = listOf(Color(0xFF2D2DFE), Color(0xFF5757FE))
 private val OrderTile = listOf(Color(0xFF04A489), Color(0xFF36B6A0))
 private val SkuTile = listOf(Color(0xFFFF5A30), Color(0xFFFF7B59))
 
+/**
+ * The month bars, on the same footing as the tiles above them.
+ *
+ * Orders keep the green they already have in the today row, so one metric is one
+ * colour down the whole tab. Revenue takes a violet of its own rather than the
+ * tiles' blue or orange: it is not the visit count and it is not SKUs per order,
+ * and a rep scanning the tab should not have to check the label to know which.
+ */
+private val RevenueRamp = listOf(Color(0xFF5C00D4), Color(0xFF8B3FE8))
+private val OrderRamp = OrderTile
+
 @Composable
 private fun StatTile(
     label: String,
@@ -255,72 +271,151 @@ private fun StatTile(
 private fun MonthCard(month: MonthFigures) {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(22.dp),
         ) {
-            KpiRow(
+            KpiBlock(
                 label = "Doanh thu (VND)",
-                actual = formatMoney(month.revenue),
-                target = month.revenueTarget?.let { formatMoney(it) },
+                value = formatMoney(month.revenue),
+                percent = month.revenuePercent,
                 progress = month.revenueProgress,
+                footer = month.revenueTarget?.let {
+                    targetLine(month.revenue, it, ::formatMoney)
+                },
+                ramp = RevenueRamp,
             )
-            KpiRow(
+            KpiBlock(
                 label = "Đơn hàng",
-                actual = month.orderCount.toString(),
-                target = month.orderTarget?.toString(),
+                value = month.orderCount.toString(),
+                percent = month.orderPercent,
                 progress = month.orderProgress,
+                footer = month.orderTarget?.let {
+                    targetLine(month.orderCount.toLong(), it.toLong()) { n -> "$n đơn" }
+                },
+                ramp = OrderRamp,
             )
         }
     }
 }
 
 /**
- * Says "no target set" in words rather than drawing an empty bar.
+ * One metric: what it is, where it stands, and how far that is through the month.
  *
- * An empty bar is a claim — that the rep has achieved none of what was asked —
- * and it is not one this screen is in a position to make when head office has
- * asked for nothing.
+ * The figure is the largest thing in the block and the target sits under the bar
+ * in small type, which is the way round a rep reads it — they know what they were
+ * asked for, what they want off the screen is where they have got to. The
+ * percentage is a pill rather than another line of prose because it is the one
+ * value that gets compared between the two metrics.
  */
 @Composable
-private fun KpiRow(
+private fun KpiBlock(
     label: String,
-    actual: String,
-    target: String?,
+    value: String,
+    percent: Int?,
     progress: Float?,
+    footer: String?,
+    ramp: List<Color>,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = if (target != null) "$actual / $target" else actual,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier
+                        .size(8.dp)
+                        .background(Brush.verticalGradient(ramp), CircleShape),
+                )
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+            if (percent != null) PercentPill(percent = percent, color = ramp.first())
         }
+
+        // A step below today's revenue on purpose: that figure is the one thing the
+        // rep can still change before the day ends, and it stays the biggest number
+        // on the tab.
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+        )
+
+        // Says "no target set" in words rather than drawing an empty bar. An empty
+        // bar is a claim — that the rep has achieved none of what was asked — and it
+        // is not one this screen is in a position to make when head office has asked
+        // for nothing.
         if (progress != null) {
-            LinearProgressIndicator(
-                progress = { progress },
-                modifier = Modifier.fillMaxWidth().height(6.dp),
-            )
-        } else {
-            Text(
-                text = "Chưa được giao chỉ tiêu tháng này",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            KpiBar(progress = progress, ramp = ramp)
         }
+        Text(
+            text = footer ?: "Chưa được giao chỉ tiêu tháng này",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
+}
+
+/**
+ * The bar. Rounded at both ends and on the fill, so a month barely started reads
+ * as a bead on the track rather than as a rendering fault.
+ */
+@Composable
+private fun KpiBar(progress: Float, ramp: List<Color>) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(10.dp)
+            .clip(CircleShape)
+            .background(ramp.first().copy(alpha = 0.15f)),
+    ) {
+        Box(
+            Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(progress.coerceIn(0f, 1f))
+                .clip(CircleShape)
+                .background(Brush.horizontalGradient(ramp)),
+        )
+    }
+}
+
+@Composable
+private fun PercentPill(percent: Int, color: Color) {
+    Surface(
+        color = color.copy(alpha = 0.14f),
+        contentColor = color,
+        shape = CircleShape,
+    ) {
+        Text(
+            text = "$percent%",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+        )
+    }
+}
+
+/**
+ * The gap to the target, in the direction it actually runs.
+ *
+ * Only ever a subtraction of the two figures on screen. Nothing here divides the
+ * month by its days: a daily share of a monthly target is a number nobody agreed
+ * to, and drawing a rep as behind against it would be worse than saying nothing.
+ */
+private fun targetLine(actual: Long, target: Long, format: (Long) -> String): String {
+    val gap = target - actual
+    val tail = if (gap > 0) "còn ${format(gap)}" else "vượt ${format(-gap)}"
+    return "Chỉ tiêu ${format(target)} · $tail"
 }
 
 @Composable
@@ -503,6 +598,30 @@ private fun DashboardPreview() {
     MyeSalesTheme {
         DashboardContent(
             state = DashboardUiState(loading = false, overview = SampleOverview),
+            onOpenDrawer = {},
+            onRefresh = {},
+            onRangeSelected = {},
+        )
+    }
+}
+
+/** The month beaten, which is the state the percentage exists to show. */
+@Preview(name = "Overview - target beaten", showBackground = true, heightDp = 900)
+@Composable
+private fun DashboardBeatenPreview() {
+    MyeSalesTheme {
+        DashboardContent(
+            state = DashboardUiState(
+                loading = false,
+                overview = SampleOverview.copy(
+                    month = MonthFigures(
+                        revenue = 134_500_000,
+                        revenueTarget = 120_000_000,
+                        orderCount = 58,
+                        orderTarget = 50,
+                    ),
+                ),
+            ),
             onOpenDrawer = {},
             onRefresh = {},
             onRangeSelected = {},
