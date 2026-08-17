@@ -21,6 +21,7 @@ import com.tinhcd.myesalessfa.feature.incall.steps.StockCountScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.SurveyScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.TakeOrderScreen
 import com.tinhcd.myesalessfa.feature.newcustomer.NewCustomerScreen
+import com.tinhcd.myesalessfa.feature.receivables.ReceivablesScreen
 import com.tinhcd.myesalessfa.feature.reports.ReportsScreen
 import com.tinhcd.myesalessfa.feature.shell.MainShell
 import com.tinhcd.myesalessfa.feature.workday.WorkDayScreen
@@ -38,6 +39,7 @@ object Routes {
     const val WORK_DAY = "workday"
     const val NEW_CUSTOMER = "newcustomer"
     const val REPORTS = "reports"
+    const val RECEIVABLES = "receivables"
     const val CHECK_IN = "checkin/{customerId}"
     const val IN_CALL = "incall/{visitId}/{customerId}"
     // The customer travels with the step, not just the visit: take_order prices
@@ -81,6 +83,7 @@ fun AppNavHost(
                     when (code) {
                         SupportedMenu.NEW_CUSTOMER -> navController.navigate(Routes.NEW_CUSTOMER)
                         SupportedMenu.REPORT -> navController.navigate(Routes.REPORTS)
+                        SupportedMenu.RECEIVABLE -> navController.navigate(Routes.RECEIVABLES)
                     }
                 },
                 onOpenStop = { stop ->
@@ -100,6 +103,10 @@ fun AppNavHost(
                     }
                 },
             )
+        }
+
+        composable(Routes.RECEIVABLES) {
+            ReceivablesScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Routes.REPORTS) {

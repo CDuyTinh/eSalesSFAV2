@@ -8,6 +8,7 @@ import com.tinhcd.myesalessfa.data.remote.service.DashboardService
 import com.tinhcd.myesalessfa.data.remote.service.DisplayAuditService
 import com.tinhcd.myesalessfa.data.remote.service.FeedbackService
 import com.tinhcd.myesalessfa.data.remote.service.OrderService
+import com.tinhcd.myesalessfa.data.remote.service.ReceivableService
 import com.tinhcd.myesalessfa.data.remote.service.ReportService
 import com.tinhcd.myesalessfa.data.remote.service.RouteService
 import com.tinhcd.myesalessfa.data.remote.service.StockService
@@ -162,6 +163,11 @@ object NetworkModule {
     @Singleton
     fun provideReportService(retrofit: Retrofit): ReportService =
         retrofit.create(ReportService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideReceivableService(retrofit: Retrofit): ReceivableService =
+        retrofit.create(ReceivableService::class.java)
 
     @Provides
     @Singleton

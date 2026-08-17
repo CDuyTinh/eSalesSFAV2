@@ -323,6 +323,60 @@ data class SalesReportDto(
     val products: List<ProductSalesDto> = emptyList(),
 )
 
+// -----------------------------------------------------------------------------
+// Receivables
+// -----------------------------------------------------------------------------
+
+@Serializable
+data class ReceivableCustomerDto(
+    @SerialName("customer_id") val customerId: String,
+    @SerialName("customer_code") val customerCode: String,
+    @SerialName("customer_name") val customerName: String,
+    val phone: String? = null,
+    val address: String? = null,
+    val invoices: Int = 0,
+    val outstanding: Long = 0,
+    val overdue: Boolean = false,
+)
+
+@Serializable
+data class ReceivableCustomersDto(
+    val customers: List<ReceivableCustomerDto> = emptyList(),
+)
+
+@Serializable
+data class ReceivableInvoiceDto(
+    @SerialName("invoice_id") val invoiceId: String,
+    @SerialName("invoice_no") val invoiceNo: String,
+    @SerialName("issued_on") val issuedOn: String,
+    @SerialName("due_on") val dueOn: String,
+    val total: Long = 0,
+    val paid: Long = 0,
+    val outstanding: Long = 0,
+    val note: String? = null,
+)
+
+@Serializable
+data class ReceivableInvoicesDto(
+    val invoices: List<ReceivableInvoiceDto> = emptyList(),
+)
+
+/** The id is the client's, and is what makes a replayed save a no-op. */
+@Serializable
+data class PaymentAllocationDto(
+    val id: String,
+    @SerialName("invoice_id") val invoiceId: String,
+    val amount: Long,
+)
+
+@Serializable
+data class CollectPaymentDto(
+    @SerialName("visit_id") val visitId: String? = null,
+    @SerialName("collected_on") val collectedOn: String,
+    val note: String? = null,
+    val allocations: List<PaymentAllocationDto>,
+)
+
 /** Every write function answers with this, or with an error body carrying `message`. */
 @Serializable
 data class WriteAckDto(
