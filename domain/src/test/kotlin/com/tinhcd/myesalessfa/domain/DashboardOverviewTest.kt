@@ -72,6 +72,22 @@ class DashboardOverviewTest {
     }
 
     @Test
+    fun `the percentage keeps the surplus the bar has to drop`() {
+        val month = MonthFigures(revenue = 300, revenueTarget = 100, orderCount = 9, orderTarget = 3)
+
+        assertEquals(300, month.revenuePercent)
+        assertEquals(300, month.orderPercent)
+    }
+
+    @Test
+    fun `no target means no percentage either`() {
+        val month = MonthFigures(revenue = 500, revenueTarget = null, orderCount = 5, orderTarget = 0)
+
+        assertNull(month.revenuePercent)
+        assertNull(month.orderPercent)
+    }
+
+    @Test
     fun `progress is the fraction achieved`() {
         val month = MonthFigures(revenue = 25, revenueTarget = 100, orderCount = 1, orderTarget = 4)
 
