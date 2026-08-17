@@ -20,6 +20,7 @@ import com.tinhcd.myesalessfa.feature.incall.steps.StockCountScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.SurveyScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.TakeOrderScreen
 import com.tinhcd.myesalessfa.feature.shell.MainShell
+import com.tinhcd.myesalessfa.feature.workday.WorkDayScreen
 
 object Routes {
     const val LOGIN = "login"
@@ -29,6 +30,9 @@ object Routes {
      * they are configuration, and the bar is built from whatever the server sent.
      */
     const val SHELL = "shell"
+
+    /** Opening and closing the selling day. No argument: it is always today's. */
+    const val WORK_DAY = "workday"
     const val CHECK_IN = "checkin/{customerId}"
     const val IN_CALL = "incall/{visitId}/{customerId}"
     // The customer travels with the step, not just the visit: take_order prices
@@ -64,6 +68,7 @@ fun AppNavHost(
 
         composable(Routes.SHELL) {
             MainShell(
+                onOpenWorkDay = { navController.navigate(Routes.WORK_DAY) },
                 onOpenStop = { stop ->
                     // Where a tap goes depends on how far the visit has got.
                     // Already checked in means the rep wants the work list, not
@@ -81,6 +86,12 @@ fun AppNavHost(
                     }
                 },
             )
+        }
+
+        composable(Routes.WORK_DAY) {
+            // Back to the shell either way. The punch went through the repository
+            // the shell is collecting, so the bar and the drawer already know.
+            WorkDayScreen(onDone = { navController.popBackStack() })
         }
 
         composable(

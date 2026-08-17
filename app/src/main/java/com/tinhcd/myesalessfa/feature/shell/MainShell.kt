@@ -17,6 +17,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.EventAvailable
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Lock
@@ -49,10 +51,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.MenuEntry
 import com.tinhcd.myesalessfa.domain.model.RouteStop
 import com.tinhcd.myesalessfa.domain.model.SupportedMenu
+import com.tinhcd.myesalessfa.domain.model.WorkDay
 import com.tinhcd.myesalessfa.feature.dashboard.DashboardScreen
 import com.tinhcd.myesalessfa.feature.route.RouteScreen
 import kotlinx.coroutines.launch
@@ -71,6 +75,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun MainShell(
     onOpenStop: (RouteStop) -> Unit,
+    onOpenWorkDay: () -> Unit,
     onSignedOut: () -> Unit,
     viewModel: ShellViewModel = hiltViewModel(),
 ) {
@@ -89,6 +94,11 @@ fun MainShell(
                 name = state.me?.fullName,
                 branch = state.me?.branchName,
                 code = state.me?.code,
+                workDay = state.workDay,
+                onOpenWorkDay = {
+                    scope.launch { drawerState.close() }
+                    onOpenWorkDay()
+                },
                 onSignOut = {
                     scope.launch { drawerState.close() }
                     viewModel.signOut()
@@ -103,11 +113,22 @@ fun MainShell(
                         onOpenDrawer = { scope.launch { drawerState.open() } },
                     )
 
-                    SupportedMenu.CHECK_IN -> RouteScreen(
-                        onOpenStop = onOpenStop,
-                        onOpenDrawer = { scope.launch { drawerState.open() } },
-                        onReferenceDataRefreshed = viewModel::reloadMenu,
-                    )
+                    // The route is behind the depot, as it was in the app this
+                    // replaces: a visit records a rep who is on shift, and the
+                    // shift has to have been started for that to be true.
+                    SupportedMenu.CHECK_IN -> if (state.routeBlocked) {
+                        DayNotStartedPanel(
+                            branchName = state.workDay?.branch?.name,
+                            onOpenWorkDay = onOpenWorkDay,
+                            onOpenDrawer = { scope.launch { drawerState.open() } },
+                        )
+                    } else {
+                        RouteScreen(
+                            onOpenStop = onOpenStop,
+                            onOpenDrawer = { scope.launch { drawerState.open() } },
+                            onReferenceDataRefreshed = viewModel::reloadMenu,
+                        )
+                    }
 
                     // Only reachable if the server names a page tab this build does
                     // not know. The bar still shows it; opening it says so.
@@ -286,6 +307,8 @@ private fun ShellDrawer(
     name: String?,
     branch: String?,
     code: String?,
+    workDay: WorkDay?,
+    onOpenWorkDay: () -> Unit,
     onSignOut: () -> Unit,
 ) {
     val brand = MaterialTheme.brand
@@ -319,6 +342,20 @@ private fun ShellDrawer(
             }
         }
 
+        // Only while there is a day to end. Signing out is not the same act — it
+        // drops the session and leaves the day open behind it — so the two are
+        // never offered as if they were interchangeable.
+        if (workDay?.isOpen == true) {
+            NavigationDrawerItem(
+                label = { Text("Kết thúc ngày bán hàng") },
+                icon = { Icon(Icons.Default.EventAvailable, contentDescription = null) },
+                selected = false,
+                onClick = onOpenWorkDay,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(12.dp),
+            )
+        }
+
         NavigationDrawerItem(
             label = { Text("Đăng xuất") },
             icon = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null) },
@@ -327,6 +364,70 @@ private fun ShellDrawer(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             shape = RoundedCornerShape(12.dp),
         )
+    }
+}
+
+/**
+ * What the visit tab shows before the day has been opened.
+ *
+ * A panel rather than a dialog. The legacy app put a modal here and a rep who
+ * dismissed it landed on an empty container with nothing to explain it; this
+ * states the situation and keeps the only useful action on screen.
+ */
+@Composable
+private fun DayNotStartedPanel(
+    branchName: String?,
+    onOpenWorkDay: () -> Unit,
+    onOpenDrawer: () -> Unit,
+) {
+    Column(Modifier.fillMaxSize()) {
+        Surface(color = MaterialTheme.brand.header, contentColor = MaterialTheme.brand.onHeader) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                androidx.compose.material3.IconButton(onClick = onOpenDrawer) {
+                    Icon(Icons.Default.Menu, contentDescription = "Mở menu")
+                }
+                Text(
+                    text = "Viếng thăm",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+        ) {
+            Icon(
+                Icons.Default.EventAvailable,
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+                text = "Chưa bắt đầu ngày bán hàng",
+                style = MaterialTheme.typography.titleLarge,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = branchName
+                    ?.let { "Chấm công tại $it để mở tuyến hôm nay." }
+                    ?: "Chấm công tại chi nhánh để mở tuyến hôm nay.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+            PrimaryButton(text = "Bắt đầu ngày bán hàng", onClick = onOpenWorkDay)
+        }
     }
 }
 

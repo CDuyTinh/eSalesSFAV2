@@ -176,6 +176,36 @@ data class VisitCountDto(
     val counted: Map<String, Int> = emptyMap(),
 )
 
+/**
+ * The rep's selling day as the server sees it.
+ *
+ * Both timestamps null means the day has not been opened; only the second null
+ * means it is under way. The client does not infer either from the absence of a
+ * row, because "no rows came back" is also what a failed read looks like.
+ */
+@Serializable
+data class WorkDayDto(
+    @SerialName("work_date") val workDate: String,
+    val branch: BranchDto,
+    @SerialName("check_in_at") val checkInAt: String? = null,
+    @SerialName("check_out_at") val checkOutAt: String? = null,
+    /** Visits still in progress today, which is what blocks closing the day. */
+    @SerialName("open_visits") val openVisits: Int = 0,
+)
+
+/** A punch at the depot. `type` is check_in or check_out; the server fixes nothing else. */
+@Serializable
+data class WorkDayPunchDto(
+    val type: String,
+    @SerialName("work_date") val workDate: String,
+    @SerialName("happened_at") val happenedAt: String,
+    val lat: Double? = null,
+    val lng: Double? = null,
+    @SerialName("accuracy_m") val accuracyM: Double? = null,
+    @SerialName("distance_m") val distanceM: Double? = null,
+    @SerialName("reason_id") val reasonId: String? = null,
+)
+
 /** Every write function answers with this, or with an error body carrying `message`. */
 @Serializable
 data class WriteAckDto(

@@ -22,7 +22,9 @@ import com.tinhcd.myesalessfa.domain.model.CheckInPolicy
 import com.tinhcd.myesalessfa.domain.model.ReasonCode
 import com.tinhcd.myesalessfa.domain.model.SupportedSteps
 import com.tinhcd.myesalessfa.domain.model.ReasonKind
+import com.tinhcd.myesalessfa.domain.model.WorkDayPolicy
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
+import java.time.LocalTime
 import com.tinhcd.myesalessfa.data.remote.service.BootstrapService
 import com.tinhcd.myesalessfa.data.remote.dto.activeLanguage
 import kotlinx.serialization.json.Json
@@ -50,6 +52,24 @@ class ConfigRepositoryImpl @Inject constructor(
             maxAccuracyM = dao.setting(KEY_ACCURACY)?.toIntOrNull() ?: fallback.maxAccuracyM,
             allowReasonWhenFar = dao.setting(KEY_ALLOW_REASON)?.toBooleanStrictOrNull()
                 ?: fallback.allowReasonWhenFar,
+        )
+    }
+
+    /**
+     * A malformed `checkin_late_after` reads as "not tracked" rather than throwing.
+     * Lateness is a note on a screen; a typo in one setting row should not stop a
+     * rep opening their day.
+     */
+    override suspend fun workDayPolicy(): WorkDayPolicy {
+        val fallback = WorkDayPolicy.Fallback
+        return WorkDayPolicy(
+            branchRadiusM = dao.setting(KEY_BRANCH_RADIUS)?.toIntOrNull()
+                ?: fallback.branchRadiusM,
+            maxAccuracyM = dao.setting(KEY_ACCURACY)?.toIntOrNull() ?: fallback.maxAccuracyM,
+            allowReasonWhenFar = dao.setting(KEY_ALLOW_REASON)?.toBooleanStrictOrNull()
+                ?: fallback.allowReasonWhenFar,
+            lateAfter = dao.setting(KEY_LATE_AFTER)
+                ?.let { runCatching { LocalTime.parse(it) }.getOrNull() },
         )
     }
 
@@ -187,6 +207,8 @@ class ConfigRepositoryImpl @Inject constructor(
         const val KEY_ACCURACY = "gps_max_accuracy_m"
         const val KEY_ALLOW_REASON = "allow_reason_when_far"
         const val KEY_STOCK_BEFORE_ORDER = "require_stock_before_order"
+        const val KEY_BRANCH_RADIUS = "gps_branch_radius_m"
+        const val KEY_LATE_AFTER = "checkin_late_after"
     }
 }
 

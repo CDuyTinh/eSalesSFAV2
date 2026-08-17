@@ -10,6 +10,7 @@ import com.tinhcd.myesalessfa.data.remote.service.OrderService
 import com.tinhcd.myesalessfa.data.remote.service.RouteService
 import com.tinhcd.myesalessfa.data.remote.service.StockService
 import com.tinhcd.myesalessfa.data.remote.service.SurveyService
+import com.tinhcd.myesalessfa.data.remote.service.TimekeepingService
 import com.tinhcd.myesalessfa.data.remote.service.VisitService
 import com.tinhcd.myesalessfa.data.remote.service.WorkflowService
 import com.tinhcd.myesalessfa.data.remote.http.ClockSkewRetryInterceptor
@@ -144,6 +145,11 @@ object NetworkModule {
     @Singleton
     fun provideVisitService(retrofit: Retrofit): VisitService =
         retrofit.create(VisitService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideTimekeepingService(retrofit: Retrofit): TimekeepingService =
+        retrofit.create(TimekeepingService::class.java)
 
     @Provides
     @Singleton

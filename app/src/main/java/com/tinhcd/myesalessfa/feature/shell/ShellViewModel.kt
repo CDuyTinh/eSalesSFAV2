@@ -6,8 +6,12 @@ import com.tinhcd.myesalessfa.domain.model.AppMenu
 import com.tinhcd.myesalessfa.domain.model.MenuEntry
 import com.tinhcd.myesalessfa.domain.model.Salesperson
 import com.tinhcd.myesalessfa.domain.model.SessionState
+import com.tinhcd.myesalessfa.domain.model.WorkDay
+import com.tinhcd.myesalessfa.domain.model.WorkDayState
 import com.tinhcd.myesalessfa.domain.repository.AuthRepository
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
+import com.tinhcd.myesalessfa.domain.repository.TimekeepingRepository
+import java.time.LocalDate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +29,20 @@ data class ShellUiState(
     val signedOut: Boolean = false,
     /** Set when a rep taps something the server offers but this build lacks. */
     val unavailableMessage: String? = null,
-)
+    /** Null while it has never loaded, which is not the same as "not started". */
+    val workDay: WorkDay? = null,
+) {
+    /**
+     * Whether the visit list is reachable.
+     *
+     * Only a day we positively know has not been opened closes it. An unknown day —
+     * the read failed, the rep is in a dead spot — leaves the route where it is:
+     * stranding a rep outside their first shop because a status call timed out would
+     * be a worse failure than letting them work an unclocked day.
+     */
+    val routeBlocked: Boolean
+        get() = workDay?.state == WorkDayState.NOT_STARTED
+}
 
 /**
  * Owns the shell: which tab is showing, which sheet is open, and who is signed in.
@@ -37,6 +54,7 @@ data class ShellUiState(
 class ShellViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val configRepository: ConfigRepository,
+    private val timekeeping: TimekeepingRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ShellUiState())
@@ -54,6 +72,17 @@ class ShellViewModel @Inject constructor(
                 _state.update { it.copy(me = (session as? SessionState.SignedIn)?.rep) }
             }
         }
+        // Collected rather than fetched: the punch screen writes through the same
+        // repository, so the depot being opened reaches the bar and the drawer
+        // without a result being threaded back through navigation.
+        viewModelScope.launch {
+            timekeeping.today.collect { day -> _state.update { it.copy(workDay = day) } }
+        }
+        refreshWorkDay()
+    }
+
+    fun refreshWorkDay() {
+        viewModelScope.launch { timekeeping.refresh(LocalDate.now()) }
     }
 
     /**
