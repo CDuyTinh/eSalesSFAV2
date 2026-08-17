@@ -7,6 +7,7 @@ import com.tinhcd.myesalessfa.domain.model.RouteStop
 import com.tinhcd.myesalessfa.domain.model.Salesperson
 import com.tinhcd.myesalessfa.domain.model.SessionState
 import com.tinhcd.myesalessfa.domain.model.SyncState
+import com.tinhcd.myesalessfa.domain.model.VisitStatus
 import com.tinhcd.myesalessfa.domain.repository.AuthRepository
 import com.tinhcd.myesalessfa.domain.repository.CheckInRepository
 import com.tinhcd.myesalessfa.domain.repository.ReferenceDataSync
@@ -18,13 +19,31 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.text.Normalizer
 import javax.inject.Inject
+
+/**
+ * The narrowing the filter sheet offers, in the order it lists them.
+ *
+ * [DONE] deliberately covers both endings a visit can have. A rep sorting the
+ * day's work asks "which ones are behind me", not "which ones ended in an order".
+ */
+enum class RouteFilter(val label: String) {
+    ALL("Tất cả"),
+    PLANNED("Chưa ghé"),
+    IN_PROGRESS("Đang viếng thăm"),
+    DONE("Đã hoàn thành"),
+    CLOSED("Đóng cửa"),
+}
 
 data class RouteUiState(
     val loading: Boolean = true,
     val stops: List<RouteStop> = emptyList(),
     val me: Salesperson? = null,
     val error: String? = null,
+    /** What the rep typed in the search box. Matched against the loaded stops. */
+    val query: String = "",
+    val filter: RouteFilter = RouteFilter.ALL,
     /**
      * Signed in, but the rep's profile has not arrived. Worth saying out loud rather
      * than just leaving the app bar subtitle blank: a check-in stamps salesperson_id
@@ -39,7 +58,53 @@ data class RouteUiState(
      * act on.
      */
     val sync: SyncState = SyncState(),
-)
+) {
+    /**
+     * The stops the list actually draws.
+     *
+     * Filtered here rather than on the server: the whole day's route is already in
+     * memory, it is tens of rows, and a rep typing a shop name in a market with one
+     * bar of signal should not be waiting on a round trip per keystroke.
+     */
+    val visibleStops: List<RouteStop>
+        get() = stops.filter { it.matches(query) && filter.accepts(it.status) }
+
+    /** True when something is being hidden, which the filter button has to admit to. */
+    val filtering: Boolean
+        get() = query.isNotBlank() || filter != RouteFilter.ALL
+}
+
+private fun RouteStop.matches(query: String): Boolean {
+    val needle = query.trim().forSearch()
+    if (needle.isEmpty()) return true
+    return listOfNotNull(customer.name, customer.code, customer.address, customer.phone)
+        .any { it.forSearch().contains(needle) }
+}
+
+/**
+ * Folded for comparison: lower case, and with the tone and vowel marks removed.
+ *
+ * Customer names arrive from head office spelled properly — "Tạp hoá Bà Bảy" — and
+ * a rep standing in that shop types "tap hoa ba bay", because nobody reaches for
+ * the tone keys one-handed. Comparing the two literally finds nothing, which reads
+ * as a missing customer rather than a missing accent.
+ */
+private fun String.forSearch(): String = Normalizer
+    .normalize(this, Normalizer.Form.NFD)
+    .replace(CombiningMarks, "")
+    .lowercase()
+    // Not a marked vowel, so NFD leaves it whole and it has to be spelled out.
+    .replace('đ', 'd')
+
+private val CombiningMarks = "\\p{Mn}+".toRegex()
+
+private fun RouteFilter.accepts(status: VisitStatus): Boolean = when (this) {
+    RouteFilter.ALL -> true
+    RouteFilter.PLANNED -> status == VisitStatus.PLANNED
+    RouteFilter.IN_PROGRESS -> status == VisitStatus.IN_PROGRESS
+    RouteFilter.DONE -> status == VisitStatus.COMPLETED || status == VisitStatus.NO_ORDER
+    RouteFilter.CLOSED -> status == VisitStatus.CLOSED
+}
 
 @HiltViewModel
 class RouteViewModel @Inject constructor(
@@ -79,10 +144,18 @@ class RouteViewModel @Inject constructor(
 
                 is DataResult.Failure ->
                     _state.update {
-                        it.copy(loading = false, error = "Khong tai duoc tuyen hom nay")
+                        it.copy(loading = false, error = "Không tải được tuyến hôm nay")
                     }
             }
         }
+    }
+
+    fun onQueryChanged(query: String) {
+        _state.update { it.copy(query = query) }
+    }
+
+    fun onFilterChanged(filter: RouteFilter) {
+        _state.update { it.copy(filter = filter) }
     }
 
     /**
