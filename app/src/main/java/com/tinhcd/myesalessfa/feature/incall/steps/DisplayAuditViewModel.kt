@@ -112,7 +112,7 @@ class DisplayAuditViewModel @Inject constructor(
             if (size <= 0L) {
                 photoStore.delete(target.path)
                 _state.update {
-                    it.copy(capturing = false, error = "Khong luu duoc anh, thu lai")
+                    it.copy(capturing = false, error = "Không lưu được ảnh, thử lại")
                 }
                 return@launch
             }
@@ -159,7 +159,7 @@ class DisplayAuditViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(submitting = false, error = "Khong luu duoc phieu cham trung bay")
+                    it.copy(submitting = false, error = "Không lưu được phiếu chấm trưng bày")
                 }
             }
         }

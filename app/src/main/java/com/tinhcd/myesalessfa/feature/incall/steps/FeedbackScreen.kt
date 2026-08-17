@@ -71,7 +71,7 @@ fun FeedbackScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(state.title.ifBlank { "Phan hoi khach hang" }) })
+            TopAppBar(title = { Text(state.title.ifBlank { "Phản hồi khách hàng" }) })
         },
     ) { padding ->
         Box(Modifier.padding(padding)) {
@@ -90,7 +90,7 @@ fun FeedbackScreen(
             ) {
                 if (state.topics.isNotEmpty()) {
                     Text(
-                        "Noi dung phan hoi ve",
+                        "Nội dung phản hồi về",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
                     )
@@ -110,14 +110,14 @@ fun FeedbackScreen(
                 OutlinedTextField(
                     value = state.draft.note,
                     onValueChange = viewModel::onNoteChange,
-                    label = { Text("Khach hang noi gi") },
+                    label = { Text("Khách hàng nói gì") },
                     minLines = 4,
                     modifier = Modifier.fillMaxWidth(),
                 )
 
                 if (state.draft.charsStillNeeded > 0) {
                     Text(
-                        "Con thieu ${state.draft.charsStillNeeded} ky tu",
+                        "Còn thiếu ${state.draft.charsStillNeeded} ký tự",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -144,14 +144,14 @@ fun FeedbackScreen(
                 }
 
                 PrimaryButton(
-                    text = if (state.submitting) "Dang luu..." else "Hoan thanh buoc nay",
+                    text = if (state.submitting) "Đang lưu..." else "Hoàn thành bước này",
                     onClick = viewModel::submit,
                     enabled = state.canSubmit,
                     modifier = Modifier.fillMaxWidth(),
                 )
 
                 TextButton(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
-                    Text("Quay lai")
+                    Text("Quay lại")
                 }
             }
         }
@@ -181,7 +181,7 @@ private fun AudioSection(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                "Ghi am (tuy chon)",
+                "Ghi âm (tùy chọn)",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
             )
@@ -189,20 +189,20 @@ private fun AudioSection(
             when {
                 state.recording -> Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "Dang ghi ${state.recordingSeconds}s",
+                        "Đang ghi ${state.recordingSeconds}s",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.weight(1f),
                     )
                     OutlinedButton(onClick = onStop) {
                         Icon(Icons.Default.Stop, contentDescription = null)
-                        Text("Dung", Modifier.padding(start = 6.dp))
+                        Text("Dừng", Modifier.padding(start = 6.dp))
                     }
                 }
 
                 state.draft.hasAudio -> Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "Da ghi ${state.draft.audioSeconds}s",
+                        "Đã ghi ${state.draft.audioSeconds}s",
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.weight(1f),
                     )
@@ -211,22 +211,22 @@ private fun AudioSection(
                             if (state.playing) Icons.Default.Stop else Icons.Default.PlayArrow,
                             contentDescription = null,
                         )
-                        Text(if (state.playing) "Dung" else "Nghe", Modifier.padding(start = 6.dp))
+                        Text(if (state.playing) "Dừng" else "Nghe", Modifier.padding(start = 6.dp))
                     }
                     TextButton(onClick = onDelete) {
-                        Icon(Icons.Default.Delete, contentDescription = "Xoa ban ghi")
+                        Icon(Icons.Default.Delete, contentDescription = "Xoá bản ghi")
                     }
                 }
 
                 else -> OutlinedButton(onClick = onRecord, modifier = Modifier.fillMaxWidth()) {
                     Icon(Icons.Default.Mic, contentDescription = null)
-                    Text("Ghi am", Modifier.padding(start = 6.dp))
+                    Text("Ghi âm", Modifier.padding(start = 6.dp))
                 }
             }
 
             if (micDenied) {
                 Text(
-                    "Chua cho phep dung micro. Van co the gui phan hoi bang chu.",
+                    "Chưa cho phép dùng micro. Vẫn có thể gửi phản hồi bằng chữ.",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -235,7 +235,7 @@ private fun AudioSection(
             // Said plainly, because the alternative is a rep recording a two-minute
             // account and discovering the limit only from a truncated file.
             Text(
-                "Toi da 2 phut. Ban ghi khong thay cho phan noi dung.",
+                "Tối đa 2 phút. Bản ghi không thay cho phần nội dung.",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

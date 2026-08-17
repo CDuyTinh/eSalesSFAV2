@@ -130,7 +130,7 @@ class TakeOrderViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(loading = false, error = "Khong tai duoc danh muc san pham")
+                    it.copy(loading = false, error = "Không tải được danh mục sản phẩm")
                 }
             }
         }
@@ -264,7 +264,7 @@ class TakeOrderViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(submitting = false, error = "Khong luu duoc don hang")
+                    it.copy(submitting = false, error = "Không lưu được đơn hàng")
                 }
             }
         }

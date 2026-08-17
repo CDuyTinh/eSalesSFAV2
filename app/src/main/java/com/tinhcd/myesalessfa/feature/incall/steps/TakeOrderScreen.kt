@@ -64,10 +64,10 @@ fun TakeOrderScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Dat hang")
+                        Text("Đặt hàng")
                         val subtitle = listOfNotNull(
                             state.customerName.ifBlank { null },
-                            state.order.lines.size.takeIf { it > 0 }?.let { "$it mat hang" },
+                            state.order.lines.size.takeIf { it > 0 }?.let { "$it mặt hàng" },
                         ).joinToString(" - ")
                         if (subtitle.isNotBlank()) {
                             Text(subtitle, style = MaterialTheme.typography.labelSmall)
@@ -82,7 +82,7 @@ fun TakeOrderScreen(
                 state.loading -> LoadingBox()
 
                 state.catalogue.isEmpty() -> ErrorBox(
-                    state.error ?: "Danh muc san pham trong. Dang nhap lai de tai ve.",
+                    state.error ?: "Danh mục sản phẩm trống. Đăng nhập lại để tải về.",
                     onRetry = viewModel::load,
                 )
 
@@ -99,7 +99,7 @@ fun TakeOrderScreen(
                     OutlinedTextField(
                         value = state.query,
                         onValueChange = viewModel::onQueryChange,
-                        label = { Text("Tim san pham") },
+                        label = { Text("Tìm sản phẩm") },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                         singleLine = true,
                         modifier = Modifier
@@ -109,7 +109,7 @@ fun TakeOrderScreen(
 
                     val visible = state.visible
                     if (visible.isEmpty()) {
-                        ErrorBox("Khong tim thay san pham nao")
+                        ErrorBox("Không tìm thấy sản phẩm nào")
                     } else {
                         LazyColumn(
                             modifier = Modifier.weight(1f),
@@ -169,15 +169,15 @@ private fun SuggestionBanner(
         ) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    "Goi y tu kiem ton: ${state.suggestions.size} mat hang duoi dinh muc",
+                    "Gợi ý từ kiểm tồn: ${state.suggestions.size} mặt hàng dưới định mức",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
                     if (state.suggestionsApplied) {
-                        "Da dien $totalLines dong - sua lai truoc khi gui neu can"
+                        "Đã điền $totalLines dòng - sửa lại trước khi gửi nếu cần"
                     } else {
-                        "Se them $totalLines dong"
+                        "Sẽ thêm $totalLines dòng"
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -185,7 +185,7 @@ private fun SuggestionBanner(
             }
 
             if (!state.suggestionsApplied) {
-                OutlinedButton(onClick = onApply) { Text("Ap dung") }
+                OutlinedButton(onClick = onApply) { Text("Áp dụng") }
             }
         }
     }
@@ -258,16 +258,16 @@ private fun ProductRow(
             }
 
             // The shortfall behind the suggestion, so a rep who did not press
-            // "Ap dung" still sees which SKUs the shelf is short of — and can see
+            // "Áp dụng" still sees which SKUs the shelf is short of — and can see
             // when a whole case is being suggested to cover a small gap.
             val suggestion = state.suggestionFor(product.product.id)
             if (suggestion != null) {
                 Text(
-                    "Thieu ${suggestion.shortfallBaseQty} " +
-                        "${product.product.baseUomCode.lowercase()} so voi dinh muc " +
-                        "- goi y ${suggestion.parts.describe()}" +
+                    "Thiếu ${suggestion.shortfallBaseQty} " +
+                        "${product.product.baseUomCode.lowercase()} so với định mức " +
+                        "- gợi ý ${suggestion.parts.describe()}" +
                         if (suggestion.overshootBaseQty > 0) {
-                            " (thua ${suggestion.overshootBaseQty})"
+                            " (thừa ${suggestion.overshootBaseQty})"
                         } else {
                             ""
                         },
@@ -302,7 +302,7 @@ private fun QtyStepper(qty: Int, onQtyChange: (Int) -> Unit) {
             onClick = { onQtyChange(qty - 1) },
             enabled = qty > 0,
             modifier = Modifier.size(36.dp),
-        ) { Icon(Icons.Default.Remove, contentDescription = "Giam") }
+        ) { Icon(Icons.Default.Remove, contentDescription = "Giảm") }
 
         OutlinedTextField(
             value = if (qty == 0) "" else qty.toString(),
@@ -323,7 +323,7 @@ private fun QtyStepper(qty: Int, onQtyChange: (Int) -> Unit) {
         FilledIconButton(
             onClick = { onQtyChange(qty + 1) },
             modifier = Modifier.size(36.dp),
-        ) { Icon(Icons.Default.Add, contentDescription = "Tang") }
+        ) { Icon(Icons.Default.Add, contentDescription = "Tăng") }
     }
 }
 
@@ -335,10 +335,10 @@ private fun OrderFooter(
 ) {
     Surface(shadowElevation = 8.dp) {
         Column(Modifier.padding(16.dp)) {
-            AmountRow("Tam tinh", formatDong(state.order.subTotal))
+            AmountRow("Tạm tính", formatDong(state.order.subTotal))
             AmountRow("VAT", formatDong(state.order.vatAmount))
             AmountRow(
-                label = "Tong cong",
+                label = "Tổng cộng",
                 value = formatDong(state.order.totalAmount),
                 emphasise = true,
             )
@@ -353,7 +353,7 @@ private fun OrderFooter(
             }
 
             PrimaryButton(
-                text = "Gui don hang",
+                text = "Gửi đơn hàng",
                 onClick = onSubmit,
                 enabled = state.order.canSubmit,
                 loading = state.submitting,
@@ -365,7 +365,7 @@ private fun OrderFooter(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 4.dp),
-            ) { Text("Quay lai") }
+            ) { Text("Quay lại") }
         }
     }
 }

@@ -38,7 +38,7 @@ fun NoteStepScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(state.title.ifBlank { "Buoc cong viec" }) }) },
+        topBar = { TopAppBar(title = { Text(state.title.ifBlank { "Bước công việc" }) }) },
     ) { padding ->
         if (state.loading) {
             // The step's own rules decide whether the note is mandatory, so the
@@ -73,9 +73,9 @@ private fun NoteForm(
     ) {
         Text(
             if (state.isRequired) {
-                "Ghi nhan noi dung tai diem ban (bat buoc)"
+                "Ghi nhận nội dung tại điểm bán (bắt buộc)"
             } else {
-                "Ghi nhan noi dung tai diem ban"
+                "Ghi nhận nội dung tại điểm bán"
             },
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -85,12 +85,12 @@ private fun NoteForm(
         OutlinedTextField(
             value = state.note,
             onValueChange = onNoteChange,
-            label = { Text("Noi dung") },
+            label = { Text("Nội dung") },
             minLines = 4,
             isError = state.error != null,
             // Says why the button is dead instead of leaving the rep guessing.
             supportingText = if (remaining > 0) {
-                { Text("Con thieu $remaining ky tu") }
+                { Text("Còn thiếu $remaining ký tự") }
             } else {
                 null
             },
@@ -108,7 +108,7 @@ private fun NoteForm(
         }
 
         PrimaryButton(
-            text = "Hoan thanh buoc nay",
+            text = "Hoàn thành bước này",
             onClick = onSubmit,
             enabled = state.canSubmit,
             loading = state.submitting,
@@ -119,11 +119,11 @@ private fun NoteForm(
         OutlinedButton(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth(),
-        ) { Text("Quay lai") }
+        ) { Text("Quay lại") }
 
         if (state.isRequired) {
             Text(
-                "Buoc bat buoc: chua hoan thanh se khong check-out duoc",
+                "Bước bắt buộc: chưa hoàn thành sẽ không check-out được",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

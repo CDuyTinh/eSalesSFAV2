@@ -84,15 +84,15 @@ private fun DashboardContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Tong quan") },
+                title = { Text("Tổng quan") },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = "Mo menu")
+                        Icon(Icons.Default.Menu, contentDescription = "Mở menu")
                     }
                 },
                 actions = {
                     IconButton(onClick = onRefresh, enabled = !state.loading) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Tai lai")
+                        Icon(Icons.Default.Refresh, contentDescription = "Tải lại")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -114,7 +114,7 @@ private fun DashboardContent(
 
                 overview == null ->
                     EmptyState(
-                        message = state.error ?: "Chua co so lieu",
+                        message = state.error ?: "Chưa có số liệu",
                         modifier = Modifier.align(Alignment.Center),
                     )
 
@@ -149,9 +149,9 @@ private fun Figures(
             item { ErrorNotice(error) }
         }
         item { TodayCard(overview.today) }
-        item { SectionTitle("KPI thang nay") }
+        item { SectionTitle("KPI tháng này") }
         item { MonthCard(overview.month) }
-        item { SectionTitle("Doanh so ban hang") }
+        item { SectionTitle("Doanh số bán hàng") }
         item {
             TrendCard(
                 overview = overview,
@@ -173,7 +173,7 @@ private fun TodayCard(today: TodayFigures) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text("Hom nay", style = MaterialTheme.typography.titleLarge)
+            Text("Hôm nay", style = MaterialTheme.typography.titleLarge)
             Text(
                 text = "Doanh thu (VND)",
                 style = MaterialTheme.typography.bodySmall,
@@ -190,19 +190,19 @@ private fun TodayCard(today: TodayFigures) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 StatTile(
-                    label = "Vieng tham",
+                    label = "Viếng thăm",
                     value = "${today.visitDone}/${today.visitPlanned}",
                     colors = VisitTile,
                     modifier = Modifier.weight(1f),
                 )
                 StatTile(
-                    label = "Don hang",
+                    label = "Đơn hàng",
                     value = today.orderCount.toString(),
                     colors = OrderTile,
                     modifier = Modifier.weight(1f),
                 )
                 StatTile(
-                    label = "SKU/don",
+                    label = "SKU/đơn",
                     value = formatDecimal(today.skuPerOrder),
                     colors = SkuTile,
                     modifier = Modifier.weight(1f),
@@ -268,7 +268,7 @@ private fun MonthCard(month: MonthFigures) {
                 progress = month.revenueProgress,
             )
             KpiRow(
-                label = "Don hang",
+                label = "Đơn hàng",
                 actual = month.orderCount.toString(),
                 target = month.orderTarget?.toString(),
                 progress = month.orderProgress,
@@ -315,7 +315,7 @@ private fun KpiRow(
             )
         } else {
             Text(
-                text = "Chua duoc giao chi tieu thang nay",
+                text = "Chưa được giao chỉ tiêu tháng này",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -354,9 +354,9 @@ private fun TrendCard(
 }
 
 private val RangeLabels = listOf(
-    ChartRange.THIS_WEEK to "Tuan nay",
-    ChartRange.LAST_WEEK to "Tuan truoc",
-    ChartRange.THIS_MONTH to "Thang nay",
+    ChartRange.THIS_WEEK to "Tuần này",
+    ChartRange.LAST_WEEK to "Tuần trước",
+    ChartRange.THIS_MONTH to "Tháng này",
 )
 
 @Composable

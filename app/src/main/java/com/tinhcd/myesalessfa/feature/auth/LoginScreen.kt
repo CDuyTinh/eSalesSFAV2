@@ -139,7 +139,7 @@ private fun LoginContent(
                 OutlinedTextField(
                     value = state.username,
                     onValueChange = onUsernameChange,
-                    label = { Text("Ten dang nhap") },
+                    label = { Text("Tên đăng nhập") },
                     singleLine = true,
                     leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                     // Usernames are lowercase codes; auto-capitalising them is a
@@ -163,7 +163,7 @@ private fun LoginContent(
                 OutlinedTextField(
                     value = state.password,
                     onValueChange = onPasswordChange,
-                    label = { Text("Mat khau") },
+                    label = { Text("Mật khẩu") },
                     singleLine = true,
                     leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                     trailingIcon = {
@@ -177,9 +177,9 @@ private fun LoginContent(
                                     Icons.Default.Visibility
                                 },
                                 contentDescription = if (revealed) {
-                                    "An mat khau"
+                                    "Ẩn mật khẩu"
                                 } else {
-                                    "Hien mat khau"
+                                    "Hiện mật khẩu"
                                 },
                             )
                         }
@@ -216,7 +216,7 @@ private fun LoginContent(
                 Spacer(Modifier.height(20.dp))
 
                 PrimaryButton(
-                    text = "Dang nhap",
+                    text = "Đăng nhập",
                     onClick = {
                         focusManager.clearFocus()
                         onSubmit()
@@ -230,7 +230,7 @@ private fun LoginContent(
         // Not decoration: when a rep rings in about something odd, the first
         // question is always which build they are on.
         Text(
-            text = "Phien ban ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+            text = "Phiên bản ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -287,7 +287,7 @@ private fun BrandHeader() {
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                text = "Dang nhap de bat dau tuyen hom nay",
+                text = "Đăng nhập để bắt đầu tuyến hôm nay",
                 style = MaterialTheme.typography.bodyLarge,
                 color = brand.onHeader.copy(alpha = 0.88f),
                 textAlign = TextAlign.Center,
@@ -352,7 +352,7 @@ private fun LoginErrorPreview() {
             state = LoginUiState(
                 username = "nvbh01",
                 password = "wrong",
-                error = "Sai ten dang nhap hoac mat khau",
+                error = "Sai tên đăng nhập hoặc mật khẩu",
             ),
             onUsernameChange = {},
             onPasswordChange = {},

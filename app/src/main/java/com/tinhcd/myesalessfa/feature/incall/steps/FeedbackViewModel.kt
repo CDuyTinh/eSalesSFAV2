@@ -115,7 +115,7 @@ class FeedbackViewModel @Inject constructor(
         val path = started.getOrElse { error ->
             _state.update {
                 it.copy(
-                    error = "Khong bat duoc micro" + (error.message?.let { m -> ": $m" } ?: ""),
+                    error = "Không bật được micro" + (error.message?.let { m -> ": $m" } ?: ""),
                     draft = it.draft.copy(audioPath = null, audioSeconds = 0),
                 )
             }
@@ -160,7 +160,7 @@ class FeedbackViewModel @Inject constructor(
                 } else {
                     it.draft.copy(audioSeconds = seconds)
                 },
-                error = if (seconds < 1) "Ban ghi qua ngan" else it.error,
+                error = if (seconds < 1) "Bản ghi quá ngắn" else it.error,
             )
         }
     }
@@ -206,7 +206,7 @@ class FeedbackViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(submitting = false, error = "Khong luu duoc phan hoi")
+                    it.copy(submitting = false, error = "Không lưu được phản hồi")
                 }
             }
         }

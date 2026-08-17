@@ -65,12 +65,12 @@ fun StockCountScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Kiem ton cua hang")
+                        Text("Kiểm tồn cửa hàng")
                         val subtitle = listOfNotNull(
                             state.customerName.ifBlank { null },
                             state.count.countedProducts
                                 .takeIf { it > 0 }
-                                ?.let { "da kiem $it mat hang" },
+                                ?.let { "đã kiểm $it mặt hàng" },
                         ).joinToString(" - ")
                         if (subtitle.isNotBlank()) {
                             Text(subtitle, style = MaterialTheme.typography.labelSmall)
@@ -85,7 +85,7 @@ fun StockCountScreen(
                 state.loading -> LoadingBox()
 
                 state.catalogue.isEmpty() -> ErrorBox(
-                    state.error ?: "Danh muc san pham trong. Dang nhap lai de tai ve.",
+                    state.error ?: "Danh mục sản phẩm trống. Đăng nhập lại để tải về.",
                     onRetry = viewModel::load,
                 )
 
@@ -99,7 +99,7 @@ fun StockCountScreen(
                         // missing "last time" as the outlet never having been
                         // counted, which is a different conclusion entirely.
                         Text(
-                            "Khong tai duoc so lieu ky truoc. Van kiem duoc, chi khong so sanh duoc.",
+                            "Không tải được số liệu kỳ trước. Vẫn kiểm được, chỉ không so sánh được.",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.error,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
@@ -109,7 +109,7 @@ fun StockCountScreen(
                     OutlinedTextField(
                         value = state.query,
                         onValueChange = viewModel::onQueryChange,
-                        label = { Text("Tim san pham") },
+                        label = { Text("Tìm sản phẩm") },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                         singleLine = true,
                         modifier = Modifier
@@ -127,12 +127,12 @@ fun StockCountScreen(
                             FilterChip(
                                 selected = state.mustStockOnly,
                                 onClick = { viewModel.onMustStockOnlyChange(!state.mustStockOnly) },
-                                label = { Text("Chi hang bat buoc (${compliance.required})") },
+                                label = { Text("Chỉ hàng bắt buộc (${compliance.required})") },
                             )
                             Spacer(Modifier.width(8.dp))
                             if (compliance.unchecked > 0) {
                                 Text(
-                                    "con ${compliance.unchecked} chua kiem",
+                                    "còn ${compliance.unchecked} chưa kiểm",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.error,
                                 )
@@ -142,7 +142,7 @@ fun StockCountScreen(
 
                     val visible = state.visible
                     if (visible.isEmpty()) {
-                        ErrorBox("Khong tim thay san pham nao")
+                        ErrorBox("Không tìm thấy sản phẩm nào")
                     } else {
                         LazyColumn(
                             modifier = Modifier.weight(1f),
@@ -198,7 +198,7 @@ private fun StockRow(
                         // obligation without reading each row.
                         if (par != null) {
                             Text(
-                                "BAT BUOC",
+                                "BẮT BUỘC",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
@@ -213,7 +213,7 @@ private fun StockRow(
                     }
                     Text(
                         product.product.code +
-                            if (par != null) "  -  dinh muc $par $baseUom" else "",
+                            if (par != null) "  -  định mức $par $baseUom" else "",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -223,7 +223,7 @@ private fun StockRow(
                 // the rep undoes a count, which is different from counting zero.
                 if (line != null) {
                     IconButton(onClick = onClear) {
-                        Icon(Icons.Default.Close, contentDescription = "Bo qua san pham nay")
+                        Icon(Icons.Default.Close, contentDescription = "Bỏ qua sản phẩm này")
                     }
                 }
             }
@@ -252,9 +252,9 @@ private fun StockRow(
                 Column(Modifier.weight(1f)) {
                     Text(
                         if (prevBase != null) {
-                            "Ky truoc: $prevBase $baseUom"
+                            "Kỳ trước: $prevBase $baseUom"
                         } else {
-                            "Chua kiem lan nao"
+                            "Chưa kiểm lần nào"
                         },
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -276,9 +276,9 @@ private fun StockRow(
 
             if (line != null) {
                 val movement = when {
-                    line.isNewlyOutOfStock -> "Het hang - ky truoc con ${line.prevBaseQty} $baseUom"
-                    line.soldSinceCount > 0 -> "Ban ${line.soldSinceCount} $baseUom tu ky truoc"
-                    else -> "Ton ${line.baseQty} $baseUom"
+                    line.isNewlyOutOfStock -> "Hết hàng - kỳ trước còn ${line.prevBaseQty} $baseUom"
+                    line.soldSinceCount > 0 -> "Bán ${line.soldSinceCount} $baseUom từ kỳ trước"
+                    else -> "Tồn ${line.baseQty} $baseUom"
                 }
                 Text(
                     movement,
@@ -296,7 +296,7 @@ private fun StockRow(
                 // rather than as decoration.
                 if (line.shortfallBaseQty > 0) {
                     Text(
-                        "Thieu ${line.shortfallBaseQty} $baseUom so voi dinh muc",
+                        "Thiếu ${line.shortfallBaseQty} $baseUom so với định mức",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.error,
@@ -319,7 +319,7 @@ private fun CountStepper(qty: Int?, onQtyChange: (Int) -> Unit) {
             onClick = { onQtyChange((qty ?: 0) - 1) },
             enabled = (qty ?: 0) > 0,
             modifier = Modifier.size(36.dp),
-        ) { Icon(Icons.Default.Remove, contentDescription = "Giam") }
+        ) { Icon(Icons.Default.Remove, contentDescription = "Giảm") }
 
         OutlinedTextField(
             value = qty?.toString() ?: "",
@@ -338,7 +338,7 @@ private fun CountStepper(qty: Int?, onQtyChange: (Int) -> Unit) {
         FilledIconButton(
             onClick = { onQtyChange((qty ?: 0) + 1) },
             modifier = Modifier.size(36.dp),
-        ) { Icon(Icons.Default.Add, contentDescription = "Tang") }
+        ) { Icon(Icons.Default.Add, contentDescription = "Tăng") }
     }
 }
 
@@ -352,13 +352,13 @@ private fun StockFooter(
         Column(Modifier.padding(16.dp)) {
             Row(Modifier.fillMaxWidth()) {
                 Text(
-                    "Da kiem",
+                    "Đã kiểm",
                     modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    "${state.count.countedProducts} mat hang",
+                    "${state.count.countedProducts} mặt hàng",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
                 )
@@ -367,13 +367,13 @@ private fun StockFooter(
             if (state.count.outOfStockCount > 0) {
                 Row(Modifier.fillMaxWidth()) {
                     Text(
-                        "Het hang",
+                        "Hết hàng",
                         modifier = Modifier.weight(1f),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        "${state.count.outOfStockCount} mat hang",
+                        "${state.count.outOfStockCount} mặt hàng",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.error,
                         fontWeight = FontWeight.Bold,
@@ -385,7 +385,7 @@ private fun StockFooter(
             if (compliance.required > 0) {
                 Row(Modifier.fillMaxWidth()) {
                     Text(
-                        "Hang bat buoc co san",
+                        "Hàng bắt buộc có sẵn",
                         modifier = Modifier.weight(1f),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -409,7 +409,7 @@ private fun StockFooter(
 
                 if (!compliance.isComplete) {
                     Text(
-                        "Con ${compliance.unchecked} mat hang bat buoc chua kiem",
+                        "Còn ${compliance.unchecked} mặt hàng bắt buộc chưa kiểm",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -417,7 +417,7 @@ private fun StockFooter(
 
                 if (state.count.totalShortfallBaseQty > 0) {
                     Text(
-                        "Can bo sung ${state.count.totalShortfallBaseQty} don vi de dat dinh muc",
+                        "Cần bổ sung ${state.count.totalShortfallBaseQty} đơn vị để đạt định mức",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -434,7 +434,7 @@ private fun StockFooter(
             }
 
             PrimaryButton(
-                text = "Gui phieu kiem ton",
+                text = "Gửi phiếu kiểm tồn",
                 onClick = onSubmit,
                 enabled = state.count.canSubmit,
                 loading = state.submitting,
@@ -446,7 +446,7 @@ private fun StockFooter(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 4.dp),
-            ) { Text("Quay lai") }
+            ) { Text("Quay lại") }
         }
     }
 }

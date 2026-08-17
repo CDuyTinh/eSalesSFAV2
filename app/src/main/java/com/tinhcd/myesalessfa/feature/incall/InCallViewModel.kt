@@ -66,7 +66,7 @@ class InCallViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(loading = false, error = "Khong tai duoc danh sach cong viec")
+                    it.copy(loading = false, error = "Không tải được danh sách công việc")
                 }
             }
         }
@@ -86,7 +86,7 @@ class InCallViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(submitting = false, error = "Khong luu duoc check-out")
+                    it.copy(submitting = false, error = "Không lưu được check-out")
                 }
             }
         }

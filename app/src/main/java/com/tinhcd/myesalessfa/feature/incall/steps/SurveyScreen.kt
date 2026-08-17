@@ -68,12 +68,12 @@ fun SurveyScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text(survey?.definition?.name ?: "Khao sat")
+                        Text(survey?.definition?.name ?: "Khảo sát")
                         if (survey != null && survey.definition.isScored) {
                             Text(
-                                "Diem ${survey.totalScore}/${survey.definition.maxScore}" +
+                                "Điểm ${survey.totalScore}/${survey.definition.maxScore}" +
                                     if (survey.definition.passScore > 0) {
-                                        if (survey.isPassing) " - Dat" else " - Chua dat"
+                                        if (survey.isPassing) " - Đạt" else " - Chưa đạt"
                                     } else {
                                         ""
                                     },
@@ -89,7 +89,7 @@ fun SurveyScreen(
             when {
                 state.loading -> LoadingBox()
                 survey == null -> ErrorBox(
-                    state.error ?: "Khong co bo cau hoi",
+                    state.error ?: "Không có bộ câu hỏi",
                     onRetry = viewModel::load,
                 )
 
@@ -131,7 +131,7 @@ fun SurveyScreen(
                             OutlinedTextField(
                                 value = survey.note,
                                 onValueChange = viewModel::onNoteChange,
-                                label = { Text("Ghi chu chung (tuy chon)") },
+                                label = { Text("Ghi chú chung (tùy chọn)") },
                                 minLines = 2,
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -175,7 +175,7 @@ private fun QuestionCard(
             // questionnaire does not sprout meaningless zeros.
             if (question.maxScore > 0) {
                 Text(
-                    "Toi da ${question.maxScore} diem",
+                    "Tối đa ${question.maxScore} điểm",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -189,12 +189,12 @@ private fun QuestionCard(
                         FilterChip(
                             selected = answer?.bool == true,
                             onClick = { viewModel.onYesNo(question.id, true) },
-                            label = { Text("Co") },
+                            label = { Text("Có") },
                         )
                         FilterChip(
                             selected = answer?.bool == false,
                             onClick = { viewModel.onYesNo(question.id, false) },
-                            label = { Text("Khong") },
+                            label = { Text("Không") },
                         )
                     }
 
@@ -259,7 +259,7 @@ private fun QuestionCard(
 
             if (question.isRequired && !answered) {
                 Text(
-                    "Chua tra loi",
+                    "Chưa trả lời",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(top = 4.dp),
@@ -282,7 +282,7 @@ private fun SurveyFooter(
             if (survey.definition.isScored) {
                 Row(Modifier.fillMaxWidth()) {
                     Text(
-                        "Diem",
+                        "Điểm",
                         modifier = Modifier.weight(1f),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -303,7 +303,7 @@ private fun SurveyFooter(
 
             if (survey.unanswered.isNotEmpty()) {
                 Text(
-                    "Con ${survey.unanswered.size} cau bat buoc chua tra loi",
+                    "Còn ${survey.unanswered.size} câu bắt buộc chưa trả lời",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -318,7 +318,7 @@ private fun SurveyFooter(
             }
 
             PrimaryButton(
-                text = "Hoan thanh buoc nay",
+                text = "Hoàn thành bước này",
                 onClick = onSubmit,
                 enabled = survey.canSubmit,
                 loading = submitting,
@@ -330,7 +330,7 @@ private fun SurveyFooter(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 4.dp),
-            ) { Text("Quay lai") }
+            ) { Text("Quay lại") }
         }
     }
 }

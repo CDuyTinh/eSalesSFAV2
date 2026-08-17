@@ -69,21 +69,21 @@ class LoginViewModel @Inject constructor(
 
 private fun AppError.toMessage(): String = when (this) {
     is AppError.Auth -> when (message) {
-        "invalid_credentials" -> "Sai ten dang nhap hoac mat khau"
+        "invalid_credentials" -> "Sai tên đăng nhập hoặc mật khẩu"
         // Permanent, and only head office can fix it.
-        "account_not_provisioned" -> "Tai khoan chua duoc gan nhan vien ban hang"
+        "account_not_provisioned" -> "Tài khoản chưa được gắn nhân viên bán hàng"
         // Transient: the password was accepted, the profile was not fetched. Says so,
         // rather than blaming the account.
-        "profile_unavailable" -> "Da dang nhap nhung chua tai duoc thong tin nhan vien. Thu lai."
-        else -> "Dang nhap that bai"
+        "profile_unavailable" -> "Đã đăng nhập nhưng chưa tải được thông tin nhân viên. Thử lại."
+        else -> "Đăng nhập thất bại"
     }
 
-    is AppError.Network -> "Khong co ket noi mang"
+    is AppError.Network -> "Không có kết nối mạng"
     is AppError.Rule -> when (key) {
-        "login_empty_fields" -> "Vui long nhap day du thong tin"
-        else -> "Du lieu khong hop le"
+        "login_empty_fields" -> "Vui lòng nhập đầy đủ thông tin"
+        else -> "Dữ liệu không hợp lệ"
     }
 
-    is AppError.Server -> "Loi may chu${code?.let { " ($it)" }.orEmpty()}"
-    is AppError.Unknown -> message?.takeIf { it.isNotBlank() } ?: "Da co loi xay ra"
+    is AppError.Server -> "Lỗi máy chủ${code?.let { " ($it)" }.orEmpty()}"
+    is AppError.Unknown -> message?.takeIf { it.isNotBlank() } ?: "Đã có lỗi xảy ra"
 }

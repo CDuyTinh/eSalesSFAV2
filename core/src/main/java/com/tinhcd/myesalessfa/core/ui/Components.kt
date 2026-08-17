@@ -61,14 +61,14 @@ fun ErrorBox(
         if (onRetry != null) {
             OutlinedButton(onClick = onRetry) {
                 Icon(Icons.Default.Refresh, contentDescription = null)
-                Text("  Thu lai")
+                Text("  Thử lại")
             }
         }
     }
 }
 
 /**
- * Dong, grouped the way it is written in Vietnam: 1.234.567 d.
+ * Dong, grouped the way it is written in Vietnam: 1.234.567 đ.
  *
  * Built by hand rather than through NumberFormat so the grouping does not follow
  * the device locale. A rep reading a total out to a customer must see the same
@@ -78,7 +78,7 @@ fun ErrorBox(
 fun formatDong(amount: Long): String {
     val digits = amount.toString()
     val grouped = digits.reversed().chunked(3).joinToString(".").reversed()
-    return "$grouped d"
+    return "$grouped đ"
 }
 
 /**

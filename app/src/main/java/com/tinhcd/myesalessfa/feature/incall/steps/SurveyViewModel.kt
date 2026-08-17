@@ -68,7 +68,7 @@ class SurveyViewModel @Inject constructor(
                             // no questionnaire behind it cannot be completed, and the
                             // rep needs to know that rather than wonder.
                             error = if (definition == null) {
-                                "Chua cau hinh bo cau hoi cho buoc nay"
+                                "Chưa cấu hình bộ câu hỏi cho bước này"
                             } else {
                                 null
                             },
@@ -77,7 +77,7 @@ class SurveyViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(loading = false, error = "Khong tai duoc bo cau hoi")
+                    it.copy(loading = false, error = "Không tải được bộ câu hỏi")
                 }
             }
         }
@@ -113,7 +113,7 @@ class SurveyViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(submitting = false, error = "Khong luu duoc phieu khao sat")
+                    it.copy(submitting = false, error = "Không lưu được phiếu khảo sát")
                 }
             }
         }

@@ -86,7 +86,7 @@ class CheckInViewModel @Inject constructor(
 
                 is DataResult.Failure ->
                     _state.update {
-                        it.copy(loading = false, error = "Khong tai duoc thong tin khach hang")
+                        it.copy(loading = false, error = "Không tải được thông tin khách hàng")
                     }
             }
         }
@@ -152,7 +152,7 @@ class CheckInViewModel @Inject constructor(
 
                 is DataResult.Failure ->
                     _state.update {
-                        it.copy(submitting = false, error = "Khong luu duoc check-in")
+                        it.copy(submitting = false, error = "Không lưu được check-in")
                     }
             }
         }
@@ -160,15 +160,15 @@ class CheckInViewModel @Inject constructor(
 }
 
 internal fun ReasonKind.prompt(): String = when (this) {
-    ReasonKind.GPS_OUT_OF_RANGE -> "Ban dang o ngoai ban kinh cho phep. Chon ly do de tiep tuc:"
-    ReasonKind.GPS_LOW_ACCURACY -> "Tin hieu GPS khong du chinh xac. Chon ly do de tiep tuc:"
-    ReasonKind.GPS_UNAVAILABLE -> "Khong lay duoc vi tri. Chon ly do de tiep tuc:"
-    ReasonKind.OUTLET_CLOSED -> "Cua hang dong cua. Chon ly do:"
-    ReasonKind.NO_ORDER -> "Khach khong dat hang. Chon ly do:"
-    ReasonKind.PHOTO_SKIPPED -> "Khong chup duoc anh. Chon ly do:"
+    ReasonKind.GPS_OUT_OF_RANGE -> "Bạn đang ở ngoài bán kính cho phép. Chọn lý do để tiếp tục:"
+    ReasonKind.GPS_LOW_ACCURACY -> "Tín hiệu GPS không đủ chính xác. Chọn lý do để tiếp tục:"
+    ReasonKind.GPS_UNAVAILABLE -> "Không lấy được vị trí. Chọn lý do để tiếp tục:"
+    ReasonKind.OUTLET_CLOSED -> "Cửa hàng đóng cửa. Chọn lý do:"
+    ReasonKind.NO_ORDER -> "Khách không đặt hàng. Chọn lý do:"
+    ReasonKind.PHOTO_SKIPPED -> "Không chụp được ảnh. Chọn lý do:"
 
     // Not a check-in gate at all — it classifies what feedback is about, and no gate
     // resolves to it. A neutral string rather than an exception, because an
     // unreachable branch is not worth crashing a rep's check-in over.
-    ReasonKind.FEEDBACK_TOPIC -> "Chon ly do:"
+    ReasonKind.FEEDBACK_TOPIC -> "Chọn lý do:"
 }
