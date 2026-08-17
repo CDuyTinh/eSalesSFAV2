@@ -12,6 +12,7 @@ import com.tinhcd.myesalessfa.data.repository.ReferenceDataSyncImpl
 import com.tinhcd.myesalessfa.data.repository.RouteRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.StockRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.SurveyRepositoryImpl
+import com.tinhcd.myesalessfa.data.repository.TimekeepingRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.WorkflowRepositoryImpl
 import com.tinhcd.myesalessfa.domain.repository.AuthRepository
 import com.tinhcd.myesalessfa.domain.repository.CatalogRepository
@@ -20,6 +21,7 @@ import com.tinhcd.myesalessfa.domain.repository.DashboardRepository
 import com.tinhcd.myesalessfa.domain.repository.DisplayAuditRepository
 import com.tinhcd.myesalessfa.domain.repository.FeedbackRepository
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
+import com.tinhcd.myesalessfa.domain.repository.TimekeepingRepository
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository
 import com.tinhcd.myesalessfa.domain.repository.ReferenceDataSync
 import com.tinhcd.myesalessfa.domain.repository.RouteRepository
@@ -55,6 +57,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindConfigRepository(impl: ConfigRepositoryImpl): ConfigRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindTimekeepingRepository(
+        impl: TimekeepingRepositoryImpl,
+    ): TimekeepingRepository
 
     @Binds
     @Singleton

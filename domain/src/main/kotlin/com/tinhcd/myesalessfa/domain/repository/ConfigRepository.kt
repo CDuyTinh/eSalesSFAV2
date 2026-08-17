@@ -5,9 +5,13 @@ import com.tinhcd.myesalessfa.domain.model.AppMenu
 import com.tinhcd.myesalessfa.domain.model.CheckInPolicy
 import com.tinhcd.myesalessfa.domain.model.ReasonCode
 import com.tinhcd.myesalessfa.domain.model.ReasonKind
+import com.tinhcd.myesalessfa.domain.model.WorkDayPolicy
 
 interface ConfigRepository {
     suspend fun checkInPolicy(): CheckInPolicy
+
+    /** The depot equivalent: its own radius, and when a clock-in counts as late. */
+    suspend fun workDayPolicy(): WorkDayPolicy
 
     /**
      * The shell's tabs and their sheet entries, already translated and ordered.

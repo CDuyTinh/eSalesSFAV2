@@ -4,11 +4,19 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
+/**
+ * The last three are nullable because most callers do not ask for them: only the
+ * work-day screen measures a distance to the depot, and the profile read that
+ * fills the drawer has no use for its coordinates.
+ */
 @Serializable
 data class BranchDto(
     val id: String,
     val code: String,
     val name: String,
+    val address: String? = null,
+    val lat: Double? = null,
+    val lng: Double? = null,
 )
 
 @Serializable
