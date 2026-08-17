@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.tinhcd.myesalessfa.domain.model.SupportedMenu
 import com.tinhcd.myesalessfa.domain.model.SupportedSteps
 import com.tinhcd.myesalessfa.domain.model.VisitStatus
 import com.tinhcd.myesalessfa.feature.auth.LoginScreen
@@ -19,6 +20,7 @@ import com.tinhcd.myesalessfa.feature.incall.steps.NoteStepScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.StockCountScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.SurveyScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.TakeOrderScreen
+import com.tinhcd.myesalessfa.feature.newcustomer.NewCustomerScreen
 import com.tinhcd.myesalessfa.feature.shell.MainShell
 import com.tinhcd.myesalessfa.feature.workday.WorkDayScreen
 
@@ -33,6 +35,7 @@ object Routes {
 
     /** Opening and closing the selling day. No argument: it is always today's. */
     const val WORK_DAY = "workday"
+    const val NEW_CUSTOMER = "newcustomer"
     const val CHECK_IN = "checkin/{customerId}"
     const val IN_CALL = "incall/{visitId}/{customerId}"
     // The customer travels with the step, not just the visit: take_order prices
@@ -69,6 +72,14 @@ fun AppNavHost(
         composable(Routes.SHELL) {
             MainShell(
                 onOpenWorkDay = { navController.navigate(Routes.WORK_DAY) },
+                onOpenMenuEntry = { code ->
+                    // The shell has already refused anything not in SupportedMenu,
+                    // so an unknown code here would be a registry that disagrees
+                    // with itself rather than a rep pressing something odd.
+                    when (code) {
+                        SupportedMenu.NEW_CUSTOMER -> navController.navigate(Routes.NEW_CUSTOMER)
+                    }
+                },
                 onOpenStop = { stop ->
                     // Where a tap goes depends on how far the visit has got.
                     // Already checked in means the rep wants the work list, not
@@ -86,6 +97,12 @@ fun AppNavHost(
                     }
                 },
             )
+        }
+
+        composable(Routes.NEW_CUSTOMER) {
+            // Back to the shell. The outlet is already on today's route by the
+            // time this closes, and the route reloads when its tab resumes.
+            NewCustomerScreen(onDone = { navController.popBackStack() })
         }
 
         composable(Routes.WORK_DAY) {

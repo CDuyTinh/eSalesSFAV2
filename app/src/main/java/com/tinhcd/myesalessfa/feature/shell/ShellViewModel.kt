@@ -104,10 +104,23 @@ class ShellViewModel @Inject constructor(
         }
     }
 
-    fun onSheetEntrySelected(entry: MenuEntry) {
-        // Nothing behind any of them yet. Saying so is better than a blank screen
-        // the rep has to guess their way out of.
-        _state.update { it.copy(openSheet = null, unavailableMessage = entry.title) }
+    /**
+     * Closes the sheet, and reports whether the entry has a screen behind it.
+     *
+     * The navigation is the caller's to do — this class knows nothing about a nav
+     * controller — but the decision is not, because `implemented` is the same
+     * registry the sheet drew its lock icons from and the two must not disagree.
+     */
+    fun onSheetEntrySelected(entry: MenuEntry): Boolean {
+        _state.update {
+            it.copy(
+                openSheet = null,
+                // Saying so is better than a blank screen the rep has to guess
+                // their way out of.
+                unavailableMessage = if (entry.implemented) null else entry.title,
+            )
+        }
+        return entry.implemented
     }
 
     fun dismissSheet() = _state.update { it.copy(openSheet = null) }

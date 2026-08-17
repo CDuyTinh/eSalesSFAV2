@@ -142,6 +142,8 @@ data class RouteStopDto(
     val status: String = "planned",
     @SerialName("check_in_at") val checkInAt: String? = null,
     @SerialName("check_out_at") val checkOutAt: String? = null,
+    /** True for an outlet the rep registered themselves, not one from the MCP. */
+    val unplanned: Boolean = false,
 )
 
 @Serializable
@@ -204,6 +206,57 @@ data class WorkDayPunchDto(
     @SerialName("accuracy_m") val accuracyM: Double? = null,
     @SerialName("distance_m") val distanceM: Double? = null,
     @SerialName("reason_id") val reasonId: String? = null,
+)
+
+@Serializable
+data class NamedRefDto(
+    val id: String,
+    val code: String,
+    val name: String,
+)
+
+/**
+ * One shape for all three option calls. Which lists arrive depends on which
+ * question was asked, so every field defaults to empty rather than being
+ * required — a districts response carries no provinces and says nothing about
+ * them.
+ */
+@Serializable
+data class CustomerOptionsDto(
+    val classes: List<NamedRefDto> = emptyList(),
+    val channels: List<NamedRefDto> = emptyList(),
+    @SerialName("shop_types") val shopTypes: List<NamedRefDto> = emptyList(),
+    val provinces: List<NamedRefDto> = emptyList(),
+    val districts: List<NamedRefDto> = emptyList(),
+    val wards: List<NamedRefDto> = emptyList(),
+)
+
+/** Carries no code: the server assigns that, and sending one would invite a clash. */
+@Serializable
+data class NewCustomerDto(
+    val name: String,
+    val phone: String? = null,
+    val address: String,
+    @SerialName("ward_id") val wardId: String? = null,
+    val lat: Double? = null,
+    val lng: Double? = null,
+    @SerialName("class_id") val classId: String? = null,
+    @SerialName("channel_id") val channelId: String? = null,
+    @SerialName("shop_type_id") val shopTypeId: String? = null,
+    val note: String? = null,
+)
+
+@Serializable
+data class RegisteredCustomerDto(
+    val id: String,
+    val code: String,
+    val name: String,
+)
+
+@Serializable
+data class RegisteredCustomerAckDto(
+    val ok: Boolean = true,
+    val customer: RegisteredCustomerDto,
 )
 
 /** Every write function answers with this, or with an error body carrying `message`. */
