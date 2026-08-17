@@ -43,7 +43,7 @@ fun SalesTrendChart(
     if (points.isEmpty()) {
         Box(modifier, contentAlignment = Alignment.Center) {
             Text(
-                text = "Chua co du lieu",
+                text = "Chưa có dữ liệu",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

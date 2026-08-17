@@ -73,7 +73,7 @@ fun DisplayAuditScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(state.title.ifBlank { "Cham trung bay" }) })
+            TopAppBar(title = { Text(state.title.ifBlank { "Chấm trưng bày" }) })
         },
     ) { padding ->
         if (state.loading) {
@@ -113,9 +113,9 @@ private fun AuditForm(
     ) {
         Text(
             if (audit.photoMin > 0) {
-                "Chup anh trung bay - can it nhat ${audit.photoMin} anh"
+                "Chụp ảnh trưng bày - cần ít nhất ${audit.photoMin} ảnh"
             } else {
-                "Chup anh trung bay"
+                "Chụp ảnh trưng bày"
             },
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -136,14 +136,14 @@ private fun AuditForm(
         ) {
             Icon(Icons.Default.PhotoCamera, contentDescription = null)
             Text(
-                if (audit.photos.isEmpty()) "  Chup anh" else "  Chup them anh",
+                if (audit.photos.isEmpty()) "  Chụp ảnh" else "  Chụp thêm ảnh",
             )
         }
 
         OutlinedTextField(
             value = audit.note,
             onValueChange = onNoteChange,
-            label = { Text("Ghi chu (tuy chon)") },
+            label = { Text("Ghi chú (tùy chọn)") },
             minLines = 3,
             modifier = Modifier
                 .fillMaxWidth()
@@ -162,7 +162,7 @@ private fun AuditForm(
             Column {
                 if (audit.photosStillNeeded > 0) {
                     Text(
-                        "Con thieu ${audit.photosStillNeeded} anh",
+                        "Còn thiếu ${audit.photosStillNeeded} ảnh",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -170,7 +170,7 @@ private fun AuditForm(
                     // The size is the honest answer to "why is this slow" on a
                     // connection measured in tens of kilobytes per second.
                     Text(
-                        "${audit.photoCount} anh - ${audit.totalSizeBytes / 1024} KB se duoc gui",
+                        "${audit.photoCount} ảnh - ${audit.totalSizeBytes / 1024} KB sẽ được gửi",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -179,7 +179,7 @@ private fun AuditForm(
         }
 
         PrimaryButton(
-            text = "Hoan thanh buoc nay",
+            text = "Hoàn thành bước này",
             onClick = onSubmit,
             enabled = audit.canSubmit,
             loading = state.submitting || state.capturing,
@@ -188,7 +188,7 @@ private fun AuditForm(
         OutlinedButton(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth(),
-        ) { Text("Quay lai") }
+        ) { Text("Quay lại") }
     }
 }
 
@@ -200,7 +200,7 @@ private fun PhotoThumbnail(photo: AuditPhoto, onRemove: () -> Unit) {
             // needs to see the shot they just took to judge whether to keep it.
             AsyncImage(
                 model = File(photo.localPath),
-                contentDescription = "Anh trung bay",
+                contentDescription = "Ảnh trưng bày",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -211,7 +211,7 @@ private fun PhotoThumbnail(photo: AuditPhoto, onRemove: () -> Unit) {
                     .align(Alignment.TopEnd)
                     .padding(2.dp)
                     .size(28.dp),
-            ) { Icon(Icons.Default.Close, contentDescription = "Bo anh nay") }
+            ) { Icon(Icons.Default.Close, contentDescription = "Bỏ ảnh này") }
 
             Row(
                 modifier = Modifier

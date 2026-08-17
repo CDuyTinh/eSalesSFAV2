@@ -51,7 +51,7 @@ class DashboardViewModel @Inject constructor(
                 // failed has not made yesterday's total untrue, and an empty screen
                 // would read as "you sold nothing".
                 is DataResult.Failure ->
-                    _state.update { it.copy(loading = false, error = "Khong tai duoc so lieu") }
+                    _state.update { it.copy(loading = false, error = "Không tải được số liệu") }
             }
         }
     }

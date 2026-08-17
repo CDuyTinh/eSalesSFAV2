@@ -99,7 +99,7 @@ class NoteStepViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(submitting = false, error = "Khong luu duoc buoc nay")
+                    it.copy(submitting = false, error = "Không lưu được bước này")
                 }
             }
         }

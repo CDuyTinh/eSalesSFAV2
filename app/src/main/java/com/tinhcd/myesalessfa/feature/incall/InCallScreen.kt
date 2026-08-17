@@ -61,10 +61,10 @@ fun InCallScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text(state.customer?.name ?: "Cong viec")
+                        Text(state.customer?.name ?: "Công việc")
                         val workflow = state.workflow
                         val subtitle = listOfNotNull(
-                            workflow?.let { "Da xong ${it.doneCount}/${it.steps.size} buoc" },
+                            workflow?.let { "Đã xong ${it.doneCount}/${it.steps.size} bước" },
                         ).joinToString(" - ")
                         if (subtitle.isNotBlank()) {
                             Text(subtitle, style = MaterialTheme.typography.labelSmall)
@@ -78,7 +78,7 @@ fun InCallScreen(
             when {
                 state.loading -> LoadingBox()
                 state.workflow == null ->
-                    ErrorBox(state.error ?: "Khong co du lieu", onRetry = viewModel::load)
+                    ErrorBox(state.error ?: "Không có dữ liệu", onRetry = viewModel::load)
 
                 else -> {
                     val workflow = state.workflow!!
@@ -100,7 +100,7 @@ fun InCallScreen(
                             Column(Modifier.padding(16.dp)) {
                                 if (!workflow.canCheckOut) {
                                     Text(
-                                        text = "Con buoc bat buoc chua hoan thanh: " +
+                                        text = "Còn bước bắt buộc chưa hoàn thành: " +
                                             workflow.blockingSteps.joinToString { it.title },
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.error,
@@ -189,12 +189,12 @@ private fun StepRow(step: WorkflowStep, onClick: () -> Unit) {
                 )
                 val waitingOn = step.waitingOn
                 val note = when {
-                    !step.implemented -> "Chua xay dung trong ban nay"
+                    !step.implemented -> "Chưa xây dựng trong bản này"
                     // Says which step, so the rep is not left guessing what
                     // unlocks this one.
-                    waitingOn != null -> "Can lam \"${waitingOn.title}\" truoc"
-                    step.step.isRequired -> "Bat buoc"
-                    else -> "Tuy chon"
+                    waitingOn != null -> "Cần làm \"${waitingOn.title}\" trước"
+                    step.step.isRequired -> "Bắt buộc"
+                    else -> "Tùy chọn"
                 }
                 Text(
                     text = note,

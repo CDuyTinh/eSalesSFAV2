@@ -233,7 +233,7 @@ private fun SheetMenu(tab: MenuEntry, onSelect: (MenuEntry) -> Unit) {
 
         if (tab.children.isEmpty()) {
             Text(
-                text = "Chua co muc nao",
+                text = "Chưa có mục nào",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(20.dp),
@@ -266,7 +266,7 @@ private fun SheetMenu(tab: MenuEntry, onSelect: (MenuEntry) -> Unit) {
                     Text(entry.title, style = MaterialTheme.typography.bodyLarge)
                     if (!entry.implemented) {
                         Text(
-                            text = "Chua xay dung trong ban nay",
+                            text = "Chưa xây dựng trong bản này",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -320,7 +320,7 @@ private fun ShellDrawer(
         }
 
         NavigationDrawerItem(
-            label = { Text("Dang xuat") },
+            label = { Text("Đăng xuất") },
             icon = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null) },
             selected = false,
             onClick = onSignOut,
@@ -338,7 +338,7 @@ private fun ShellDrawer(
 private fun UnknownTab() {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Text(
-            text = "Muc nay chua co trong ban nay",
+            text = "Mục này chưa có trong bản này",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -350,14 +350,14 @@ private fun NotBuiltDialog(label: String, onDismiss: () -> Unit) {
     androidx.compose.material3.AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            androidx.compose.material3.TextButton(onClick = onDismiss) { Text("Da hieu") }
+            androidx.compose.material3.TextButton(onClick = onDismiss) { Text("Đã hiểu") }
         },
         icon = { Icon(Icons.Default.Lock, contentDescription = null) },
         title = { Text(label) },
         text = {
             Text(
-                "Chuc nang nay da duoc bat tren he thong nhung ban ung dung hien tai " +
-                    "chua co man hinh cho no.",
+                "Chức năng này đã được bật trên hệ thống nhưng bản ứng dụng hiện tại " +
+                    "chưa có màn hình cho nó.",
             )
         },
     )

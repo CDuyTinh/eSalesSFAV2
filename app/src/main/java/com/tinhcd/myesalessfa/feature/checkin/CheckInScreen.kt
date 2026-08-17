@@ -77,7 +77,7 @@ fun CheckInScreen(
         when {
             state.loading -> LoadingBox(Modifier.padding(padding))
             state.customer == null -> ErrorBox(
-                state.error ?: "Khong tim thay khach hang trong tuyen hom nay",
+                state.error ?: "Không tìm thấy khách hàng trong tuyến hôm nay",
                 modifier = Modifier.padding(padding),
             )
 
@@ -119,7 +119,7 @@ fun CheckInScreen(
                     }
                     if (state.reasons.isEmpty()) {
                         Text(
-                            "Chua tai duoc danh sach ly do. Kiem tra ket noi roi thu lai.",
+                            "Chưa tải được danh sách lý do. Kiểm tra kết nối rồi thử lại.",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.error,
                         )
@@ -146,7 +146,7 @@ fun CheckInScreen(
                 OutlinedButton(
                     onClick = onDone,
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Quay lai") }
+                ) { Text("Quay lại") }
             }
         }
     }
@@ -160,19 +160,19 @@ private fun GateCard(
 ) {
     val scheme = MaterialTheme.colorScheme
     val (text, tint) = when {
-        locating -> "Dang lay vi tri..." to scheme.onSurfaceVariant
+        locating -> "Đang lấy vị trí..." to scheme.onSurfaceVariant
         gate is CheckInGate.Allowed ->
-            "Trong ban kinh cho phep (${gate.distanceM.roundToInt()} m)" to scheme.primary
+            "Trong bán kính cho phép (${gate.distanceM.roundToInt()} m)" to scheme.primary
 
         gate is CheckInGate.NeedsReason -> {
             val d = gate.distanceM?.let { " (${it.roundToInt()} m)" }.orEmpty()
-            "Can chon ly do$d" to scheme.secondary
+            "Cần chọn lý do$d" to scheme.secondary
         }
 
         gate is CheckInGate.Blocked ->
-            "Khong the check-in tai vi tri nay" to scheme.error
+            "Không thể check-in tại vị trí này" to scheme.error
 
-        else -> "Chua xac dinh vi tri" to scheme.onSurfaceVariant
+        else -> "Chưa xác định vị trí" to scheme.onSurfaceVariant
     }
 
     Surface(
@@ -193,7 +193,7 @@ private fun GateCard(
                     .weight(1f)
                     .padding(horizontal = 10.dp),
             )
-            OutlinedButton(onClick = onRefresh, enabled = !locating) { Text("Lam moi") }
+            OutlinedButton(onClick = onRefresh, enabled = !locating) { Text("Làm mới") }
         }
     }
 }
