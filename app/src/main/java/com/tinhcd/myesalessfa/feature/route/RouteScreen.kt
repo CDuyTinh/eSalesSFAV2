@@ -27,6 +27,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Refresh
@@ -38,6 +39,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -60,6 +62,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -96,6 +99,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun RouteScreen(
     onOpenStop: (RouteStop) -> Unit,
+    onOpenMap: () -> Unit,
     onOpenDrawer: () -> Unit,
     /**
      * Head office may have added a tab in the same refresh that brought new
@@ -116,6 +120,7 @@ fun RouteScreen(
     RouteContent(
         state = state,
         onOpenStop = onOpenStop,
+        onOpenMap = onOpenMap,
         onOpenDrawer = onOpenDrawer,
         onRetry = viewModel::load,
         onRetryProfile = viewModel::retryProfile,
@@ -130,6 +135,7 @@ fun RouteScreen(
 private fun RouteContent(
     state: RouteUiState,
     onOpenStop: (RouteStop) -> Unit,
+    onOpenMap: () -> Unit,
     onOpenDrawer: () -> Unit,
     onRetry: () -> Unit,
     onRetryProfile: () -> Unit,
@@ -170,6 +176,22 @@ private fun RouteContent(
         }
 
         Box(Modifier.weight(1f)) {
+            // Only once there is something to plot. A map button over an empty
+            // route opens an empty map, which answers nothing.
+            if (state.stops.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = onOpenMap,
+                    containerColor = MapRed,
+                    contentColor = Color.White,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp)
+                        .zIndex(1f),
+                ) {
+                    Icon(Icons.Default.Map, contentDescription = "Xem tuyến trên bản đồ")
+                }
+            }
+
             when {
                 state.loading && state.stops.isEmpty() -> LoadingBox()
                 state.error != null -> ErrorBox(state.error, onRetry = onRetry)
@@ -828,6 +850,9 @@ private val CallBlue = Color(0xFF2D2DFE)
 
 /** Not one of the status colours: being off-MCP is not a stage of a visit. */
 private val UnplannedViolet = Color(0xFF5C00D4)
+
+/** The map button, in the red the app this replaces used for it. */
+private val MapRed = Color(0xFFD5262B)
 private val FilterActive = Color(0xFFF5A202)
 
 private fun VisitStatus.chipColor(): Color = when (this) {
@@ -932,6 +957,7 @@ private fun RoutePreview() {
         RouteContent(
             state = RouteUiState(loading = false, stops = SampleStops, sync = SyncState()),
             onOpenStop = {},
+            onOpenMap = {},
             onOpenDrawer = {},
             onRetry = {},
             onRetryProfile = {},
@@ -954,6 +980,7 @@ private fun RouteFilteredPreview() {
                 query = "không khớp",
             ),
             onOpenStop = {},
+            onOpenMap = {},
             onOpenDrawer = {},
             onRetry = {},
             onRetryProfile = {},

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -17,6 +19,16 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // The Maps key, from local.properties like every other key here, so it
+        // never reaches git. Empty is a working build with a blank grey map
+        // rather than a failing one: a missing key must not stop someone
+        // compiling the other nine screens.
+        val props = Properties().apply {
+            val f = rootProject.file("local.properties")
+            if (f.exists()) f.inputStream().use { stream -> load(stream) }
+        }
+        manifestPlaceholders["mapsApiKey"] = props.getProperty("maps.apiKey") ?: ""
     }
 
     buildTypes {
@@ -60,6 +72,8 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+    implementation(libs.play.services.maps)
+    implementation(libs.maps.compose)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
