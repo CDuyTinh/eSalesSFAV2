@@ -16,6 +16,7 @@ import com.tinhcd.myesalessfa.feature.account.AccountScreen
 import com.tinhcd.myesalessfa.feature.auth.LoginScreen
 import com.tinhcd.myesalessfa.feature.checkin.CheckInScreen
 import com.tinhcd.myesalessfa.feature.dailytarget.DailyTargetScreen
+import com.tinhcd.myesalessfa.feature.focus.FocusProductsScreen
 import com.tinhcd.myesalessfa.feature.incall.InCallScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.DisplayAuditScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.FeedbackScreen
@@ -47,6 +48,7 @@ object Routes {
     const val ROUTE_MAP = "routemap"
     const val ACCOUNT = "account"
     const val DAILY_TARGET = "dailytarget"
+    const val FOCUS_PRODUCTS = "focusproducts"
     const val CHECK_IN = "checkin/{customerId}"
     const val IN_CALL = "incall/{visitId}/{customerId}"
     // The customer travels with the step, not just the visit: take_order prices
@@ -95,6 +97,8 @@ fun AppNavHost(
                         SupportedMenu.RECEIVABLE -> navController.navigate(Routes.RECEIVABLES)
                         SupportedMenu.DAILY_SALES_TARGET ->
                             navController.navigate(Routes.DAILY_TARGET)
+
+                        SupportedMenu.SALES_FOCUS -> navController.navigate(Routes.FOCUS_PRODUCTS)
                     }
                 },
                 onOpenStop = { stop -> navController.navigateToStop(stop) },
@@ -104,6 +108,10 @@ fun AppNavHost(
                     }
                 },
             )
+        }
+
+        composable(Routes.FOCUS_PRODUCTS) {
+            FocusProductsScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Routes.DAILY_TARGET) {

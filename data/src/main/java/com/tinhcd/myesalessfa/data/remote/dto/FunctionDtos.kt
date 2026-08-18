@@ -420,3 +420,30 @@ data class SaveDailyTargetsDto(
     val date: String,
     val targets: List<DailyTargetEntryDto>,
 )
+
+// -----------------------------------------------------------------------------
+// Focus products
+// -----------------------------------------------------------------------------
+
+@Serializable
+data class FocusProductDto(
+    @SerialName("focus_id") val focusId: String,
+    @SerialName("product_id") val productId: String,
+    @SerialName("product_code") val productCode: String,
+    @SerialName("product_name") val productName: String,
+    @SerialName("base_uom") val baseUom: String = "",
+    @SerialName("from_date") val fromDate: String,
+    @SerialName("to_date") val toDate: String,
+    val priority: Int = 0,
+    /** Absent when the push is qualitative rather than a quantity. */
+    @SerialName("target_base_qty") val targetBaseQty: Int? = null,
+    val note: String? = null,
+    @SerialName("sold_base_qty") val soldBaseQty: Int = 0,
+    val outlets: Int = 0,
+)
+
+@Serializable
+data class FocusProductsDto(
+    val date: String,
+    val products: List<FocusProductDto> = emptyList(),
+)
