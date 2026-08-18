@@ -18,6 +18,7 @@ import com.tinhcd.myesalessfa.data.remote.service.StockService
 import com.tinhcd.myesalessfa.data.remote.service.SurveyService
 import com.tinhcd.myesalessfa.data.remote.service.TimekeepingService
 import com.tinhcd.myesalessfa.data.remote.service.VisitService
+import com.tinhcd.myesalessfa.data.remote.service.WorkNoteService
 import com.tinhcd.myesalessfa.data.remote.service.WorkflowService
 import com.tinhcd.myesalessfa.data.remote.http.ClockSkewRetryInterceptor
 import com.tinhcd.myesalessfa.data.remote.http.SessionTokens
@@ -186,6 +187,11 @@ object NetworkModule {
     @Singleton
     fun provideSiteStockService(retrofit: Retrofit): SiteStockService =
         retrofit.create(SiteStockService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideWorkNoteService(retrofit: Retrofit): WorkNoteService =
+        retrofit.create(WorkNoteService::class.java)
 
     @Provides
     @Singleton

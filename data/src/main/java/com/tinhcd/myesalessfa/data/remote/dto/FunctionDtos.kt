@@ -477,3 +477,40 @@ data class SiteStockDto(
     @SerialName("site_id") val siteId: String? = null,
     val items: List<SiteStockItemDto> = emptyList(),
 )
+
+// -----------------------------------------------------------------------------
+// Work notes
+// -----------------------------------------------------------------------------
+
+@Serializable
+data class WorkNoteDto(
+    @SerialName("note_id") val noteId: String,
+    val title: String,
+    val body: String? = null,
+    @SerialName("due_on") val dueOn: String? = null,
+    val status: String = "open",
+    val result: String? = null,
+    @SerialName("done_at") val doneAt: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("customer_id") val customerId: String? = null,
+    @SerialName("customer_name") val customerName: String? = null,
+)
+
+@Serializable
+data class WorkNotesDto(
+    val notes: List<WorkNoteDto> = emptyList(),
+)
+
+@Serializable
+data class NewWorkNoteDto(
+    val title: String,
+    val body: String? = null,
+    @SerialName("due_on") val dueOn: String? = null,
+    @SerialName("customer_id") val customerId: String? = null,
+)
+
+@Serializable
+data class CompleteWorkNoteDto(
+    @SerialName("note_id") val noteId: String,
+    val result: String,
+)

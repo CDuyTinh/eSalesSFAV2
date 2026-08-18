@@ -16,6 +16,7 @@ import com.tinhcd.myesalessfa.data.repository.CustomerRegistrationRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.DailyTargetRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.FocusProductRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.SiteStockRepositoryImpl
+import com.tinhcd.myesalessfa.data.repository.WorkNoteRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.ReceivableRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.ReportRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.TimekeepingRepositoryImpl
@@ -31,6 +32,7 @@ import com.tinhcd.myesalessfa.domain.repository.CustomerRegistrationRepository
 import com.tinhcd.myesalessfa.domain.repository.DailyTargetRepository
 import com.tinhcd.myesalessfa.domain.repository.FocusProductRepository
 import com.tinhcd.myesalessfa.domain.repository.SiteStockRepository
+import com.tinhcd.myesalessfa.domain.repository.WorkNoteRepository
 import com.tinhcd.myesalessfa.domain.repository.ReceivableRepository
 import com.tinhcd.myesalessfa.domain.repository.ReportRepository
 import com.tinhcd.myesalessfa.domain.repository.TimekeepingRepository
@@ -101,6 +103,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSiteStockRepository(impl: SiteStockRepositoryImpl): SiteStockRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindWorkNoteRepository(impl: WorkNoteRepositoryImpl): WorkNoteRepository
 
     @Binds
     @Singleton
