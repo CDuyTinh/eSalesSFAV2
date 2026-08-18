@@ -447,3 +447,33 @@ data class FocusProductsDto(
     val date: String,
     val products: List<FocusProductDto> = emptyList(),
 )
+
+// -----------------------------------------------------------------------------
+// Issuing sites and their stock
+// -----------------------------------------------------------------------------
+
+@Serializable
+data class SiteDto(
+    @SerialName("site_id") val siteId: String,
+    val code: String,
+    val name: String,
+    val address: String? = null,
+)
+
+@Serializable
+data class SiteStockItemDto(
+    @SerialName("product_id") val productId: String,
+    @SerialName("product_code") val productCode: String,
+    @SerialName("product_name") val productName: String,
+    @SerialName("base_uom") val baseUom: String = "",
+    @SerialName("qty_base") val qtyBase: Int = 0,
+    @SerialName("updated_at") val updatedAt: String? = null,
+)
+
+@Serializable
+data class SiteStockDto(
+    val sites: List<SiteDto> = emptyList(),
+    /** Null when the branch has no active warehouse at all. */
+    @SerialName("site_id") val siteId: String? = null,
+    val items: List<SiteStockItemDto> = emptyList(),
+)

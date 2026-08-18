@@ -29,6 +29,7 @@ import com.tinhcd.myesalessfa.feature.receivables.ReceivablesScreen
 import com.tinhcd.myesalessfa.feature.routemap.RouteMapScreen
 import com.tinhcd.myesalessfa.feature.reports.ReportsScreen
 import com.tinhcd.myesalessfa.feature.shell.MainShell
+import com.tinhcd.myesalessfa.feature.sitestock.SiteStockScreen
 import com.tinhcd.myesalessfa.feature.workday.WorkDayScreen
 
 object Routes {
@@ -49,6 +50,7 @@ object Routes {
     const val ACCOUNT = "account"
     const val DAILY_TARGET = "dailytarget"
     const val FOCUS_PRODUCTS = "focusproducts"
+    const val SITE_STOCK = "sitestock"
     const val CHECK_IN = "checkin/{customerId}"
     const val IN_CALL = "incall/{visitId}/{customerId}"
     // The customer travels with the step, not just the visit: take_order prices
@@ -99,6 +101,7 @@ fun AppNavHost(
                             navController.navigate(Routes.DAILY_TARGET)
 
                         SupportedMenu.SALES_FOCUS -> navController.navigate(Routes.FOCUS_PRODUCTS)
+                        SupportedMenu.SITE -> navController.navigate(Routes.SITE_STOCK)
                     }
                 },
                 onOpenStop = { stop -> navController.navigateToStop(stop) },
@@ -108,6 +111,10 @@ fun AppNavHost(
                     }
                 },
             )
+        }
+
+        composable(Routes.SITE_STOCK) {
+            SiteStockScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Routes.FOCUS_PRODUCTS) {
