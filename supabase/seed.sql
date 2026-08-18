@@ -575,3 +575,36 @@ insert into focus_product (id, product_id, branch_id, from_date, to_date, priori
      '00000000-0000-0000-0000-000000000c02', null,
      current_date + 7, current_date + 37, 6, 400, null)
 on conflict (id) do nothing;
+
+-- -----------------------------------------------------------------------------
+-- Issuing sites and stock
+--
+-- Two warehouses so the picker has something to pick between — with one, the
+-- dropdown is a control that does nothing and would never be exercised.
+--
+-- The second is deliberately thinner and staler: it holds only part of the range
+-- and its figures are a day older, which is what makes the freshness line and the
+-- "hết hàng" count visible instead of theoretical.
+-- -----------------------------------------------------------------------------
+
+insert into site (id, branch_id, code, name, address) values
+    ('00000000-0000-0000-0000-0000000000e1', '00000000-0000-0000-0000-000000000010',
+     'KHO01', 'Kho chinh Thu Dau Mot', '12 Yersin, Phu Hoa'),
+    ('00000000-0000-0000-0000-0000000000e2', '00000000-0000-0000-0000-000000000010',
+     'KHO02', 'Kho Lai Thieu', '88 Nguyen Van Tiet, Lai Thieu')
+on conflict (id) do nothing;
+
+insert into site_stock (site_id, product_id, qty_base, updated_at) values
+    -- Main warehouse: the full range, counted this morning. One line is zero, so
+    -- the out-of-stock treatment has something to render.
+    ('00000000-0000-0000-0000-0000000000e1', '00000000-0000-0000-0000-000000000c01', 480, now() - interval '3 hours'),
+    ('00000000-0000-0000-0000-0000000000e1', '00000000-0000-0000-0000-000000000c02', 260, now() - interval '3 hours'),
+    ('00000000-0000-0000-0000-0000000000e1', '00000000-0000-0000-0000-000000000c03',   0, now() - interval '3 hours'),
+    ('00000000-0000-0000-0000-0000000000e1', '00000000-0000-0000-0000-000000000c04', 132, now() - interval '5 hours'),
+    ('00000000-0000-0000-0000-0000000000e1', '00000000-0000-0000-0000-000000000c05',  96, now() - interval '3 hours'),
+
+    -- Second warehouse: part of the range, a day and a half old, so the age line
+    -- turns amber and quotes the oldest of these rather than the newest.
+    ('00000000-0000-0000-0000-0000000000e2', '00000000-0000-0000-0000-000000000c01', 120, now() - interval '30 hours'),
+    ('00000000-0000-0000-0000-0000000000e2', '00000000-0000-0000-0000-000000000c03',  45, now() - interval '36 hours')
+on conflict (site_id, product_id) do nothing;

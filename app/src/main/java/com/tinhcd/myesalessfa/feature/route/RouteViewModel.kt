@@ -18,8 +18,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import com.tinhcd.myesalessfa.domain.foldForSearch
 import kotlinx.coroutines.launch
-import java.text.Normalizer
 import javax.inject.Inject
 
 /**
@@ -75,28 +75,11 @@ data class RouteUiState(
 }
 
 private fun RouteStop.matches(query: String): Boolean {
-    val needle = query.trim().forSearch()
+    val needle = query.trim().foldForSearch()
     if (needle.isEmpty()) return true
     return listOfNotNull(customer.name, customer.code, customer.address, customer.phone)
-        .any { it.forSearch().contains(needle) }
+        .any { it.foldForSearch().contains(needle) }
 }
-
-/**
- * Folded for comparison: lower case, and with the tone and vowel marks removed.
- *
- * Customer names arrive from head office spelled properly — "Tạp hoá Bà Bảy" — and
- * a rep standing in that shop types "tap hoa ba bay", because nobody reaches for
- * the tone keys one-handed. Comparing the two literally finds nothing, which reads
- * as a missing customer rather than a missing accent.
- */
-private fun String.forSearch(): String = Normalizer
-    .normalize(this, Normalizer.Form.NFD)
-    .replace(CombiningMarks, "")
-    .lowercase()
-    // Not a marked vowel, so NFD leaves it whole and it has to be spelled out.
-    .replace('đ', 'd')
-
-private val CombiningMarks = "\\p{Mn}+".toRegex()
 
 private fun RouteFilter.accepts(status: VisitStatus): Boolean = when (this) {
     RouteFilter.ALL -> true
