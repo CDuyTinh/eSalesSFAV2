@@ -13,6 +13,7 @@ import com.tinhcd.myesalessfa.data.repository.RouteRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.StockRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.SurveyRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.CustomerRegistrationRepositoryImpl
+import com.tinhcd.myesalessfa.data.repository.DailyTargetRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.ReceivableRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.ReportRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.TimekeepingRepositoryImpl
@@ -25,6 +26,7 @@ import com.tinhcd.myesalessfa.domain.repository.DisplayAuditRepository
 import com.tinhcd.myesalessfa.domain.repository.FeedbackRepository
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
 import com.tinhcd.myesalessfa.domain.repository.CustomerRegistrationRepository
+import com.tinhcd.myesalessfa.domain.repository.DailyTargetRepository
 import com.tinhcd.myesalessfa.domain.repository.ReceivableRepository
 import com.tinhcd.myesalessfa.domain.repository.ReportRepository
 import com.tinhcd.myesalessfa.domain.repository.TimekeepingRepository
@@ -85,6 +87,12 @@ abstract class RepositoryModule {
     abstract fun bindReceivableRepository(
         impl: ReceivableRepositoryImpl,
     ): ReceivableRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindDailyTargetRepository(
+        impl: DailyTargetRepositoryImpl,
+    ): DailyTargetRepository
 
     @Binds
     @Singleton

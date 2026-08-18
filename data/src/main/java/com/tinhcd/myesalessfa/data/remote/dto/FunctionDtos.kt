@@ -384,3 +384,39 @@ data class WriteAckDto(
     @SerialName("order_id") val orderId: String? = null,
     @SerialName("stock_count_id") val stockCountId: String? = null,
 )
+
+// -----------------------------------------------------------------------------
+// Daily sales targets
+// -----------------------------------------------------------------------------
+
+@Serializable
+data class DailyTargetStopDto(
+    @SerialName("customer_id") val customerId: String,
+    @SerialName("customer_code") val customerCode: String,
+    @SerialName("customer_name") val customerName: String,
+    val address: String? = null,
+    @SerialName("visit_order") val visitOrder: Int = 0,
+    val target: Long = 0,
+    @SerialName("has_target") val hasTarget: Boolean = false,
+    /** Null when this rep has never sold here. */
+    @SerialName("last_amount") val lastAmount: Long? = null,
+    @SerialName("last_date") val lastDate: String? = null,
+)
+
+@Serializable
+data class DailyTargetsDto(
+    val date: String,
+    val stops: List<DailyTargetStopDto> = emptyList(),
+)
+
+@Serializable
+data class DailyTargetEntryDto(
+    @SerialName("customer_id") val customerId: String,
+    @SerialName("target_amount") val targetAmount: Long,
+)
+
+@Serializable
+data class SaveDailyTargetsDto(
+    val date: String,
+    val targets: List<DailyTargetEntryDto>,
+)
