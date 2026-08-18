@@ -12,6 +12,7 @@ import com.tinhcd.myesalessfa.domain.model.RouteStop
 import com.tinhcd.myesalessfa.domain.model.SupportedMenu
 import com.tinhcd.myesalessfa.domain.model.SupportedSteps
 import com.tinhcd.myesalessfa.domain.model.VisitStatus
+import com.tinhcd.myesalessfa.feature.account.AccountScreen
 import com.tinhcd.myesalessfa.feature.auth.LoginScreen
 import com.tinhcd.myesalessfa.feature.checkin.CheckInScreen
 import com.tinhcd.myesalessfa.feature.incall.InCallScreen
@@ -43,6 +44,7 @@ object Routes {
     const val REPORTS = "reports"
     const val RECEIVABLES = "receivables"
     const val ROUTE_MAP = "routemap"
+    const val ACCOUNT = "account"
     const val CHECK_IN = "checkin/{customerId}"
     const val IN_CALL = "incall/{visitId}/{customerId}"
     // The customer travels with the step, not just the visit: take_order prices
@@ -79,6 +81,7 @@ fun AppNavHost(
         composable(Routes.SHELL) {
             MainShell(
                 onOpenMap = { navController.navigate(Routes.ROUTE_MAP) },
+                onOpenAccount = { navController.navigate(Routes.ACCOUNT) },
                 onOpenWorkDay = { navController.navigate(Routes.WORK_DAY) },
                 onOpenMenuEntry = { code ->
                     // The shell has already refused anything not in SupportedMenu,
@@ -97,6 +100,13 @@ fun AppNavHost(
                     }
                 },
             )
+        }
+
+        composable(Routes.ACCOUNT) {
+            // No sign-out on success. Supabase keeps the session alive across a
+            // password change, and throwing the rep back to the login screen
+            // mid-route would cost them their place for no security gained.
+            AccountScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Routes.ROUTE_MAP) {

@@ -76,6 +76,7 @@ import kotlinx.coroutines.launch
 fun MainShell(
     onOpenStop: (RouteStop) -> Unit,
     onOpenMap: () -> Unit,
+    onOpenAccount: () -> Unit,
     onOpenWorkDay: () -> Unit,
     /** A sheet entry this build has a screen for. The code, not the label. */
     onOpenMenuEntry: (String) -> Unit,
@@ -98,6 +99,10 @@ fun MainShell(
                 branch = state.me?.branchName,
                 code = state.me?.code,
                 workDay = state.workDay,
+                onOpenAccount = {
+                    scope.launch { drawerState.close() }
+                    onOpenAccount()
+                },
                 onOpenWorkDay = {
                     scope.launch { drawerState.close() }
                     onOpenWorkDay()
@@ -317,6 +322,7 @@ private fun ShellDrawer(
     branch: String?,
     code: String?,
     workDay: WorkDay?,
+    onOpenAccount: () -> Unit,
     onOpenWorkDay: () -> Unit,
     onSignOut: () -> Unit,
 ) {
@@ -350,6 +356,15 @@ private fun ShellDrawer(
                 )
             }
         }
+
+        NavigationDrawerItem(
+            label = { Text("Thông tin tài khoản") },
+            icon = { Icon(Icons.Default.Person, contentDescription = null) },
+            selected = false,
+            onClick = onOpenAccount,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            shape = RoundedCornerShape(12.dp),
+        )
 
         // Only while there is a day to end. Signing out is not the same act — it
         // drops the session and leaves the day open behind it — so the two are

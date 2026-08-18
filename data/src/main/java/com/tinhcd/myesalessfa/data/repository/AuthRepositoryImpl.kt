@@ -39,6 +39,9 @@ private const val EMAIL_DOMAIN = "@esales.local"
 /** No salesperson row points at this auth user. Permanent; head office must fix it. */
 const val ERROR_NOT_PROVISIONED = "account_not_provisioned"
 
+/** Reached only if the session vanished between opening the screen and saving. */
+const val ERROR_NO_SESSION = "no_session"
+
 /** Signed in, but the profile could not be fetched. Transient; retrying may work. */
 const val ERROR_PROFILE_UNAVAILABLE = "profile_unavailable"
 
@@ -174,6 +177,41 @@ class AuthRepositoryImpl @Inject constructor(
 
         publish(SessionState.SignedIn(profile))
         return DataResult.Success(profile)
+    }
+
+    /**
+     * Two calls, and the first is the security of the thing.
+     *
+     * `updateUser` changes the password on the strength of the session alone, so
+     * on its own it would let anyone holding an unlocked phone lock the rep out of
+     * their own account. Re-authenticating first turns "has the phone" into "knows
+     * the password", and a wrong one comes back as invalid_credentials — which the
+     * screen already knows how to say.
+     *
+     * The email is read from the session rather than rebuilt from the rep's code:
+     * it is the address the account was actually created with, and deriving it a
+     * second time would be a second place for the mapping to drift.
+     *
+     * Signing in again replaces the session with a fresh one for the same user, so
+     * nothing downstream has to be told.
+     */
+    override suspend fun changePassword(
+        currentPassword: String,
+        newPassword: String,
+    ): DataResult<Unit> = try {
+        val email = client.auth.currentUserOrNull()?.email
+        if (email.isNullOrBlank()) {
+            DataResult.Failure(AppError.Auth(ERROR_NO_SESSION))
+        } else {
+            client.auth.signInWith(Email) {
+                this.email = email
+                this.password = currentPassword
+            }
+            client.auth.updateUser { password = newPassword }
+            DataResult.Success(Unit)
+        }
+    } catch (e: Exception) {
+        DataResult.Failure(e.toAppError())
     }
 
     override suspend fun signOut(): DataResult<Unit> = try {
