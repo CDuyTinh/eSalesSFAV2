@@ -33,5 +33,19 @@ interface AuthRepository {
      */
     suspend fun refreshProfile(): DataResult<Salesperson>
 
+    /**
+     * Changes the signed-in rep's password.
+     *
+     * [currentPassword] is verified rather than trusted, by re-authenticating with
+     * it first. The auth backend would change the password without asking, which
+     * is exactly the problem: a phone left unlocked on a counter is the threat
+     * this guards against, and the session alone is not proof the person holding
+     * it is the rep.
+     */
+    suspend fun changePassword(
+        currentPassword: String,
+        newPassword: String,
+    ): DataResult<Unit>
+
     suspend fun signOut(): DataResult<Unit>
 }
