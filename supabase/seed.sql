@@ -525,3 +525,53 @@ insert into ar_payment (id, invoice_id, salesperson_id, amount, collected_on, no
     ('00000000-0000-0000-0000-0000000000fb', '00000000-0000-0000-0000-0000000000f4',
      '00000000-0000-0000-0000-000000000081', 2000000, current_date - 3, null)
 on conflict (id) do nothing;
+
+-- -----------------------------------------------------------------------------
+-- Focus products — one of each case the briefing has to render
+--
+-- Dates are relative to the seeding day, for the reason the receivables seed
+-- gives: a push that is "in force" only until a date in 2026 stops testing
+-- anything the morning that date passes.
+--
+-- The last two are the ones worth having. Neither may appear, and a seed made
+-- only of live pushes would never have caught it if the date filter were wrong —
+-- an expired campaign would simply have sat there looking plausible.
+-- -----------------------------------------------------------------------------
+
+insert into focus_product (id, product_id, branch_id, from_date, to_date, priority,
+                           target_base_qty, note) values
+    -- Running, with a target: the case the progress bar and the pill exist for.
+    ('00000000-0000-0000-0000-0000000000d1',
+     '00000000-0000-0000-0000-000000000c01', null,
+     current_date - 17, current_date + 13, 1, 500,
+     'Uu tien trung bay ngang tam mat, nhac khach ve gia khuyen mai thang nay'),
+
+    -- Qualitative: no target at all. Not a target of zero.
+    ('00000000-0000-0000-0000-0000000000d2',
+     '00000000-0000-0000-0000-000000000c03', null,
+     current_date - 5, current_date + 9, 2, null,
+     'Dam bao co mat tren ke o moi diem ban'),
+
+    -- Ends in two days, so the countdown shows amber.
+    ('00000000-0000-0000-0000-0000000000d3',
+     '00000000-0000-0000-0000-000000000c04', null,
+     current_date - 12, current_date + 1, 3, 300,
+     'Chot don truoc khi chuong trinh ket thuc'),
+
+    -- Scoped to BR01 rather than every branch; still visible to this rep.
+    ('00000000-0000-0000-0000-0000000000d4',
+     '00000000-0000-0000-0000-000000000c05',
+     '00000000-0000-0000-0000-000000000010',
+     current_date - 3, current_date + 20, 4, 200,
+     'Chi ap dung cho NPP Mien Dong'),
+
+    -- Expired: must not appear.
+    ('00000000-0000-0000-0000-0000000000d5',
+     '00000000-0000-0000-0000-000000000c02', null,
+     current_date - 60, current_date - 30, 5, 400, null),
+
+    -- Starts next week: must not appear yet either.
+    ('00000000-0000-0000-0000-0000000000d6',
+     '00000000-0000-0000-0000-000000000c02', null,
+     current_date + 7, current_date + 37, 6, 400, null)
+on conflict (id) do nothing;
