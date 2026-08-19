@@ -514,3 +514,48 @@ data class CompleteWorkNoteDto(
     @SerialName("note_id") val noteId: String,
     val result: String,
 )
+
+// -----------------------------------------------------------------------------
+// Leave requests
+// -----------------------------------------------------------------------------
+
+@Serializable
+data class LeaveTypeDto(
+    @SerialName("leave_type_id") val leaveTypeId: String,
+    val code: String,
+    val name: String,
+    @SerialName("is_paid") val isPaid: Boolean = true,
+)
+
+@Serializable
+data class LeaveRequestDto(
+    @SerialName("request_id") val requestId: String,
+    @SerialName("leave_type_id") val leaveTypeId: String,
+    @SerialName("type_name") val typeName: String,
+    @SerialName("is_paid") val isPaid: Boolean = true,
+    @SerialName("from_date") val fromDate: String,
+    @SerialName("to_date") val toDate: String,
+    val reason: String = "",
+    val status: String = "pending",
+    @SerialName("decision_note") val decisionNote: String? = null,
+    @SerialName("decided_at") val decidedAt: String? = null,
+)
+
+@Serializable
+data class LeaveBoardDto(
+    val types: List<LeaveTypeDto> = emptyList(),
+    val requests: List<LeaveRequestDto> = emptyList(),
+)
+
+@Serializable
+data class NewLeaveRequestDto(
+    @SerialName("leave_type_id") val leaveTypeId: String,
+    @SerialName("from_date") val fromDate: String,
+    @SerialName("to_date") val toDate: String,
+    val reason: String,
+)
+
+@Serializable
+data class WithdrawLeaveDto(
+    @SerialName("request_id") val requestId: String,
+)

@@ -18,6 +18,7 @@ import com.tinhcd.myesalessfa.feature.checkin.CheckInScreen
 import com.tinhcd.myesalessfa.feature.dailytarget.DailyTargetScreen
 import com.tinhcd.myesalessfa.feature.focus.FocusProductsScreen
 import com.tinhcd.myesalessfa.feature.incall.InCallScreen
+import com.tinhcd.myesalessfa.feature.leave.LeaveScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.DisplayAuditScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.FeedbackScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.NoteStepScreen
@@ -53,6 +54,7 @@ object Routes {
     const val FOCUS_PRODUCTS = "focusproducts"
     const val SITE_STOCK = "sitestock"
     const val WORK_NOTES = "worknotes"
+    const val LEAVE = "leave"
     const val CHECK_IN = "checkin/{customerId}"
     const val IN_CALL = "incall/{visitId}/{customerId}"
     // The customer travels with the step, not just the visit: take_order prices
@@ -105,6 +107,7 @@ fun AppNavHost(
                         SupportedMenu.SALES_FOCUS -> navController.navigate(Routes.FOCUS_PRODUCTS)
                         SupportedMenu.SITE -> navController.navigate(Routes.SITE_STOCK)
                         SupportedMenu.WORKING_NOTE -> navController.navigate(Routes.WORK_NOTES)
+                        SupportedMenu.LEAVE_APPLICATION -> navController.navigate(Routes.LEAVE)
                     }
                 },
                 onOpenStop = { stop -> navController.navigateToStop(stop) },
@@ -114,6 +117,10 @@ fun AppNavHost(
                     }
                 },
             )
+        }
+
+        composable(Routes.LEAVE) {
+            LeaveScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Routes.WORK_NOTES) {
