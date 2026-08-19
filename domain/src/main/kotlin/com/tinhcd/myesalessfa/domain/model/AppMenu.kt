@@ -87,14 +87,15 @@ object SupportedMenu {
     const val SALES_FOCUS = "SALES_FOCUS"
     const val SITE = "SITE"
     const val WORKING_NOTE = "WORKING_NOTE"
+    const val LEAVE_APPLICATION = "LEAVE_APPLICATION"
 
     /** Tabs that swap the content area. Everything else opens a sheet. */
     val pages: Set<String> = setOf(DASH_BOARD, CHECK_IN)
 
     /**
      * Codes with a screen behind them today. The three sheet tabs are here
-     * because the sheet itself is the screen; of their children, seven have one
-     * so far — the whole of Chuẩn bị, three of the five under Khác, and one
+     * because the sheet itself is the screen; of their children, eight have one
+     * so far — the whole of Chuẩn bị, four of the five under Khác, and one
      * under Công việc.
      */
     val implemented: Set<String> = setOf(
@@ -110,5 +111,6 @@ object SupportedMenu {
         SALES_FOCUS,
         SITE,
         WORKING_NOTE,
+        LEAVE_APPLICATION,
     )
 }
