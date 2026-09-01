@@ -26,7 +26,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Menu
@@ -100,7 +99,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun RouteScreen(
     onOpenStop: (RouteStop) -> Unit,
-    onOpenCustomer: (String) -> Unit,
+    onOpenCustomer: (RouteStop) -> Unit,
     onOpenMap: () -> Unit,
     onOpenDrawer: () -> Unit,
     /**
@@ -138,7 +137,7 @@ fun RouteScreen(
 private fun RouteContent(
     state: RouteUiState,
     onOpenStop: (RouteStop) -> Unit,
-    onOpenCustomer: (String) -> Unit,
+    onOpenCustomer: (RouteStop) -> Unit,
     onOpenMap: () -> Unit,
     onOpenDrawer: () -> Unit,
     onRetry: () -> Unit,
@@ -408,7 +407,7 @@ private fun StopList(
     filter: RouteFilter,
     subtitle: String,
     onOpenStop: (RouteStop) -> Unit,
-    onOpenCustomer: (String) -> Unit,
+    onOpenCustomer: (RouteStop) -> Unit,
     onCall: (String) -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
@@ -442,7 +441,7 @@ private fun StopList(
                 StopCard(
                     stop = stop,
                     onOpen = { onOpenStop(stop) },
-                    onOpenInfo = { onOpenCustomer(stop.customer.id) },
+                    onOpenHub = { onOpenCustomer(stop) },
                     onCall = onCall,
                 )
             }
@@ -484,22 +483,33 @@ private fun ListHeading(subtitle: String, count: Int, modifier: Modifier = Modif
 // Card
 // -----------------------------------------------------------------------------
 
+/**
+ * Two ways in, and they mean different things.
+ *
+ * The card opens the outlet's own screen — details, order history, the visit's
+ * work if one is open. Reading a shop's credit limit should not leave a
+ * timestamped record saying the rep was there, so this commits to nothing.
+ *
+ * The chip is the commitment: check in, or step back into the call in progress.
+ * It stays on the card because that is the thing a rep taps forty times a day.
+ */
 @Composable
 private fun StopCard(
     stop: RouteStop,
     onOpen: () -> Unit,
-    onOpenInfo: () -> Unit,
+    onOpenHub: () -> Unit,
     onCall: (String) -> Unit,
 ) {
-    val openable = stop.status.openable()
-
     Card(
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = openable, onClick = onOpen),
+            // Always enabled, unlike the chip. A finished stop, or one where the
+            // outlet was shut, is exactly when a rep goes looking for the phone
+            // number or what the shop last took.
+            .clickable(onClick = onOpenHub),
     ) {
         Column {
             Row(Modifier.padding(12.dp)) {
@@ -560,21 +570,6 @@ private fun StopCard(
                         .weight(1f)
                         .padding(end = 8.dp),
                 )
-
-                // Before the action, not after: this is the question a rep asks
-                // on the way in — how much credit, who do I ask for — and it has
-                // to be reachable without starting the visit to find out.
-                IconButton(
-                    onClick = onOpenInfo,
-                    modifier = Modifier.size(36.dp),
-                ) {
-                    Icon(
-                        Icons.Default.Info,
-                        contentDescription = "Thông tin ${stop.customer.name}",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
 
                 StopAction(status = stop.status, onOpen = onOpen)
 
@@ -898,9 +893,6 @@ private fun VisitStatus.label(): String = when (this) {
     VisitStatus.ABANDONED -> "Bỏ dở - không check-out"
 }
 
-/** Only a stop with work left in it opens; the rest are a record, not a task. */
-private fun VisitStatus.openable(): Boolean =
-    this == VisitStatus.PLANNED || this == VisitStatus.IN_PROGRESS
 
 /** Wall-clock time, which is what a rep compares against their own watch. */
 private val ClockFormat = DateTimeFormatter.ofPattern("HH:mm")

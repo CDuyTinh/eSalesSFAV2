@@ -580,3 +580,27 @@ data class CustomerInfoDto(
     @SerialName("credit_limit") val creditLimit: Long? = null,
     @SerialName("month_revenue") val monthRevenue: Long = 0,
 )
+
+@Serializable
+data class CustomerOrderLineDto(
+    @SerialName("product_code") val productCode: String = "",
+    @SerialName("product_name") val productName: String = "",
+    @SerialName("uom_code") val uomCode: String = "",
+    val qty: Int = 0,
+    @SerialName("line_amount") val lineAmount: Long = 0,
+)
+
+@Serializable
+data class CustomerOrderDto(
+    @SerialName("order_id") val orderId: String,
+    @SerialName("order_no") val orderNo: String = "",
+    @SerialName("order_date") val orderDate: String,
+    val status: String = "new",
+    @SerialName("total_amount") val totalAmount: Long = 0,
+    val lines: List<CustomerOrderLineDto> = emptyList(),
+)
+
+@Serializable
+data class CustomerOrdersDto(
+    val orders: List<CustomerOrderDto> = emptyList(),
+)
