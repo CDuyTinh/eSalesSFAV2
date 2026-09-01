@@ -4,24 +4,20 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.DataResult
-import com.tinhcd.myesalessfa.domain.model.Customer
 import com.tinhcd.myesalessfa.domain.model.DraftOrder
 import com.tinhcd.myesalessfa.domain.model.OrderLine
 import com.tinhcd.myesalessfa.domain.model.OrderSuggestion
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
 import com.tinhcd.myesalessfa.domain.model.PricedUnit
-import com.tinhcd.myesalessfa.domain.model.orderSuggestions
-import com.tinhcd.myesalessfa.domain.repository.CatalogRepository
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository
-import com.tinhcd.myesalessfa.domain.repository.RouteRepository
-import com.tinhcd.myesalessfa.domain.repository.StockRepository
+import com.tinhcd.myesalessfa.domain.usecase.GetOrderSuggestionsUseCase
+import com.tinhcd.myesalessfa.domain.usecase.GetVisitCatalogueUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import javax.inject.Inject
 
 data class TakeOrderUiState(
@@ -86,10 +82,9 @@ data class TakeOrderUiState(
 @HiltViewModel
 class TakeOrderViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val catalogRepository: CatalogRepository,
+    private val getVisitCatalogue: GetVisitCatalogueUseCase,
+    private val getOrderSuggestions: GetOrderSuggestionsUseCase,
     private val orderRepository: OrderRepository,
-    private val routeRepository: RouteRepository,
-    private val stockRepository: StockRepository,
 ) : ViewModel() {
 
     private val visitId: String = checkNotNull(savedStateHandle["visitId"])
@@ -105,23 +100,20 @@ class TakeOrderViewModel @Inject constructor(
     fun load() {
         _state.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
-            val stop = (routeRepository.getStop(customerId, LocalDate.now()) as? DataResult.Success)
-                ?.data
-
             // The customer's class decides the price list that applies, so it is
             // needed before anything can be shown with a figure next to it.
-            when (val result = catalogRepository.catalogue(stop?.customer?.classId, LocalDate.now())) {
+            when (val visit = getVisitCatalogue(customerId)) {
                 is DataResult.Success -> {
                     // What the stock count found short of par, converted into whole
                     // sale units. Failure here costs the suggestions and nothing
                     // else — the rep can still write the order by hand.
-                    val suggestions = suggestionsFor(stop?.customer, result.data)
+                    val suggestions = getOrderSuggestions(visitId, visit.data)
 
                     _state.update {
                         it.copy(
                             loading = false,
-                            customerName = stop?.customer?.name.orEmpty(),
-                            catalogue = result.data,
+                            customerName = visit.data.customer?.name.orEmpty(),
+                            catalogue = visit.data.catalogue,
                             suggestions = suggestions,
                             suggestionsApplied = false,
                             order = DraftOrder(visitId = visitId, customerId = customerId),
@@ -134,33 +126,6 @@ class TakeOrderViewModel @Inject constructor(
                 }
             }
         }
-    }
-
-    /**
-     * Reads the count for this visit and turns whatever is below par into whole
-     * sale units. All three inputs are separately survivable: no must-stock list, no
-     * count, or a catalogue miss each simply produce fewer suggestions.
-     */
-    private suspend fun suggestionsFor(
-        customer: Customer?,
-        catalogue: List<PricedProduct>,
-    ): List<OrderSuggestion> {
-        val mustStock = (
-            catalogRepository.mustStock(
-                channelId = customer?.channelId,
-                shopTypeId = customer?.shopTypeId,
-                on = LocalDate.now(),
-            ) as? DataResult.Success
-            )?.data ?: return emptyList()
-
-        val counted = (stockRepository.countedBaseQty(visitId) as? DataResult.Success)
-            ?.data ?: return emptyList()
-
-        return orderSuggestions(
-            mustStock = mustStock,
-            countedBaseQty = counted,
-            catalogue = catalogue,
-        )
     }
 
     /**
