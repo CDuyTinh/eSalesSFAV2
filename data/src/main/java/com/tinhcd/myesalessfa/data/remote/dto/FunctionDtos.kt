@@ -572,6 +572,8 @@ data class CustomerInfoDto(
     val phone: String? = null,
     val address: String? = null,
     @SerialName("avatar_url") val avatarUrl: String? = null,
+    val lat: Double? = null,
+    val lng: Double? = null,
     @SerialName("contact_name") val contactName: String? = null,
     @SerialName("channel_name") val channelName: String? = null,
     @SerialName("class_name") val className: String? = null,
