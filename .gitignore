@@ -22,3 +22,8 @@ build/
 
 # Holds the Supabase URL, publishable key and database password.
 local.properties
+
+# Screenshots pulled off the device while checking a change on real hardware.
+# Evidence for one session, not for the repo — the commit message says what they
+# showed.
+/.run/
