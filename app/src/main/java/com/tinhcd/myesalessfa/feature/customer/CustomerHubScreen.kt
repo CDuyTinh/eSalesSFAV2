@@ -83,7 +83,7 @@ private enum class HubTab(val title: String) {
  * literally here it left the photo squeezed between the status bar and the name —
  * about 100dp of actual picture on a tall phone.
  */
-private val BannerHeight = 220.dp
+private val BannerHeight = 260.dp
 
 @Composable
 fun CustomerHubScreen(
