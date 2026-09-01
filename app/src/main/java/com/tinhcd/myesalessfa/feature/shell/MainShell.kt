@@ -75,7 +75,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun MainShell(
     onOpenStop: (RouteStop) -> Unit,
-    onOpenCustomer: (String) -> Unit,
+    onOpenCustomer: (RouteStop) -> Unit,
     onOpenMap: () -> Unit,
     onOpenAccount: () -> Unit,
     onOpenWorkDay: () -> Unit,

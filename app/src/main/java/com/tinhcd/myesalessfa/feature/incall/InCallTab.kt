@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,13 +18,10 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,11 +38,18 @@ import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.domain.model.WorkflowStep
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Công việc — the steps this visit still owes, and the check-out that closes it.
+ *
+ * A tab rather than a screen of its own since the customer hub took over. It
+ * only exists while a visit is open, so it is composed conditionally: its view
+ * model reads a visit id that does not exist before check-in.
+ */
 @Composable
-fun InCallScreen(
+fun InCallTab(
     onOpenStep: (formId: String) -> Unit,
     onCheckedOut: () -> Unit,
+    modifier: Modifier = Modifier,
     viewModel: InCallViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -56,72 +61,63 @@ fun InCallScreen(
         if (state.checkedOut) onCheckedOut()
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(state.customer?.name ?: "Công việc")
-                        val workflow = state.workflow
-                        val subtitle = listOfNotNull(
-                            workflow?.let { "Đã xong ${it.doneCount}/${it.steps.size} bước" },
-                        ).joinToString(" - ")
-                        if (subtitle.isNotBlank()) {
-                            Text(subtitle, style = MaterialTheme.typography.labelSmall)
+    Box(modifier.fillMaxSize()) {
+        when {
+            state.loading -> LoadingBox()
+            state.workflow == null ->
+                ErrorBox(state.error ?: "Không có dữ liệu", onRetry = viewModel::load)
+
+            else -> {
+                val workflow = state.workflow!!
+                Column(Modifier.fillMaxSize()) {
+                    // Was the app bar subtitle before this became a tab. Kept,
+                    // because it is the one line that says how much of the visit
+                    // is left without counting the ticks.
+                    Text(
+                        text = "Đã xong ${workflow.doneCount}/${workflow.steps.size} bước",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 16.dp, top = 12.dp),
+                    )
+
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        items(workflow.steps, key = { it.step.formId }) { step ->
+                            StepRow(
+                                step = step,
+                                onClick = { onOpenStep(step.step.formId) },
+                            )
                         }
                     }
-                },
-            )
-        },
-    ) { padding ->
-        Box(Modifier.padding(padding)) {
-            when {
-                state.loading -> LoadingBox()
-                state.workflow == null ->
-                    ErrorBox(state.error ?: "Không có dữ liệu", onRetry = viewModel::load)
 
-                else -> {
-                    val workflow = state.workflow!!
-                    Column(Modifier.fillMaxSize()) {
-                        LazyColumn(
-                            modifier = Modifier.weight(1f),
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            items(workflow.steps, key = { it.step.formId }) { step ->
-                                StepRow(
-                                    step = step,
-                                    onClick = { onOpenStep(step.step.formId) },
+                    Surface(shadowElevation = 8.dp) {
+                        Column(Modifier.padding(16.dp)) {
+                            if (!workflow.canCheckOut) {
+                                Text(
+                                    text = "Còn bước bắt buộc chưa hoàn thành: " +
+                                        workflow.blockingSteps.joinToString { it.title },
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.padding(bottom = 8.dp),
                                 )
                             }
-                        }
-
-                        Surface(shadowElevation = 8.dp) {
-                            Column(Modifier.padding(16.dp)) {
-                                if (!workflow.canCheckOut) {
-                                    Text(
-                                        text = "Còn bước bắt buộc chưa hoàn thành: " +
-                                            workflow.blockingSteps.joinToString { it.title },
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.error,
-                                        modifier = Modifier.padding(bottom = 8.dp),
-                                    )
-                                }
-                                if (state.error != null) {
-                                    Text(
-                                        state.error.orEmpty(),
-                                        color = MaterialTheme.colorScheme.error,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        modifier = Modifier.padding(bottom = 8.dp),
-                                    )
-                                }
-                                PrimaryButton(
-                                    text = "Check-out",
-                                    onClick = viewModel::checkOut,
-                                    enabled = workflow.canCheckOut,
-                                    loading = state.submitting,
+                            if (state.error != null) {
+                                Text(
+                                    state.error.orEmpty(),
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier.padding(bottom = 8.dp),
                                 )
                             }
+                            PrimaryButton(
+                                text = "Check-out",
+                                onClick = viewModel::checkOut,
+                                enabled = workflow.canCheckOut,
+                                loading = state.submitting,
+                            )
                         }
                     }
                 }

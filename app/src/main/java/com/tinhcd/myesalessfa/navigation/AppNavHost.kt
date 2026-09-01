@@ -15,10 +15,9 @@ import com.tinhcd.myesalessfa.domain.model.VisitStatus
 import com.tinhcd.myesalessfa.feature.account.AccountScreen
 import com.tinhcd.myesalessfa.feature.auth.LoginScreen
 import com.tinhcd.myesalessfa.feature.checkin.CheckInScreen
-import com.tinhcd.myesalessfa.feature.customer.CustomerDetailScreen
+import com.tinhcd.myesalessfa.feature.customer.CustomerHubScreen
 import com.tinhcd.myesalessfa.feature.dailytarget.DailyTargetScreen
 import com.tinhcd.myesalessfa.feature.focus.FocusProductsScreen
-import com.tinhcd.myesalessfa.feature.incall.InCallScreen
 import com.tinhcd.myesalessfa.feature.leave.LeaveScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.DisplayAuditScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.FeedbackScreen
@@ -57,16 +56,25 @@ object Routes {
     const val WORK_NOTES = "worknotes"
     const val LEAVE = "leave"
     const val CHECK_IN = "checkin/{customerId}"
-    const val CUSTOMER = "customer/{customerId}"
-    const val IN_CALL = "incall/{visitId}/{customerId}"
+
+    /**
+     * Everything about one outlet: work, details, order history, programmes.
+     *
+     * The visit is optional because the screen is reachable before check-in —
+     * that is most of its value, since the credit limit and what the shop took
+     * last time are things a rep wants before committing to a visit.
+     */
+    const val CUSTOMER = "customer/{customerId}?visitId={visitId}"
+
     // The customer travels with the step, not just the visit: take_order prices
     // against the outlet's customer class, and re-deriving it from the visit
     // would be a second round trip inside a screen that already has one.
     const val STEP = "step/{visitId}/{customerId}/{formId}"
 
     fun checkIn(customerId: String) = "checkin/$customerId"
-    fun customer(customerId: String) = "customer/$customerId"
-    fun inCall(visitId: String, customerId: String) = "incall/$visitId/$customerId"
+
+    fun customer(customerId: String, visitId: String? = null) =
+        "customer/$customerId" + if (visitId != null) "?visitId=$visitId" else ""
 
     fun step(visitId: String, customerId: String, formId: String) =
         "step/$visitId/$customerId/$formId"
@@ -114,7 +122,7 @@ fun AppNavHost(
                     }
                 },
                 onOpenStop = { stop -> navController.navigateToStop(stop) },
-                onOpenCustomer = { id -> navController.navigate(Routes.customer(id)) },
+                onOpenCustomer = { stop -> navController.navigateToCustomer(stop) },
                 onSignedOut = {
                     navController.navigate(Routes.LOGIN) {
                         popUpTo(0) { inclusive = true }
@@ -192,28 +200,30 @@ fun AppNavHost(
 
         composable(
             route = Routes.CUSTOMER,
-            arguments = listOf(navArgument("customerId") { type = NavType.StringType }),
-        ) {
-            // Read-only, so back is the only way out. Putting a check-in button
-            // here would give the rep two routes to the same action from the
-            // same card, and the one on the card is the one they already use.
-            CustomerDetailScreen(onBack = { navController.popBackStack() })
-        }
-
-        composable(
-            route = Routes.IN_CALL,
             arguments = listOf(
-                navArgument("visitId") { type = NavType.StringType },
                 navArgument("customerId") { type = NavType.StringType },
+                // Absent before check-in, which is what hides the work tab. It
+                // travels in the route rather than being looked up here: the
+                // caller already has the stop, and a second fetch could disagree
+                // with the card the rep just tapped.
+                navArgument("visitId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
             ),
         ) { entry ->
-            val visitId = entry.arguments?.getString("visitId").orEmpty()
             val customerId = entry.arguments?.getString("customerId").orEmpty()
-            InCallScreen(
+            val visitId = entry.arguments?.getString("visitId")
+            CustomerHubScreen(
+                visitId = visitId,
                 onOpenStep = { formId ->
-                    navController.navigate(Routes.step(visitId, customerId, formId))
+                    // Only reachable from the work tab, which only exists when
+                    // there is a visit — so the id is present here.
+                    navController.navigate(Routes.step(visitId.orEmpty(), customerId, formId))
                 },
                 onCheckedOut = { navController.popBackStack(Routes.SHELL, inclusive = false) },
+                onBack = { navController.popBackStack() },
             )
         }
 
@@ -266,11 +276,33 @@ fun AppNavHost(
  * the work list, not the check-in form again. Shared by the route list and the
  * map so the two cannot come to different conclusions about the same stop.
  */
+/**
+ * The action chip on a stop: start the visit, or step back into one already open.
+ *
+ * Not the same as tapping the card, which opens the outlet's screen without
+ * committing to anything — see [NavHostController.navigateToCustomer]. Keeping
+ * the two apart is what lets a rep read a shop's credit limit without leaving a
+ * check-in behind that says they were there.
+ */
 private fun NavHostController.navigateToStop(stop: RouteStop) {
     val visitId = stop.visitId
     if (stop.status == VisitStatus.IN_PROGRESS && visitId != null) {
-        navigate(Routes.inCall(visitId, stop.customer.id))
+        navigate(Routes.customer(stop.customer.id, visitId))
     } else {
         navigate(Routes.checkIn(stop.customer.id))
     }
+}
+
+/**
+ * Tapping the card itself. Carries the visit only while one is open, so a rep
+ * who is mid-visit lands on the work tab rather than on a screen that has
+ * forgotten they are inside a call.
+ *
+ * A finished visit keeps its id, and passing that would put a work tab with a
+ * live Check-out button on a stop that was closed hours ago. Same rule the
+ * legacy used: the tab belongs to the call in progress, not to any call.
+ */
+private fun NavHostController.navigateToCustomer(stop: RouteStop) {
+    val openVisit = stop.visitId.takeIf { stop.status == VisitStatus.IN_PROGRESS }
+    navigate(Routes.customer(stop.customer.id, openVisit))
 }
