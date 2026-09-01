@@ -211,7 +211,7 @@ private fun StepTile(
                 },
                 modifier = Modifier
                     .padding(6.dp)
-                    .size(60.dp),
+                    .size(50.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
@@ -222,7 +222,7 @@ private fun StepTile(
                         } else {
                             scheme.onSurfaceVariant
                         },
-                        modifier = Modifier.size(30.dp),
+                        modifier = Modifier.size(24.dp),
                     )
                 }
             }
