@@ -75,6 +75,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun MainShell(
     onOpenStop: (RouteStop) -> Unit,
+    onOpenCustomer: (String) -> Unit,
     onOpenMap: () -> Unit,
     onOpenAccount: () -> Unit,
     onOpenWorkDay: () -> Unit,
@@ -133,6 +134,7 @@ fun MainShell(
                     } else {
                         RouteScreen(
                             onOpenStop = onOpenStop,
+                            onOpenCustomer = onOpenCustomer,
                             onOpenMap = onOpenMap,
                             onOpenDrawer = { scope.launch { drawerState.open() } },
                             onReferenceDataRefreshed = viewModel::reloadMenu,

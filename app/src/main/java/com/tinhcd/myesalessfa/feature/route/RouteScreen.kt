@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Menu
@@ -99,6 +100,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun RouteScreen(
     onOpenStop: (RouteStop) -> Unit,
+    onOpenCustomer: (String) -> Unit,
     onOpenMap: () -> Unit,
     onOpenDrawer: () -> Unit,
     /**
@@ -120,6 +122,7 @@ fun RouteScreen(
     RouteContent(
         state = state,
         onOpenStop = onOpenStop,
+        onOpenCustomer = onOpenCustomer,
         onOpenMap = onOpenMap,
         onOpenDrawer = onOpenDrawer,
         onRetry = viewModel::load,
@@ -135,6 +138,7 @@ fun RouteScreen(
 private fun RouteContent(
     state: RouteUiState,
     onOpenStop: (RouteStop) -> Unit,
+    onOpenCustomer: (String) -> Unit,
     onOpenMap: () -> Unit,
     onOpenDrawer: () -> Unit,
     onRetry: () -> Unit,
@@ -205,6 +209,7 @@ private fun RouteContent(
                     subtitle = listOfNotNull(state.me?.fullName, state.me?.branchName)
                         .joinToString(" - "),
                     onOpenStop = onOpenStop,
+                    onOpenCustomer = onOpenCustomer,
                     onCall = { phone ->
                         context.startActivity(
                             Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone")),
@@ -403,6 +408,7 @@ private fun StopList(
     filter: RouteFilter,
     subtitle: String,
     onOpenStop: (RouteStop) -> Unit,
+    onOpenCustomer: (String) -> Unit,
     onCall: (String) -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
@@ -436,6 +442,7 @@ private fun StopList(
                 StopCard(
                     stop = stop,
                     onOpen = { onOpenStop(stop) },
+                    onOpenInfo = { onOpenCustomer(stop.customer.id) },
                     onCall = onCall,
                 )
             }
@@ -481,6 +488,7 @@ private fun ListHeading(subtitle: String, count: Int, modifier: Modifier = Modif
 private fun StopCard(
     stop: RouteStop,
     onOpen: () -> Unit,
+    onOpenInfo: () -> Unit,
     onCall: (String) -> Unit,
 ) {
     val openable = stop.status.openable()
@@ -552,6 +560,21 @@ private fun StopCard(
                         .weight(1f)
                         .padding(end = 8.dp),
                 )
+
+                // Before the action, not after: this is the question a rep asks
+                // on the way in — how much credit, who do I ask for — and it has
+                // to be reachable without starting the visit to find out.
+                IconButton(
+                    onClick = onOpenInfo,
+                    modifier = Modifier.size(36.dp),
+                ) {
+                    Icon(
+                        Icons.Default.Info,
+                        contentDescription = "Thông tin ${stop.customer.name}",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
 
                 StopAction(status = stop.status, onOpen = onOpen)
 
@@ -957,6 +980,7 @@ private fun RoutePreview() {
         RouteContent(
             state = RouteUiState(loading = false, stops = SampleStops, sync = SyncState()),
             onOpenStop = {},
+            onOpenCustomer = {},
             onOpenMap = {},
             onOpenDrawer = {},
             onRetry = {},
@@ -980,6 +1004,7 @@ private fun RouteFilteredPreview() {
                 query = "không khớp",
             ),
             onOpenStop = {},
+            onOpenCustomer = {},
             onOpenMap = {},
             onOpenDrawer = {},
             onRetry = {},

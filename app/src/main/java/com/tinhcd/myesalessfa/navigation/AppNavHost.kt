@@ -15,6 +15,7 @@ import com.tinhcd.myesalessfa.domain.model.VisitStatus
 import com.tinhcd.myesalessfa.feature.account.AccountScreen
 import com.tinhcd.myesalessfa.feature.auth.LoginScreen
 import com.tinhcd.myesalessfa.feature.checkin.CheckInScreen
+import com.tinhcd.myesalessfa.feature.customer.CustomerDetailScreen
 import com.tinhcd.myesalessfa.feature.dailytarget.DailyTargetScreen
 import com.tinhcd.myesalessfa.feature.focus.FocusProductsScreen
 import com.tinhcd.myesalessfa.feature.incall.InCallScreen
@@ -56,6 +57,7 @@ object Routes {
     const val WORK_NOTES = "worknotes"
     const val LEAVE = "leave"
     const val CHECK_IN = "checkin/{customerId}"
+    const val CUSTOMER = "customer/{customerId}"
     const val IN_CALL = "incall/{visitId}/{customerId}"
     // The customer travels with the step, not just the visit: take_order prices
     // against the outlet's customer class, and re-deriving it from the visit
@@ -63,6 +65,7 @@ object Routes {
     const val STEP = "step/{visitId}/{customerId}/{formId}"
 
     fun checkIn(customerId: String) = "checkin/$customerId"
+    fun customer(customerId: String) = "customer/$customerId"
     fun inCall(visitId: String, customerId: String) = "incall/$visitId/$customerId"
 
     fun step(visitId: String, customerId: String, formId: String) =
@@ -111,6 +114,7 @@ fun AppNavHost(
                     }
                 },
                 onOpenStop = { stop -> navController.navigateToStop(stop) },
+                onOpenCustomer = { id -> navController.navigate(Routes.customer(id)) },
                 onSignedOut = {
                     navController.navigate(Routes.LOGIN) {
                         popUpTo(0) { inclusive = true }
@@ -184,6 +188,16 @@ fun AppNavHost(
             // in progress. Going straight into the workflow would need the new
             // visit id, which a queued check-in does not have yet.
             CheckInScreen(onDone = { navController.popBackStack() })
+        }
+
+        composable(
+            route = Routes.CUSTOMER,
+            arguments = listOf(navArgument("customerId") { type = NavType.StringType }),
+        ) {
+            // Read-only, so back is the only way out. Putting a check-in button
+            // here would give the rep two routes to the same action from the
+            // same card, and the one on the card is the one they already use.
+            CustomerDetailScreen(onBack = { navController.popBackStack() })
         }
 
         composable(

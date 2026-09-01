@@ -109,6 +109,29 @@ insert into customer (id, code, name, branch_id, phone, address, ward_id, lat, l
      '00000000-0000-0000-0000-000000000052', '00000000-0000-0000-0000-000000000061', '00000000-0000-0000-0000-000000000071')
 on conflict (id) do nothing;
 
+-- Contact and credit limit, for the customer detail screen.
+--
+-- An update rather than more columns on the insert above, because the insert is
+-- `do nothing` on conflict: a database seeded before these columns existed would
+-- keep two null columns forever and the screen would look broken against real
+-- rows. This fills them either way.
+--
+-- The spread is deliberate. Two outlets have no contact name, because most shops
+-- are the owner and nobody else; one has a zero limit (cash only) and one has
+-- none set at all, which the screen must show as different answers.
+update customer set contact_name = v.contact_name, credit_limit = v.credit_limit
+  from (values
+    ('00000000-0000-0000-0000-000000000091'::uuid, 'Chi Minh Anh',        20000000::bigint),
+    ('00000000-0000-0000-0000-000000000092'::uuid, 'Ba Bay',              10000000::bigint),
+    ('00000000-0000-0000-0000-000000000093'::uuid, 'Anh Cong (quan ly)',  50000000::bigint),
+    ('00000000-0000-0000-0000-000000000094'::uuid, null,                         0::bigint),
+    ('00000000-0000-0000-0000-000000000095'::uuid, 'Chi Phat',            15000000::bigint),
+    ('00000000-0000-0000-0000-000000000096'::uuid, null,                  null::bigint),
+    ('00000000-0000-0000-0000-000000000097'::uuid, 'Anh Tuan',            40000000::bigint),
+    ('00000000-0000-0000-0000-000000000098'::uuid, 'Co Ngan',             12000000::bigint)
+  ) as v (id, contact_name, credit_limit)
+ where customer.id = v.id;
+
 -- -----------------------------------------------------------------------------
 -- Route: nvbh01 covers Thu Dau Mot Mon/Wed/Fri, Lai Thieu Tue/Thu/Sat
 -- -----------------------------------------------------------------------------

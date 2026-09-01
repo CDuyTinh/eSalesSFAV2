@@ -559,3 +559,24 @@ data class NewLeaveRequestDto(
 data class WithdrawLeaveDto(
     @SerialName("request_id") val requestId: String,
 )
+
+// -----------------------------------------------------------------------------
+// Customer detail
+// -----------------------------------------------------------------------------
+
+@Serializable
+data class CustomerInfoDto(
+    @SerialName("customer_id") val customerId: String,
+    val code: String,
+    val name: String,
+    val phone: String? = null,
+    val address: String? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
+    @SerialName("contact_name") val contactName: String? = null,
+    @SerialName("channel_name") val channelName: String? = null,
+    @SerialName("class_name") val className: String? = null,
+    @SerialName("shop_type_name") val shopTypeName: String? = null,
+    /** Nullable on purpose: absent means no limit set, which is not zero. */
+    @SerialName("credit_limit") val creditLimit: Long? = null,
+    @SerialName("month_revenue") val monthRevenue: Long = 0,
+)

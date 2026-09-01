@@ -9,6 +9,7 @@ import com.tinhcd.myesalessfa.data.repository.FeedbackRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.ConfigRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.OrderRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.ReferenceDataSyncImpl
+import com.tinhcd.myesalessfa.data.repository.CustomerRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.RouteRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.StockRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.SurveyRepositoryImpl
@@ -40,6 +41,7 @@ import com.tinhcd.myesalessfa.domain.repository.ReportRepository
 import com.tinhcd.myesalessfa.domain.repository.TimekeepingRepository
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository
 import com.tinhcd.myesalessfa.domain.repository.ReferenceDataSync
+import com.tinhcd.myesalessfa.domain.repository.CustomerRepository
 import com.tinhcd.myesalessfa.domain.repository.RouteRepository
 import com.tinhcd.myesalessfa.domain.repository.StockRepository
 import com.tinhcd.myesalessfa.domain.repository.SurveyRepository
@@ -65,6 +67,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindRouteRepository(impl: RouteRepositoryImpl): RouteRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCustomerRepository(impl: CustomerRepositoryImpl): CustomerRepository
 
     @Binds
     @Singleton
