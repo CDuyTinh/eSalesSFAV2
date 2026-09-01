@@ -19,6 +19,13 @@ data class CustomerInfo(
     val phone: String?,
     val address: String?,
     val avatarUrl: String?,
+    /**
+     * Where the outlet is, when anyone has recorded it. Null on one a rep
+     * registered in the field and head office has not geocoded, which is why the
+     * header hides its map button rather than opening a map on nothing.
+     */
+    val lat: Double?,
+    val lng: Double?,
     /** Who to ask for at the counter. Null is normal — most shops are the owner. */
     val contactName: String?,
     val channelName: String?,
