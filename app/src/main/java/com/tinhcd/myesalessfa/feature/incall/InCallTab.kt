@@ -166,21 +166,43 @@ private fun StepGrid(steps: List<WorkflowStep>, onOpenStep: (String) -> Unit) {
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
     ) {
-        Column(Modifier.padding(vertical = 8.dp)) {
-            steps.chunked(3).forEach { row ->
-                Row(Modifier.fillMaxWidth()) {
-                    row.forEach { step ->
-                        StepTile(
-                            step = step,
-                            onClick = { onOpenStep(step.step.formId) },
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                    // Keeps the last row's tiles the same width as every other
-                    // row's, instead of stretching two items across three slots.
-                    repeat(3 - row.size) {
-                        Spacer(Modifier.weight(1f))
-                    }
+        StepTiles(
+            steps = steps,
+            onOpenStep = onOpenStep,
+            modifier = Modifier.padding(vertical = 8.dp),
+        )
+    }
+}
+
+/**
+ * The rows on their own, so the Công việc sheet can lay the same tiles out four
+ * across without inheriting this tab's card.
+ *
+ * Shared rather than copied because the tile carries real rules — which badge
+ * wins, what greys out, which step is holding another shut — and a second copy
+ * is a second place for those to drift from the workflow they describe.
+ */
+@Composable
+internal fun StepTiles(
+    steps: List<WorkflowStep>,
+    onOpenStep: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    columns: Int = 3,
+) {
+    Column(modifier) {
+        steps.chunked(columns).forEach { row ->
+            Row(Modifier.fillMaxWidth()) {
+                row.forEach { step ->
+                    StepTile(
+                        step = step,
+                        onClick = { onOpenStep(step.step.formId) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                // Keeps the last row's tiles the same width as every other row's,
+                // instead of stretching two items across three slots.
+                repeat(columns - row.size) {
+                    Spacer(Modifier.weight(1f))
                 }
             }
         }

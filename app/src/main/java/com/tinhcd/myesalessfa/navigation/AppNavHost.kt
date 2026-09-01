@@ -123,6 +123,12 @@ fun AppNavHost(
                 },
                 onOpenStop = { stop -> navController.navigateToStop(stop) },
                 onOpenCustomer = { stop -> navController.navigateToCustomer(stop) },
+                // Straight to the step from the work sheet, skipping the outlet
+                // screen. The rep is already inside the visit — the shortcut
+                // exists precisely to save them the two screens back to it.
+                onOpenVisitStep = { visitId, customerId, formId ->
+                    navController.navigate(Routes.step(visitId, customerId, formId))
+                },
                 onSignedOut = {
                     navController.navigate(Routes.LOGIN) {
                         popUpTo(0) { inclusive = true }

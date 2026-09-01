@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.shell
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,13 +12,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AddBusiness
 import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.Assessment
+import androidx.compose.material.icons.filled.EventBusy
+import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Warehouse
+import androidx.compose.material.icons.automirrored.filled.StickyNote2
 import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Group
@@ -48,7 +60,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
@@ -56,6 +70,8 @@ import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.MenuEntry
 import com.tinhcd.myesalessfa.domain.model.RouteStop
 import com.tinhcd.myesalessfa.domain.model.SupportedMenu
+import com.tinhcd.myesalessfa.domain.usecase.OpenVisit
+import com.tinhcd.myesalessfa.feature.incall.StepTiles
 import com.tinhcd.myesalessfa.domain.model.WorkDay
 import com.tinhcd.myesalessfa.feature.dashboard.DashboardScreen
 import com.tinhcd.myesalessfa.feature.route.RouteScreen
@@ -76,6 +92,8 @@ import kotlinx.coroutines.launch
 fun MainShell(
     onOpenStop: (RouteStop) -> Unit,
     onOpenCustomer: (RouteStop) -> Unit,
+    /** A step of the visit in progress, reached from the work sheet. */
+    onOpenVisitStep: (visitId: String, customerId: String, formId: String) -> Unit,
     onOpenMap: () -> Unit,
     onOpenAccount: () -> Unit,
     onOpenWorkDay: () -> Unit,
@@ -163,8 +181,16 @@ fun MainShell(
         ) {
             SheetMenu(
                 tab = sheet,
+                // Only the work sheet gets the shortcut. The visit's steps under
+                // Khác would be the same tiles answering a question nobody asked
+                // there.
+                openVisit = state.openVisit.takeIf { sheet.code == SupportedMenu.TASKS },
                 onSelect = { entry ->
                     if (viewModel.onSheetEntrySelected(entry)) onOpenMenuEntry(entry.code)
+                },
+                onOpenVisitStep = { visit, formId ->
+                    viewModel.dismissSheet()
+                    onOpenVisitStep(visit.visitId, visit.customerId, formId)
                 },
             )
         }
@@ -258,9 +284,29 @@ private fun iconFor(code: String): ImageVector = when (code) {
 // Sheet
 // -----------------------------------------------------------------------------
 
+/**
+ * A sheet tab's entries, as tiles four across.
+ *
+ * Was a vertical list of rows. Tiles are what the app this replaces uses for all
+ * three of these sheets, and the reason holds up: these are a handful of
+ * destinations, not a list to be read down, and four across puts every one of
+ * them above the fold where a list of eight did not.
+ *
+ * [openVisit] is only passed for the Công việc sheet, and only shows when the
+ * rep is actually inside a call.
+ */
 @Composable
-private fun SheetMenu(tab: MenuEntry, onSelect: (MenuEntry) -> Unit) {
-    Column(Modifier.navigationBarsPadding()) {
+private fun SheetMenu(
+    tab: MenuEntry,
+    openVisit: OpenVisit?,
+    onSelect: (MenuEntry) -> Unit,
+    onOpenVisitStep: (OpenVisit, String) -> Unit,
+) {
+    Column(
+        Modifier
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState()),
+    ) {
         Text(
             text = tab.title,
             style = MaterialTheme.typography.titleLarge,
@@ -277,41 +323,112 @@ private fun SheetMenu(tab: MenuEntry, onSelect: (MenuEntry) -> Unit) {
             )
         }
 
-        tab.children.forEach { entry ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onSelect(entry) }
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                Icon(
-                    imageVector = if (entry.implemented) {
-                        Icons.AutoMirrored.Filled.PlaylistAddCheck
-                    } else {
-                        Icons.Default.Lock
-                    },
-                    contentDescription = null,
-                    tint = if (entry.implemented) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                )
-                Column(Modifier.weight(1f)) {
-                    Text(entry.title, style = MaterialTheme.typography.bodyLarge)
-                    if (!entry.implemented) {
-                        Text(
-                            text = "Chưa xây dựng trong bản này",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Column(Modifier.padding(vertical = 8.dp)) {
+            tab.children.chunked(4).forEach { row ->
+                Row(Modifier.fillMaxWidth()) {
+                    row.forEach { entry ->
+                        MenuTile(
+                            entry = entry,
+                            onClick = { onSelect(entry) },
+                            modifier = Modifier.weight(1f),
                         )
                     }
+                    repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
                 }
             }
         }
+
+        if (openVisit != null) {
+            HorizontalDivider()
+
+            Text(
+                text = "Công việc",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 20.dp, top = 16.dp),
+            )
+            Text(
+                text = openVisit.customerName,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 20.dp, top = 2.dp),
+            )
+
+            // Four across here against three on the customer screen, as the
+            // legacy has it: this is a shortcut list glanced at, not the surface
+            // the visit is worked from.
+            StepTiles(
+                steps = openVisit.workflow.steps,
+                onOpenStep = { formId -> onOpenVisitStep(openVisit, formId) },
+                columns = 4,
+                modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
+            )
+        }
     }
+}
+
+/**
+ * One destination on a sheet.
+ *
+ * A locked padlock replaces the icon for an entry the server offers and this
+ * build has no screen for, rather than the entry being hidden — head office
+ * configured it, and a rep who has been told it exists should see why it does
+ * not open rather than wonder where it went.
+ */
+@Composable
+private fun MenuTile(entry: MenuEntry, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val scheme = MaterialTheme.colorScheme
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp, horizontal = 4.dp),
+    ) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = if (entry.implemented) scheme.primaryContainer else scheme.surfaceVariant,
+            modifier = Modifier.size(50.dp),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = if (entry.implemented) entry.code.menuIcon() else Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = if (entry.implemented) {
+                        scheme.onPrimaryContainer
+                    } else {
+                        scheme.onSurfaceVariant
+                    },
+                    modifier = Modifier.size(24.dp),
+                )
+            }
+        }
+
+        Spacer(Modifier.height(6.dp))
+
+        Text(
+            text = entry.title,
+            textAlign = TextAlign.Center,
+            fontSize = 12.sp,
+            lineHeight = 15.sp,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            color = if (entry.implemented) scheme.onSurface else scheme.onSurfaceVariant,
+        )
+    }
+}
+
+/** The legacy ships a drawn icon per entry; these are the nearest Material ones. */
+private fun String.menuIcon(): ImageVector = when (this) {
+    SupportedMenu.NEW_CUSTOMER -> Icons.Default.AddBusiness
+    SupportedMenu.REPORT -> Icons.Default.Assessment
+    SupportedMenu.RECEIVABLE -> Icons.Default.Payments
+    SupportedMenu.DAILY_SALES_TARGET -> Icons.Default.Flag
+    SupportedMenu.SALES_FOCUS -> Icons.Default.Star
+    SupportedMenu.SITE -> Icons.Default.Warehouse
+    SupportedMenu.WORKING_NOTE -> Icons.AutoMirrored.Filled.StickyNote2
+    SupportedMenu.LEAVE_APPLICATION -> Icons.Default.EventBusy
+    else -> Icons.AutoMirrored.Filled.PlaylistAddCheck
 }
 
 // -----------------------------------------------------------------------------

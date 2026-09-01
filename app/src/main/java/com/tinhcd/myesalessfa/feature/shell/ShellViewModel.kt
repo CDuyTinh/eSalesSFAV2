@@ -11,6 +11,8 @@ import com.tinhcd.myesalessfa.domain.model.WorkDayState
 import com.tinhcd.myesalessfa.domain.repository.AuthRepository
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
 import com.tinhcd.myesalessfa.domain.repository.TimekeepingRepository
+import com.tinhcd.myesalessfa.domain.usecase.GetOpenVisitUseCase
+import com.tinhcd.myesalessfa.domain.usecase.OpenVisit
 import java.time.LocalDate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +33,12 @@ data class ShellUiState(
     val unavailableMessage: String? = null,
     /** Null while it has never loaded, which is not the same as "not started". */
     val workDay: WorkDay? = null,
+    /**
+     * The call the rep is inside, when they are inside one. Read fresh each time
+     * a sheet opens, because "which shop am I in" changes under this screen
+     * without it being told.
+     */
+    val openVisit: OpenVisit? = null,
 ) {
     /**
      * Whether the visit list is reachable.
@@ -55,6 +63,7 @@ class ShellViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val configRepository: ConfigRepository,
     private val timekeeping: TimekeepingRepository,
+    private val getOpenVisit: GetOpenVisitUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ShellUiState())
@@ -99,8 +108,30 @@ class ShellViewModel @Inject constructor(
             com.tinhcd.myesalessfa.domain.model.MenuKind.PAGE ->
                 _state.update { it.copy(selectedTab = tab.code) }
 
-            com.tinhcd.myesalessfa.domain.model.MenuKind.SHEET ->
-                _state.update { it.copy(openSheet = tab) }
+            com.tinhcd.myesalessfa.domain.model.MenuKind.SHEET -> {
+                // Cleared before the read, not after: the sheet opens instantly
+                // and a stale shop name sitting in it for a second is worse than
+                // the section arriving a beat late. It is a shortcut, and one
+                // pointing at the wrong shop is a trap.
+                _state.update { it.copy(openSheet = tab, openVisit = null) }
+                loadOpenVisit()
+            }
+        }
+    }
+
+    /**
+     * Read on every sheet open rather than kept in sync.
+     *
+     * A check-in or check-out happens on another screen entirely, so anything
+     * cached here would be wrong exactly when it mattered — the moment after the
+     * rep walked into a shop.
+     */
+    private fun loadOpenVisit() {
+        viewModelScope.launch {
+            val visit = getOpenVisit()
+            // Only if the sheet is still open. A rep who dismissed it while the
+            // route call was in flight should not see it repopulate.
+            _state.update { if (it.openSheet == null) it else it.copy(openVisit = visit) }
         }
     }
 
