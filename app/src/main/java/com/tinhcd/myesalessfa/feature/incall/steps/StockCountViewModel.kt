@@ -4,20 +4,19 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.DataResult
+import com.tinhcd.myesalessfa.domain.getOrNull
 import com.tinhcd.myesalessfa.domain.model.DraftStockCount
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
 import com.tinhcd.myesalessfa.domain.model.PricedUnit
 import com.tinhcd.myesalessfa.domain.model.StockCountLine
-import com.tinhcd.myesalessfa.domain.repository.CatalogRepository
-import com.tinhcd.myesalessfa.domain.repository.RouteRepository
 import com.tinhcd.myesalessfa.domain.repository.StockRepository
+import com.tinhcd.myesalessfa.domain.usecase.GetVisitCatalogueUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import javax.inject.Inject
 
 data class StockCountUiState(
@@ -69,9 +68,8 @@ data class StockCountUiState(
 @HiltViewModel
 class StockCountViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val catalogRepository: CatalogRepository,
+    private val getVisitCatalogue: GetVisitCatalogueUseCase,
     private val stockRepository: StockRepository,
-    private val routeRepository: RouteRepository,
 ) : ViewModel() {
 
     private val visitId: String = checkNotNull(savedStateHandle["visitId"])
@@ -87,39 +85,25 @@ class StockCountViewModel @Inject constructor(
     fun load() {
         _state.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
-            val stop = (routeRepository.getStop(customerId, LocalDate.now()) as? DataResult.Success)
-                ?.data
-
-            // The rep counts what they can sell, so the same priced catalogue the
-            // order step uses. A product with no price for this outlet is one they
-            // cannot order, which makes counting it busywork.
-            val catalogue = catalogRepository.catalogue(stop?.customer?.classId, LocalDate.now())
-
             val previous = stockRepository.previousCount(customerId, visitId)
 
-            // Which SKUs this outlet owes comes from its channel and shop type,
-            // resolved against the cached lists — so it works with no signal, which
-            // is the situation this screen exists for.
-            val mustStock = catalogRepository.mustStock(
-                channelId = stop?.customer?.channelId,
-                shopTypeId = stop?.customer?.shopTypeId,
-                on = LocalDate.now(),
-            )
-
-            when (catalogue) {
+            // The rep counts what they can sell, so the same priced catalogue and the
+            // same par levels the order step works from. A product with no price for
+            // this outlet is one they cannot order, which makes counting it busywork.
+            when (val visit = getVisitCatalogue(customerId)) {
                 is DataResult.Success -> _state.update {
                     it.copy(
                         loading = false,
-                        customerName = stop?.customer?.name.orEmpty(),
-                        catalogue = catalogue.data,
-                        previous = (previous as? DataResult.Success)?.data.orEmpty(),
+                        customerName = visit.data.customer?.name.orEmpty(),
+                        catalogue = visit.data.catalogue,
+                        previous = previous.getOrNull().orEmpty(),
                         // Not an error the rep has to act on: they can still
                         // count, they just do it without the comparison.
                         previousUnavailable = previous is DataResult.Failure,
                         count = DraftStockCount(
                             visitId = visitId,
                             customerId = customerId,
-                            mustStock = (mustStock as? DataResult.Success)?.data.orEmpty(),
+                            mustStock = visit.data.mustStock,
                         ),
                     )
                 }
