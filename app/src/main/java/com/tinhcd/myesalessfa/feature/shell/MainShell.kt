@@ -341,8 +341,13 @@ private fun SheetMenu(
         if (openVisit != null) {
             HorizontalDivider()
 
+            // "Đang viếng thăm" rather than the legacy's "Công việc". This sheet
+            // carries the tab's own title at the top, which the legacy's does
+            // not, so repeating the word here read as a heading that had lost
+            // track of itself. It also says more: these tiles are here because
+            // the rep is inside a call, which is the thing worth stating.
             Text(
-                text = "Công việc",
+                text = "Đang viếng thăm",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(start = 20.dp, top = 16.dp),
