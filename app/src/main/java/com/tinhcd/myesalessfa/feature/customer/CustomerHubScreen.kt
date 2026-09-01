@@ -75,8 +75,15 @@ private enum class HubTab(val title: String) {
     PROGRAMS("Chương trình"),
 }
 
-/** Legacy banner height, which the shop front has to be recognisable at. */
-private val BannerHeight = 174.dp
+/**
+ * The shop front has to be recognisable at this height, and it also has to carry
+ * the status bar, the back button and two lines of name across the bottom.
+ *
+ * The legacy's 174 is measured in its own width-scaled units, not dp, and taken
+ * literally here it left the photo squeezed between the status bar and the name —
+ * about 100dp of actual picture on a tall phone.
+ */
+private val BannerHeight = 220.dp
 
 @Composable
 fun CustomerHubScreen(
