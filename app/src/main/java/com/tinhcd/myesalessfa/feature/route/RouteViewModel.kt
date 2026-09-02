@@ -60,6 +60,18 @@ data class RouteUiState(
     val sync: SyncState = SyncState(),
 ) {
     /**
+     * The stop the rep is inside, when they are inside one.
+     *
+     * One visit at a time is the rule, as it was in the app this replaces: a rep
+     * cannot be standing in two shops, and a second open visit makes the working
+     * time of both unreadable. Every other stop's check-in is refused while this
+     * is set — on the card, in the Edge Function and by a unique index, in that
+     * order of politeness.
+     */
+    val openStop: RouteStop?
+        get() = stops.firstOrNull { it.status == VisitStatus.IN_PROGRESS }
+
+    /**
      * The stops the list actually draws.
      *
      * Filtered here rather than on the server: the whole day's route is already in

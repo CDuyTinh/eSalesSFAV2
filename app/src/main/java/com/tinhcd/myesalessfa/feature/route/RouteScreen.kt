@@ -214,6 +214,10 @@ private fun RouteContent(
                             Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone")),
                         )
                     },
+                    // From the whole route, not the filtered list: a rep who has
+                    // searched for the next shop must still be told the previous
+                    // one is open, and it would have scrolled out of the results.
+                    openStop = state.openStop,
                 )
             }
         }
@@ -409,8 +413,41 @@ private fun StopList(
     onOpenStop: (RouteStop) -> Unit,
     onOpenCustomer: (RouteStop) -> Unit,
     onCall: (String) -> Unit,
+    openStop: RouteStop?,
 ) {
     Column(Modifier.fillMaxSize()) {
+        // Above the heading and outside the list, so it cannot scroll away. The
+        // greyed check-in chips below it are otherwise a dead end: the rep can
+        // see they may not check in and nothing tells them why or what to do.
+        if (openStop != null) {
+            Surface(
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                ) {
+                    Icon(
+                        Icons.Default.Schedule,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "Đang viếng thăm ${openStop.customer.name}. " +
+                            "Check-out trước khi ghé điểm khác.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    )
+                }
+            }
+        }
+
         // The heading stays put while the cards move under it: it counts what is on
         // screen, and a count that scrolls away is a count nobody can check against.
         ListHeading(
@@ -442,6 +479,7 @@ private fun StopList(
                     stop = stop,
                     onOpen = { onOpenStop(stop) },
                     onOpenHub = { onOpenCustomer(stop) },
+                    checkInBlocked = openStop != null && openStop.customer.id != stop.customer.id,
                     onCall = onCall,
                 )
             }
@@ -498,6 +536,7 @@ private fun StopCard(
     stop: RouteStop,
     onOpen: () -> Unit,
     onOpenHub: () -> Unit,
+    checkInBlocked: Boolean,
     onCall: (String) -> Unit,
 ) {
     Card(
@@ -571,7 +610,11 @@ private fun StopCard(
                         .padding(end = 8.dp),
                 )
 
-                StopAction(status = stop.status, onOpen = onOpen)
+                StopAction(
+                    status = stop.status,
+                    checkInBlocked = checkInBlocked,
+                    onOpen = onOpen,
+                )
 
                 val phone = stop.customer.phone
                 IconButton(
@@ -689,12 +732,16 @@ private fun InfoRow(icon: ImageVector, text: String) {
  * is nothing left to do.
  */
 @Composable
-private fun StopAction(status: VisitStatus, onOpen: () -> Unit) {
+private fun StopAction(status: VisitStatus, checkInBlocked: Boolean, onOpen: () -> Unit) {
     when (status) {
+        // Grey and inert while another shop is open, the way the legacy card
+        // greys it. The banner above the list says which shop and what to do
+        // about it — a dead chip on its own would leave the rep pressing.
         VisitStatus.PLANNED -> ActionChip(
             text = "Check-in",
-            container = MaterialTheme.colorScheme.primary,
+            container = if (checkInBlocked) StatusGrey else MaterialTheme.colorScheme.primary,
             content = Color.White,
+            enabled = !checkInBlocked,
             onClick = onOpen,
         )
 
@@ -725,6 +772,7 @@ private fun ActionChip(
     content: Color,
     onClick: () -> Unit,
     icon: ImageVector? = null,
+    enabled: Boolean = true,
 ) {
     Surface(
         color = container,
@@ -732,7 +780,7 @@ private fun ActionChip(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .padding(end = 4.dp)
-            .clickable(onClick = onClick),
+            .clickable(enabled = enabled, onClick = onClick),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
