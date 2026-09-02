@@ -35,6 +35,12 @@ data class CheckInUiState(
     val gate: CheckInGate? = null,
     val reasons: List<ReasonCode> = emptyList(),
     val selectedReason: ReasonCode? = null,
+    /**
+     * Free text the rep types at the door. [CheckInRequest] has carried this
+     * field since the first version and was being sent null — the screen simply
+     * never asked for it.
+     */
+    val note: String = "",
     val submitting: Boolean = false,
     val error: String? = null,
     val finished: Boolean = false,
@@ -121,6 +127,8 @@ class CheckInViewModel @Inject constructor(
 
     fun selectReason(reason: ReasonCode) = _state.update { it.copy(selectedReason = reason) }
 
+    fun onNoteChange(value: String) = _state.update { it.copy(note = value) }
+
     fun submit() {
         val current = _state.value
         val customer = current.customer ?: return
@@ -141,7 +149,9 @@ class CheckInViewModel @Inject constructor(
                 },
                 photoPath = null,
                 reasonCode = current.selectedReason?.code,
-                note = null,
+                // Blank is not a note. Sending "" would fill a column someone
+                // will later query for "check-ins that came with a note".
+                note = current.note.trim().takeIf { it.isNotEmpty() },
             )
 
             when (val result = checkInRepository.checkIn(request)) {
