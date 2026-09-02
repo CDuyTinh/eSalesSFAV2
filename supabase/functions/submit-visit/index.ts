@@ -41,6 +41,28 @@ Deno.serve(handler(async (req, db) => {
 
   if (!me) throw new HttpError(403, "no salesperson is linked to this account");
 
+  const visitDate = body.visit_date ?? body.check_in_at.slice(0, 10);
+
+  // One open visit at a time, as the legacy app enforced on its check-in button.
+  // A unique index makes this impossible anyway; this exists so the rep is told
+  // which shop is holding them up instead of receiving a constraint violation.
+  //
+  // Not a transaction with the insert below, so two check-ins racing could both
+  // pass this check. That is exactly what the index is for — one of them then
+  // fails on it, which is the correct outcome and not one worth a lock to reach
+  // more gracefully.
+  const open = unwrap(
+    await db.from("visit")
+      .select("id,customer:customer_id(name)")
+      .eq("visit_date", visitDate)
+      .eq("status", "in_progress"),
+  ) as { id: string; customer: { name: string } | null }[];
+
+  if (open.length > 0) {
+    const name = open[0].customer?.name ?? "một khách hàng khác";
+    throw new HttpError(409, `Đang viếng thăm ${name}. Check-out trước đã.`);
+  }
+
   unwrap(
     await db.from("visit").insert({
       customer_id: body.customer_id,
@@ -48,7 +70,7 @@ Deno.serve(handler(async (req, db) => {
       branch_id: me.branch_id,
       // Defaults to the check-in instant's date so a queued check-in delivered
       // after midnight still belongs to the day the rep was in the shop.
-      visit_date: body.visit_date ?? body.check_in_at.slice(0, 10),
+      visit_date: visitDate,
       status: "in_progress",
       check_in_at: body.check_in_at,
       check_in_lat: body.check_in_lat ?? null,

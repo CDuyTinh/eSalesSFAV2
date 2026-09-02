@@ -38,11 +38,13 @@ class GetOpenVisitUseCase @Inject constructor(
     suspend operator fun invoke(on: LocalDate = LocalDate.now()): OpenVisit? {
         val stops = routeRepository.getRoute(on).getOrNull() ?: return null
 
-        // In visit order, so that if two ever were open at once the rep lands on
-        // the earlier stop — the one they are more likely to have forgotten.
-        // The server closes the previous visit on check-in, so this should be at
-        // most one; taking `first` is about behaving sanely if that ever slips
-        // rather than about a case anyone expects.
+        // At most one can match: a unique index on (salesperson_id, visit_date)
+        // where status = 'in_progress' makes a second open visit impossible.
+        // `firstOrNull` is how that fact is read, not a tie-break.
+        //
+        // An earlier version of this comment claimed the server closed the
+        // previous visit on check-in. It did not — nothing enforced this at any
+        // layer until the index was added.
         val stop = stops.firstOrNull { it.status == VisitStatus.IN_PROGRESS } ?: return null
         val visitId = stop.visitId ?: return null
 
