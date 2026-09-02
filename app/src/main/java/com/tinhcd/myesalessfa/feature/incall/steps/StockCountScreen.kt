@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -17,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -29,7 +32,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -524,30 +527,94 @@ private fun CountStepper(
         horizontalArrangement = Arrangement.Center,
         modifier = modifier,
     ) {
-        FilledIconButton(
-            onClick = { onQtyChange((qty ?: 0) - 1) },
+        StepperButton(
+            icon = Icons.Default.Remove,
+            description = "Giảm",
             enabled = (qty ?: 0) > 0,
-            modifier = Modifier.size(36.dp),
-        ) { Icon(Icons.Default.Remove, contentDescription = "Giảm") }
-
-        OutlinedTextField(
-            value = qty?.toString() ?: "",
-            onValueChange = { typed ->
-                val digits = typed.filter { it.isDigit() }.take(5)
-                onQtyChange(digits.toIntOrNull() ?: 0)
-            },
-            placeholder = { Text("-", textAlign = TextAlign.Center) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            singleLine = true,
-            modifier = Modifier
-                .padding(horizontal = 6.dp)
-                .width(72.dp),
+            onClick = { onQtyChange((qty ?: 0) - 1) },
         )
 
-        FilledIconButton(
+        // A bordered box around a bare text field rather than an OutlinedTextField,
+        // which carries a 56dp minimum height and its own internal padding — half
+        // the card's height went to one input.
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .padding(horizontal = 8.dp)
+                .width(52.dp)
+                .height(32.dp)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp)),
+        ) {
+            BasicTextField(
+                value = qty?.toString() ?: "",
+                onValueChange = { typed ->
+                    val digits = typed.filter { it.isDigit() }.take(5)
+                    onQtyChange(digits.toIntOrNull() ?: 0)
+                },
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    // Green, matching the legend dot for the figure being written.
+                    color = CountedGreen,
+                    textAlign = TextAlign.Center,
+                ),
+                cursorBrush = SolidColor(CountedGreen),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                decorationBox = { field ->
+                    Box(contentAlignment = Alignment.Center) {
+                        if (qty == null) {
+                            Text(
+                                "-",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        field()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        StepperButton(
+            icon = Icons.Default.Add,
+            description = "Tăng",
+            enabled = true,
             onClick = { onQtyChange((qty ?: 0) + 1) },
-            modifier = Modifier.size(36.dp),
-        ) { Icon(Icons.Default.Add, contentDescription = "Tăng") }
+        )
+    }
+}
+
+/**
+ * 30dp, tonal rather than filled.
+ *
+ * The filled 36dp pair this replaces was the loudest thing on a card whose
+ * subject is three numbers — two solid blue discs either side of the figure they
+ * were meant to be adjusting. Still comfortably tappable; the row is 32dp tall
+ * and a thumb lands on the whole of it.
+ */
+@Composable
+private fun StepperButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    description: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        shape = CircleShape,
+        color = if (enabled) scheme.secondaryContainer else scheme.surfaceVariant,
+        modifier = Modifier
+            .size(30.dp)
+            .clickable(enabled = enabled, onClick = onClick),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                icon,
+                contentDescription = description,
+                tint = if (enabled) scheme.onSecondaryContainer else scheme.outline,
+                modifier = Modifier.size(16.dp),
+            )
+        }
     }
 }
 
