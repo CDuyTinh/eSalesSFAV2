@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -32,13 +33,15 @@ import androidx.compose.material.icons.filled.Map
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -348,12 +351,14 @@ private fun DistanceRow(gate: CheckInGate?, locating: Boolean, onRefresh: () -> 
 }
 
 /**
- * Lý do, as the dropdown the legacy uses.
+ * Lý do: a row on the card that opens the choices in a sheet.
  *
- * A dropdown rather than the radio list this replaced. With the one seeded
- * reason it is a tap worse; against a production list of reason codes it is the
- * only one of the two that still fits on the card, and the card is the point of
- * this layout.
+ * A sheet rather than the dropdown menu this replaced. A dropdown anchors itself
+ * to the row and grows downward from it, so it lands over the note field and,
+ * with a production list of reason codes, runs off the bottom of a card sitting
+ * near the top of the screen. A sheet comes up from the edge the thumb is
+ * already at, sizes itself to the list, and puts each choice on a full-width row
+ * — which is the target a rep is hitting one-handed in a doorway.
  */
 @Composable
 private fun ReasonRow(
@@ -375,24 +380,11 @@ private fun ReasonRow(
             },
             onClick = { if (reasons.isNotEmpty()) open = true },
         ) {
-            Box {
-                Icon(
-                    Icons.Default.ArrowDropDown,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-                    reasons.forEach { reason ->
-                        DropdownMenuItem(
-                            text = { Text(reason.name) },
-                            onClick = {
-                                onSelect(reason)
-                                open = false
-                            },
-                        )
-                    }
-                }
-            }
+            Icon(
+                Icons.Default.ArrowDropDown,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
 
         if (reasons.isEmpty()) {
@@ -402,6 +394,70 @@ private fun ReasonRow(
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
             )
+        }
+    }
+
+    if (open) {
+        ReasonSheet(
+            kind = kind,
+            reasons = reasons,
+            selected = selected,
+            onSelect = {
+                onSelect(it)
+                open = false
+            },
+            onDismiss = { open = false },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ReasonSheet(
+    kind: ReasonKind,
+    reasons: List<ReasonCode>,
+    selected: ReasonCode?,
+    onSelect: (ReasonCode) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        // Never a half sheet. The list is short and the rep is picking one thing;
+        // a peek state would only add a drag before the choice.
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    ) {
+        Column(Modifier.navigationBarsPadding()) {
+            Text(
+                text = kind.label(),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 12.dp),
+            )
+            HorizontalDivider()
+
+            reasons.forEach { reason ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        // The whole row, not the button: a radio dot is a 20dp
+                        // target and this gets tapped one-handed, outdoors.
+                        .clickable { onSelect(reason) }
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                ) {
+                    RadioButton(
+                        selected = reason.id == selected?.id,
+                        onClick = { onSelect(reason) },
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = reason.name,
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
         }
     }
 }
