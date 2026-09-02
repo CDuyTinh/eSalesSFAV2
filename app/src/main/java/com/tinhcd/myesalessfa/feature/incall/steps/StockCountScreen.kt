@@ -1,5 +1,7 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,13 +15,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilterChip
@@ -37,6 +45,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -119,26 +129,12 @@ fun StockCountScreen(
 
                     // Only worth offering when the outlet actually owes something.
                     val compliance = state.count.compliance
-                    if (compliance.required > 0) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 12.dp),
-                        ) {
-                            FilterChip(
-                                selected = state.mustStockOnly,
-                                onClick = { viewModel.onMustStockOnlyChange(!state.mustStockOnly) },
-                                label = { Text("Chỉ hàng bắt buộc (${compliance.required})") },
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            if (compliance.unchecked > 0) {
-                                Text(
-                                    "còn ${compliance.unchecked} chưa kiểm",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.error,
-                                )
-                            }
-                        }
-                    }
+                    LegendBoard(
+                        mustStockOnly = state.mustStockOnly,
+                        requiredCount = compliance.required.takeIf { it > 0 },
+                        uncheckedCount = compliance.unchecked,
+                        onMustStockOnlyChange = viewModel::onMustStockOnlyChange,
+                    )
 
                     val visible = state.visible
                     if (visible.isEmpty()) {
@@ -175,6 +171,80 @@ fun StockCountScreen(
     }
 }
 
+/**
+ * The board above the list: what the three numbers on every row mean.
+ *
+ * Copied from the legacy screen, where the row carries three bare figures and a
+ * legend at the top is the only thing that names them. That trade is right for a
+ * list of forty products — labelling each row three times costs a line per row
+ * and says the same thing forty times.
+ *
+ * The legacy board also carries a picker for counting by total or by expiry
+ * date. There is no second mode here: lots and expiry dates are deliberately out
+ * of this build, for the reasons the site-stock screen records.
+ */
+@Composable
+private fun LegendBoard(
+    mustStockOnly: Boolean,
+    requiredCount: Int?,
+    uncheckedCount: Int,
+    onMustStockOnlyChange: (Boolean) -> Unit,
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+    ) {
+        Column(Modifier.padding(12.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                LegendDot("Kỳ trước", PreviousInk)
+                LegendDot("Tồn hiện tại", CountedGreen)
+                LegendDot("Định mức", ParBlue)
+            }
+
+            if (requiredCount != null) {
+                Spacer(Modifier.size(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    FilterChip(
+                        selected = mustStockOnly,
+                        onClick = { onMustStockOnlyChange(!mustStockOnly) },
+                        label = { Text("Chỉ hàng bắt buộc ($requiredCount)") },
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    if (uncheckedCount > 0) {
+                        Text(
+                            "còn $uncheckedCount chưa kiểm",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LegendDot(name: String, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier
+                .size(8.dp)
+                .background(color, CircleShape),
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = name,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
 @Composable
 private fun StockRow(
     product: PricedProduct,
@@ -189,118 +259,166 @@ private fun StockRow(
     val baseUom = product.product.baseUomCode.lowercase()
     val par = state.parFor(product)
 
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Marked before the name, so a rep scanning the list sees the
-                        // obligation without reading each row.
-                        if (par != null) {
-                            Text(
-                                "BẮT BUỘC",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(end = 6.dp),
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(Modifier.padding(12.dp)) {
+            ProductThumb(par != null)
+
+            Spacer(Modifier.width(12.dp))
+
+            Column(Modifier.weight(1f)) {
+                // Name, then the out-of-stock toggle on the right, as the legacy
+                // row has it.
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        product.product.name,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.weight(1f),
+                    )
+
+                    // Kept from before the legacy layout arrived. That app has no
+                    // notion of un-counting — every product there either has a
+                    // number or was never touched — but this one distinguishes
+                    // "counted zero" from "not counted", and compliance is
+                    // measured over what was checked. Without this a rep who
+                    // typed a wrong figure could only replace it, never withdraw
+                    // it, and their slip would land on the outlet's record.
+                    if (line != null && line.qty > 0) {
+                        IconButton(
+                            onClick = onClear,
+                            modifier = Modifier.size(32.dp),
+                        ) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Bỏ kiểm sản phẩm này",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(18.dp),
                             )
                         }
-                        Text(
-                            product.product.name,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium,
-                        )
                     }
-                    Text(
-                        product.product.code +
-                            if (par != null) "  -  định mức $par $baseUom" else "",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+
+                    OutOfStockToggle(
+                        checked = line?.qty == 0,
+                        onToggle = { if (line?.qty == 0) onClear() else onQtyChange(0) },
                     )
                 }
 
-                // Only offered once something has been recorded: clearing is how
-                // the rep undoes a count, which is different from counting zero.
-                if (line != null) {
-                    IconButton(onClick = onClear) {
-                        Icon(Icons.Default.Close, contentDescription = "Bỏ qua sản phẩm này")
-                    }
-                }
-            }
-
-            if (product.units.size > 1) {
+                // Code and unit separated by a rule, again as there. The par
+                // level moved out of this line and into the third figure below,
+                // where it lines up with the other two numbers.
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    modifier = Modifier.padding(top = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 2.dp),
                 ) {
-                    product.units.forEach { option ->
-                        FilterChip(
-                            selected = option.unit.uomCode == unit.unit.uomCode,
-                            onClick = { onUnitChange(option.unit.uomCode) },
-                            label = { Text(option.unit.uomName) },
-                        )
-                    }
-                }
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-            ) {
-                Column(Modifier.weight(1f)) {
                     Text(
-                        if (prevBase != null) {
-                            "Kỳ trước: $prevBase $baseUom"
-                        } else {
-                            "Chưa kiểm lần nào"
-                        },
+                        product.product.code,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Box(
+                        Modifier
+                            .padding(horizontal = 6.dp)
+                            .size(width = 1.dp, height = 10.dp)
+                            .background(MaterialTheme.colorScheme.outlineVariant),
+                    )
+                    Text(
+                        unit.unit.uomName,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     if (unit.unit.conversionRate > 1) {
                         Text(
-                            "1 ${unit.unit.uomName} = ${unit.unit.conversionRate} $baseUom",
+                            " = ${unit.unit.conversionRate} $baseUom",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
 
-                CountStepper(
-                    qty = line?.qty,
-                    onQtyChange = onQtyChange,
-                )
-            }
-
-            if (line != null) {
-                val movement = when {
-                    line.isNewlyOutOfStock -> "Hết hàng - kỳ trước còn ${line.prevBaseQty} $baseUom"
-                    line.soldSinceCount > 0 -> "Bán ${line.soldSinceCount} $baseUom từ kỳ trước"
-                    else -> "Tồn ${line.baseQty} $baseUom"
+                if (product.units.size > 1) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(top = 6.dp),
+                    ) {
+                        product.units.forEach { option ->
+                            FilterChip(
+                                selected = option.unit.uomCode == unit.unit.uomCode,
+                                onClick = { onUnitChange(option.unit.uomCode) },
+                                label = { Text(option.unit.uomName) },
+                            )
+                        }
+                    }
                 }
-                Text(
-                    movement,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (line.isNewlyOutOfStock) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MaterialTheme.colorScheme.primary
-                    },
-                    modifier = Modifier.padding(top = 6.dp),
-                )
 
-                // The replenishment figure: the gap between the shelf and the par
-                // level. Shown only when there is one, so it reads as an action
-                // rather than as decoration.
-                if (line.shortfallBaseQty > 0) {
+                // The three figures, in the legend's order and its colours:
+                // what was here last time, what is here now, what should be.
+                // Only the middle one is the rep's to write.
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                ) {
+                    // Blank, not a dash, when there is no figure. A dash pinned
+                    // to the far edge of the row reads as a stray mark rather
+                    // than as "nothing recorded", and on a product that is
+                    // neither stocked before nor required there would be two of
+                    // them framing the stepper.
                     Text(
-                        "Thiếu ${line.shortfallBaseQty} $baseUom so với định mức",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.error,
+                        text = prevBase?.toString().orEmpty(),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = PreviousInk,
                     )
+
+                    CountStepper(qty = line?.qty, onQtyChange = onQtyChange)
+
+                    Text(
+                        text = par?.toString().orEmpty(),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.End,
+                        color = ParBlue,
+                    )
+                }
+
+                // Below the figures rather than beside them: this is the reading
+                // of the three numbers, and it only exists once one is entered.
+                if (line != null) {
+                    val movement = when {
+                        line.isNewlyOutOfStock ->
+                            "Hết hàng - kỳ trước còn ${line.prevBaseQty} $baseUom"
+
+                        line.soldSinceCount > 0 ->
+                            "Bán ${line.soldSinceCount} $baseUom từ kỳ trước"
+
+                        else -> "Tồn ${line.baseQty} $baseUom"
+                    }
+                    Text(
+                        movement,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (line.isNewlyOutOfStock) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        },
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+
+                    // The replenishment figure: the gap between the shelf and the
+                    // par level. Shown only when there is one, so it reads as an
+                    // action rather than as decoration.
+                    if (line.shortfallBaseQty > 0) {
+                        Text(
+                            "Thiếu ${line.shortfallBaseQty} $baseUom so với định mức",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
                 }
             }
         }
@@ -308,13 +426,104 @@ private fun StockRow(
 }
 
 /**
+ * The square the legacy row puts a product photo in.
+ *
+ * A placeholder, because no photo reaches here: `product.image_url` exists in the
+ * schema but the catalogue does not select it, the cached ProductEntity has no
+ * column for it, and every seeded product's is null. Carrying it would be an RPC
+ * change, a DTO field, a Room migration and a domain field — worth doing when
+ * there are photos to show, not to fill this square today.
+ *
+ * It still earns its place: the tint marks a must-stock product, which is what
+ * the "BẮT BUỘC" tag used to say in words above the name.
+ */
+@Composable
+private fun ProductThumb(required: Boolean) {
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = if (required) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        },
+        modifier = Modifier.size(48.dp),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                Icons.Default.Inventory2,
+                contentDescription = if (required) "Hàng bắt buộc" else null,
+                tint = if (required) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                modifier = Modifier.size(22.dp),
+            )
+        }
+    }
+}
+
+/**
+ * OOS, the legacy's own label, with its circle that fills when set.
+ *
+ * Writes a count of zero rather than a flag of its own, because zero already
+ * means "looked, found none" here and a second way of saying it would be a
+ * second thing to keep in step. Pressing it again clears the count entirely,
+ * which is the other state — nobody looked.
+ */
+@Composable
+private fun OutOfStockToggle(checked: Boolean, onToggle: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onToggle)
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+    ) {
+        Text(
+            text = "OOS",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.width(6.dp))
+        Icon(
+            imageVector = if (checked) {
+                Icons.Default.CheckCircle
+            } else {
+                Icons.Default.RadioButtonUnchecked
+            },
+            contentDescription = "Hết hàng",
+            tint = if (checked) {
+                MaterialTheme.colorScheme.error
+            } else {
+                MaterialTheme.colorScheme.outline
+            },
+            modifier = Modifier.size(18.dp),
+        )
+    }
+}
+
+/** Legacy's three figure colours: #0D0C22 read, #04A489 written, #2D2DFE owed. */
+private val PreviousInk = Color(0xFF0D0C22)
+private val CountedGreen = Color(0xFF04A489)
+private val ParBlue = Color(0xFF2D2DFE)
+
+/**
  * Null [qty] means the product has not been checked; 0 means checked and empty.
  * The field is blank in the first case and shows "0" in the second, so the two
  * are distinguishable at a glance.
  */
 @Composable
-private fun CountStepper(qty: Int?, onQtyChange: (Int) -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+private fun CountStepper(
+    qty: Int?,
+    onQtyChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+        modifier = modifier,
+    ) {
         FilledIconButton(
             onClick = { onQtyChange((qty ?: 0) - 1) },
             enabled = (qty ?: 0) > 0,
