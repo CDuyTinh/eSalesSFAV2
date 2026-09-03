@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,7 +28,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,7 +44,6 @@ import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.domain.model.AuditPhoto
 import java.io.File
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DisplayAuditScreen(
     onDone: () -> Unit,
@@ -73,7 +70,10 @@ fun DisplayAuditScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(state.title.ifBlank { "Chấm trưng bày" }) })
+            StepHeader(
+                title = state.title.ifBlank { "Chấm trưng bày" },
+                onBack = onDone,
+            )
         },
     ) { padding ->
         if (state.loading) {

@@ -28,7 +28,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -61,19 +60,13 @@ fun TakeOrderScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("Đặt hàng")
-                        val subtitle = listOfNotNull(
-                            state.customerName.ifBlank { null },
-                            state.order.lines.size.takeIf { it > 0 }?.let { "$it mặt hàng" },
-                        ).joinToString(" - ")
-                        if (subtitle.isNotBlank()) {
-                            Text(subtitle, style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                },
+            StepHeader(
+                title = "Đặt hàng",
+                subtitle = listOfNotNull(
+                    state.customerName.ifBlank { null },
+                    state.order.lines.size.takeIf { it > 0 }?.let { "$it mặt hàng" },
+                ).joinToString(" - "),
+                onBack = onDone,
             )
         },
     ) { padding ->

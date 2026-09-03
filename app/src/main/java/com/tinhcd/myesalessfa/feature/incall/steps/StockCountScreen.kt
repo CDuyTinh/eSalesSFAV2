@@ -41,7 +41,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -75,21 +74,15 @@ fun StockCountScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("Kiểm tồn cửa hàng")
-                        val subtitle = listOfNotNull(
-                            state.customerName.ifBlank { null },
-                            state.count.countedProducts
-                                .takeIf { it > 0 }
-                                ?.let { "đã kiểm $it mặt hàng" },
-                        ).joinToString(" - ")
-                        if (subtitle.isNotBlank()) {
-                            Text(subtitle, style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                },
+            StepHeader(
+                title = "Kiểm tồn cửa hàng",
+                subtitle = listOfNotNull(
+                    state.customerName.ifBlank { null },
+                    state.count.countedProducts
+                        .takeIf { it > 0 }
+                        ?.let { "đã kiểm $it mặt hàng" },
+                ).joinToString(" - "),
+                onBack = onDone,
             )
         },
     ) { padding ->
