@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -113,7 +114,13 @@ fun InCallTab(
                     }
 
                     Surface(shadowElevation = 8.dp) {
-                        Column(Modifier.padding(16.dp)) {
+                        // Same reason as the check-in bar: pinned to the window
+                        // bottom, so it has to keep clear of the navigation bar.
+                        Column(
+                            Modifier
+                                .navigationBarsPadding()
+                                .padding(16.dp),
+                        ) {
                             if (!workflow.canCheckOut) {
                                 Text(
                                     text = "Còn bước bắt buộc chưa hoàn thành: " +
