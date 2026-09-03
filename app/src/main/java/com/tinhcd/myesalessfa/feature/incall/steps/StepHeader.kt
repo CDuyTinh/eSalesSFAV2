@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -43,6 +44,8 @@ internal fun StepHeader(
     title: String,
     onBack: () -> Unit,
     subtitle: String? = null,
+    actions: @Composable RowScope.() -> Unit = {},
+    below: (@Composable () -> Unit)? = null,
 ) {
     val brand = MaterialTheme.brand
 
@@ -56,40 +59,52 @@ internal fun StepHeader(
                 shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp),
             ),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .statusBarsPadding()
-                .padding(start = 4.dp, end = 16.dp)
-                .padding(bottom = 12.dp, top = 4.dp),
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Quay lại",
-                    tint = brand.onHeader,
-                )
-            }
+        Column(Modifier.statusBarsPadding()) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(horizontal = 4.dp)
+                    .padding(bottom = 12.dp, top = 4.dp),
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Quay lại",
+                        tint = brand.onHeader,
+                    )
+                }
 
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontSize = 18.sp,
-                    color = brand.onHeader,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (!subtitle.isNullOrBlank()) {
+                Column(Modifier.weight(1f)) {
                     Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.labelSmall,
-                        // Dimmed rather than a second full-strength line: it is
-                        // context for the title, not a second title.
-                        color = brand.onHeader.copy(alpha = 0.85f),
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontSize = 18.sp,
+                        color = brand.onHeader,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
+                    if (!subtitle.isNullOrBlank()) {
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.labelSmall,
+                            // Dimmed rather than a second full-strength line: it
+                            // is context for the title, not a second title.
+                            color = brand.onHeader.copy(alpha = 0.85f),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+
+                actions()
+            }
+
+            // Inside the band rather than under it, the way the Viếng thăm header
+            // carries its search box: a control that filters a list belongs to the
+            // bar it is filtering from.
+            if (below != null) {
+                Box(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp)) {
+                    below()
                 }
             }
         }

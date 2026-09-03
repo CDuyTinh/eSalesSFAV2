@@ -171,7 +171,29 @@ data class DraftOrder(
 
     val totalAmount: Long get() = subTotal + vatAmount
 
+    /**
+     * Units ordered, added across lines.
+     *
+     * Deliberately not converted to base units: this is the legacy checkout's
+     * "tổng số lượng", which a rep reads back as "twelve things", and turning two
+     * cases and three bottles into 51 pieces answers a question nobody asked.
+     */
+    val totalQty: Int get() = lines.sumOf { it.qty }
+
     val canSubmit: Boolean get() = lines.isNotEmpty()
+
+    /**
+     * Base units of one product across every unit it was ordered in.
+     *
+     * A product can hold two lines — a case and a few loose pieces — so a caller
+     * asking "how much of this is in the basket" cannot read one line.
+     */
+    fun baseQtyOf(productId: String): Int = lines
+        .filter { it.productId == productId }
+        .sumOf { it.baseQty }
+
+    fun lineFor(productId: String, uomCode: String): OrderLine? =
+        lines.firstOrNull { it.productId == productId && it.uomCode == uomCode }
 
     /**
      * Adds [line], replacing any existing line for the same product and unit.

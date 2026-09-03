@@ -4,12 +4,17 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.DataResult
+import com.tinhcd.myesalessfa.domain.getOrNull
 import com.tinhcd.myesalessfa.domain.model.DraftOrder
 import com.tinhcd.myesalessfa.domain.model.OrderLine
 import com.tinhcd.myesalessfa.domain.model.OrderSuggestion
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
 import com.tinhcd.myesalessfa.domain.model.PricedUnit
+import com.tinhcd.myesalessfa.domain.model.ProductSort
+import com.tinhcd.myesalessfa.domain.model.browse
+import com.tinhcd.myesalessfa.domain.model.categoryNames
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository
+import com.tinhcd.myesalessfa.domain.repository.SiteStockRepository
 import com.tinhcd.myesalessfa.domain.usecase.GetOrderSuggestionsUseCase
 import com.tinhcd.myesalessfa.domain.usecase.GetVisitCatalogueUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,13 +25,61 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * The three screens the legacy app splits ordering across, as pages of one step.
+ *
+ * They are pages rather than nav destinations because all three edit one draft
+ * order and all three need the same visit. Three routes would mean three copies
+ * of the arguments and a draft that has to live somewhere outside them.
+ */
+enum class TakeOrderPage {
+    /** Giỏ hàng — what has been ordered so far. Where the step opens. */
+    BASKET,
+
+    /** Danh sách sản phẩm — the catalogue, reached by the basket's + button. */
+    PRODUCTS,
+
+    /** Xác nhận đơn hàng — the totals and the note, before anything is sent. */
+    CONFIRM,
+}
+
+/** The line the edit sheet is open on. Null when the sheet is closed. */
+data class EditingLine(
+    val productId: String,
+    /** The unit the line is currently recorded in — what an edit replaces. */
+    val fromUomCode: String,
+    val uomCode: String,
+    val qty: Int,
+)
+
 data class TakeOrderUiState(
     val loading: Boolean = true,
+    val page: TakeOrderPage = TakeOrderPage.BASKET,
     val customerName: String = "",
     val query: String = "",
+    val sort: ProductSort = ProductSort.DEFAULT,
+    /** Empty means every category, which is how the legacy filter starts. */
+    val categories: Set<String> = emptySet(),
     val catalogue: List<PricedProduct> = emptyList(),
+    /**
+     * Warehouse stock in base units, product id -> quantity.
+     *
+     * Empty when the warehouse could not be read, and that is not an error: the
+     * legacy row prints the figure beside the unit as information, and an order
+     * is still writable without it.
+     */
+    val available: Map<String, Int> = emptyMap(),
     /** Which unit the rep has picked per product; absent means the default. */
     val chosenUnit: Map<String, String> = emptyMap(),
+    /**
+     * Quantities typed on the product list and not yet in the basket.
+     *
+     * The legacy list does not add on each keystroke: the rep walks the shelf,
+     * types across many rows, and commits them with one "Cập nhật giỏ hàng".
+     * Keyed by product, because the row edits whichever unit the product is
+     * currently showing.
+     */
+    val draftQty: Map<String, Int> = emptyMap(),
     val order: DraftOrder = DraftOrder(visitId = "", customerId = ""),
     /**
      * Replenishment for must-stock SKUs the count found below par. Offered, never
@@ -34,6 +87,7 @@ data class TakeOrderUiState(
      */
     val suggestions: List<OrderSuggestion> = emptyList(),
     val suggestionsApplied: Boolean = false,
+    val editing: EditingLine? = null,
     val submitting: Boolean = false,
     val error: String? = null,
     val finished: Boolean = false,
@@ -41,33 +95,57 @@ data class TakeOrderUiState(
     fun suggestionFor(productId: String): OrderSuggestion? =
         suggestions.firstOrNull { it.productId == productId }
 
-    /**
-     * Every line on this product, biggest unit first.
-     *
-     * The row used to show only the line matching the unit picker, which was fine
-     * while one product meant one line. Applying a split suggestion writes two — a
-     * case and a few loose pieces — and the second would have been invisible and
-     * un-editable while still counting towards the total the rep reads out.
-     */
-    fun linesOf(productId: String): List<OrderLine> = order.lines
-        .filter { it.productId == productId }
-        .sortedByDescending { it.conversionRate }
+    fun product(productId: String): PricedProduct? =
+        catalogue.firstOrNull { it.product.id == productId }
 
+    /**
+     * The basket in a stable reading order: by product, then biggest unit first.
+     *
+     * Not the order the lines were added in. Editing a line rewrites it, which
+     * would otherwise send that card to the bottom of the basket the moment the
+     * rep corrected a quantity — the one card they were looking at.
+     */
+    val basketLines: List<OrderLine>
+        get() = order.lines.sortedWith(
+            compareBy<OrderLine> { it.productName }.thenByDescending { it.conversionRate },
+        )
+
+    /** The product list as the rep has narrowed it. */
     val visible: List<PricedProduct>
-        get() = if (query.isBlank()) {
-            catalogue
-        } else {
-            val needle = query.trim().lowercase()
-            catalogue.filter {
-                it.product.name.lowercase().contains(needle) ||
-                    it.product.code.lowercase().contains(needle)
-            }
-        }
+        get() = catalogue.browse(
+            query = query,
+            categories = categories,
+            sort = sort,
+            qtyOf = { order.baseQtyOf(it) },
+        )
+
+    val allCategories: List<String> get() = catalogue.categoryNames()
 
     fun unitFor(product: PricedProduct): PricedUnit {
         val code = chosenUnit[product.product.id] ?: return product.defaultUnit
         return product.units.firstOrNull { it.unit.uomCode == code } ?: product.defaultUnit
     }
+
+    /**
+     * What the product list's field shows: the pending edit if the rep has typed
+     * one, otherwise what is already in the basket for that product's unit.
+     */
+    fun listQtyOf(product: PricedProduct): Int {
+        draftQty[product.product.id]?.let { return it }
+        return order.quantityOf(product.product.id, unitFor(product).unit.uomCode)
+    }
+
+    /** Warehouse stock for [product] expressed in the unit the row is showing. */
+    fun availableIn(product: PricedProduct): Int? {
+        val base = available[product.product.id] ?: return null
+        val rate = unitFor(product).unit.conversionRate.coerceAtLeast(1)
+        return base / rate
+    }
+
+    val hasDraft: Boolean get() = draftQty.isNotEmpty()
+
+    /** Lines whose unit price is zero, which the ERP will not book. */
+    val unpricedLines: List<OrderLine> get() = order.lines.filter { it.unitPrice <= 0 }
 }
 
 /**
@@ -78,12 +156,17 @@ data class TakeOrderUiState(
  * the order from the same effective-dated catalogue and its answer is the one
  * that is booked. The device's total travels with the order so the two can be
  * compared after the fact.
+ *
+ * Promotions are not calculated. The legacy checkout carries automatic and manual
+ * promotions, rewards and order-level discounts; none of that is here yet, and
+ * the totals below are the plain arithmetic of the lines.
  */
 @HiltViewModel
 class TakeOrderViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getVisitCatalogue: GetVisitCatalogueUseCase,
     private val getOrderSuggestions: GetOrderSuggestionsUseCase,
+    private val siteStockRepository: SiteStockRepository,
     private val orderRepository: OrderRepository,
 ) : ViewModel() {
 
@@ -109,11 +192,21 @@ class TakeOrderViewModel @Inject constructor(
                     // else — the rep can still write the order by hand.
                     val suggestions = getOrderSuggestions(visitId, visit.data)
 
+                    // Decorative, as it is in the legacy row. Asked for after the
+                    // catalogue rather than beside it so a warehouse that is slow
+                    // or down cannot hold up the screen the rep came here for.
+                    val available = siteStockRepository.load(null)
+                        .getOrNull()
+                        ?.items
+                        ?.associate { it.productId to it.qtyBase }
+                        .orEmpty()
+
                     _state.update {
                         it.copy(
                             loading = false,
                             customerName = visit.data.customer?.name.orEmpty(),
                             catalogue = visit.data.catalogue,
+                            available = available,
                             suggestions = suggestions,
                             suggestionsApplied = false,
                             order = DraftOrder(visitId = visitId, customerId = customerId),
@@ -125,6 +218,105 @@ class TakeOrderViewModel @Inject constructor(
                     it.copy(loading = false, error = "Không tải được danh mục sản phẩm")
                 }
             }
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Moving between the three pages
+    // -------------------------------------------------------------------------
+
+    /**
+     * Opens the catalogue. Anything typed on a previous visit to it is dropped:
+     * the basket is the record of what was agreed, and a stale pending quantity
+     * reappearing under a rep's finger is worse than making them type it again.
+     */
+    fun openProducts() = _state.update {
+        it.copy(page = TakeOrderPage.PRODUCTS, draftQty = emptyMap(), error = null)
+    }
+
+    fun openBasket() = _state.update {
+        it.copy(page = TakeOrderPage.BASKET, draftQty = emptyMap(), error = null)
+    }
+
+    /**
+     * Moves to the confirmation, refusing an order carrying a line the ERP cannot
+     * book. The legacy basket runs the same check on its confirm button, and it
+     * belongs there rather than on submit: a rep told at the last step which
+     * product is unpriced can still remove it and keep the rest of the order.
+     */
+    fun openConfirm() {
+        val current = _state.value
+        if (!current.order.canSubmit) return
+
+        val unpriced = current.unpricedLines
+        if (unpriced.isNotEmpty()) {
+            _state.update {
+                it.copy(
+                    error = "Sản phẩm chưa có giá, bỏ khỏi giỏ hàng trước khi gửi: " +
+                        unpriced.joinToString { line -> line.productName },
+                )
+            }
+            return
+        }
+
+        _state.update { it.copy(page = TakeOrderPage.CONFIRM, error = null) }
+    }
+
+    // -------------------------------------------------------------------------
+    // The product list
+    // -------------------------------------------------------------------------
+
+    fun onQueryChange(value: String) = _state.update { it.copy(query = value) }
+
+    fun onSortChange(sort: ProductSort) = _state.update { it.copy(sort = sort) }
+
+    fun onCategoryToggle(name: String) = _state.update {
+        val next = if (name in it.categories) it.categories - name else it.categories + name
+        it.copy(categories = next)
+    }
+
+    fun clearCategories() = _state.update { it.copy(categories = emptySet()) }
+
+    fun onDraftQtyChange(product: PricedProduct, qty: Int) = _state.update {
+        it.copy(
+            draftQty = it.draftQty + (product.product.id to qty.coerceAtLeast(0)),
+            error = null,
+        )
+    }
+
+    /**
+     * Writes everything typed on the list into the basket at once.
+     *
+     * A zero commits as a removal rather than being skipped. The legacy list
+     * filters zeroes out and leaves removal to the basket's delete button, which
+     * means typing 0 there looks like it worked and does nothing — the one
+     * behaviour here that deliberately departs from it.
+     */
+    fun commitDraft() {
+        val current = _state.value
+        if (current.draftQty.isEmpty()) {
+            _state.update { it.copy(error = "Nhập số lượng cho ít nhất một sản phẩm") }
+            return
+        }
+
+        var order = current.order
+        for ((productId, qty) in current.draftQty) {
+            val product = current.product(productId) ?: continue
+            val unit = current.unitFor(product)
+            order = if (qty == 0) {
+                order.withoutLine(productId, unit.unit.uomCode)
+            } else {
+                order.withLine(lineFor(product, unit, qty))
+            }
+        }
+
+        _state.update {
+            it.copy(
+                order = order,
+                draftQty = emptyMap(),
+                page = TakeOrderPage.BASKET,
+                error = null,
+            )
         }
     }
 
@@ -145,8 +337,7 @@ class TakeOrderViewModel @Inject constructor(
         var chosen = current.chosenUnit
 
         for (suggestion in current.suggestions) {
-            val product = current.catalogue
-                .firstOrNull { it.product.id == suggestion.productId } ?: continue
+            val product = current.product(suggestion.productId) ?: continue
 
             // A suggestion can span units — one case plus two loose pieces — and each
             // part is its own line, which the order keys by product *and* unit.
@@ -156,9 +347,9 @@ class TakeOrderViewModel @Inject constructor(
                 order = order.withLine(lineFor(product, unit, part.qty))
             }
 
-            // Move the picker onto the biggest part's unit, or the rep would see a
-            // case quantity sitting under a "piece" selection. The smaller parts are
-            // still listed on the row, so nothing applied here is hidden.
+            // Move the row onto the biggest part's unit, or the rep would see a case
+            // quantity sitting under a "piece" label. The smaller parts are their own
+            // basket cards, so nothing applied here is hidden.
             suggestion.primaryPart?.let { chosen = chosen + (suggestion.productId to it.uomCode) }
         }
 
@@ -166,53 +357,88 @@ class TakeOrderViewModel @Inject constructor(
             it.copy(
                 order = order,
                 chosenUnit = chosen,
+                // Applying replaces whatever was typed for those products; leaving
+                // both would let one silently overwrite the other on commit.
+                draftQty = it.draftQty - current.suggestions.map { s -> s.productId }.toSet(),
                 suggestionsApplied = true,
                 error = null,
             )
         }
     }
 
-    fun onQueryChange(value: String) = _state.update { it.copy(query = value) }
+    // -------------------------------------------------------------------------
+    // The basket
+    // -------------------------------------------------------------------------
+
+    fun startEdit(line: OrderLine) = _state.update {
+        it.copy(
+            editing = EditingLine(
+                productId = line.productId,
+                fromUomCode = line.uomCode,
+                uomCode = line.uomCode,
+                qty = line.qty,
+            ),
+        )
+    }
+
+    fun onEditUnitChange(uomCode: String) = _state.update { state ->
+        val editing = state.editing ?: return@update state
+        val product = state.product(editing.productId) ?: return@update state
+        if (product.units.none { it.unit.uomCode == uomCode }) return@update state
+        state.copy(editing = editing.copy(uomCode = uomCode))
+    }
+
+    fun onEditQtyChange(qty: Int) = _state.update { state ->
+        val editing = state.editing ?: return@update state
+        state.copy(editing = editing.copy(qty = qty.coerceAtLeast(0)))
+    }
+
+    fun cancelEdit() = _state.update { it.copy(editing = null) }
 
     /**
-     * Switching unit changes which unit the stepper edits, and moves nothing.
-     *
-     * It used to carry the quantity across and delete the old line, to stop 5 cases
-     * turning into 5 cases *and* 5 pieces when a rep changed their mind. That was the
-     * right trade while the row could only show one line, but it destroys quantities
-     * now that a suggestion can legitimately put a case and a few loose pieces on the
-     * same product: switching the picker to pieces would have overwritten the two
-     * suggested pieces with the one case's quantity, losing both.
-     *
-     * Every line on the product is now listed on the row, so the hazard it was
-     * guarding against is visible instead of hidden, and a rep who did mean to change
-     * unit can zero the line they no longer want.
+     * Commits the sheet. A changed unit moves the quantity rather than adding a
+     * second line: the rep opened one line and is editing that line, and leaving
+     * the old unit behind would double the order without a second thought.
      */
-    fun onUnitChange(product: PricedProduct, uomCode: String) {
-        if (product.units.none { it.unit.uomCode == uomCode }) return
+    fun applyEdit() {
+        val current = _state.value
+        val editing = current.editing ?: return
+        val product = current.product(editing.productId) ?: return
+        val unit = product.units.firstOrNull { it.unit.uomCode == editing.uomCode } ?: return
+
+        if (editing.qty <= 0) {
+            _state.update { it.copy(error = "Nhập số lượng lớn hơn 0") }
+            return
+        }
+
+        val order = current.order
+            .withoutLine(editing.productId, editing.fromUomCode)
+            .withLine(lineFor(product, unit, editing.qty))
 
         _state.update {
             it.copy(
-                chosenUnit = it.chosenUnit + (product.product.id to uomCode),
+                order = order,
+                chosenUnit = it.chosenUnit + (editing.productId to editing.uomCode),
+                editing = null,
                 error = null,
             )
         }
     }
 
-    fun onQtyChange(product: PricedProduct, qty: Int) {
-        val current = _state.value
-        val unit = current.unitFor(product)
-        val clamped = qty.coerceAtLeast(0)
+    fun removeLine(line: OrderLine) = _state.update {
+        it.copy(
+            order = it.order.withoutLine(line.productId, line.uomCode),
+            editing = null,
+            error = null,
+        )
+    }
 
-        // Zero is how a line is removed: the server rejects a zero-quantity line,
-        // and an order carrying one would be a line the customer did not agree to.
-        val order = if (clamped == 0) {
-            current.order.withoutLine(product.product.id, unit.unit.uomCode)
-        } else {
-            current.order.withLine(lineFor(product, unit, clamped))
-        }
+    // -------------------------------------------------------------------------
+    // Confirmation
+    // -------------------------------------------------------------------------
 
-        _state.update { it.copy(order = order, error = null) }
+    fun onNoteChange(value: String) = _state.update {
+        it.copy(order = it.order.copy(note = value))
     }
 
     fun submit() {
