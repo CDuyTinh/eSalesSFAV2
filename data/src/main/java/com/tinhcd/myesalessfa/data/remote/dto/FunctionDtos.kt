@@ -144,6 +144,8 @@ data class RouteStopDto(
     @SerialName("check_out_at") val checkOutAt: String? = null,
     /** True for an outlet the rep registered themselves, not one from the MCP. */
     val unplanned: Boolean = false,
+    /** Calls made on this shop today, the one described above included. */
+    @SerialName("visit_count") val visitCount: Int = 0,
 )
 
 @Serializable
