@@ -44,6 +44,21 @@ interface VisitRow {
   check_out_at: string | null;
 }
 
+/**
+ * Which of a shop's calls the card should be about.
+ *
+ * Open wins outright: a rep with a visit in progress needs the way back into it
+ * far more than they need to read about the one they finished. Otherwise the
+ * later check-in wins. A row with no check_in_at loses either comparison, which
+ * is right — there is nothing to report about a call that never started.
+ */
+const outranks = (a: VisitRow, b: VisitRow): boolean => {
+  const aOpen = a.status === "in_progress";
+  const bOpen = b.status === "in_progress";
+  if (aOpen !== bOpen) return aOpen;
+  return (a.check_in_at ?? "") > (b.check_in_at ?? "");
+};
+
 Deno.serve(handler(async (req, db) => {
   const date = new URL(req.url).searchParams.get("date");
   if (!date) throw new HttpError(400, "date is required (YYYY-MM-DD)");
@@ -115,7 +130,22 @@ Deno.serve(handler(async (req, db) => {
       .then((r) => unwrap(r) as Customer[]),
   ]);
 
-  const byCustomer = new Map(visits.map((v) => [v.customer_id, v]));
+  // A shop may be called on more than once in a day, so a stop is no longer one
+  // visit. Which of them the card should describe is the open one if there is
+  // one — that is where the rep's work is — and otherwise the latest, which is
+  // the call a "Đã hoàn thành" card is reporting on.
+  const byCustomer = new Map<string, VisitRow>();
+  const timesByCustomer = new Map<string, number>();
+
+  for (const visit of visits) {
+    timesByCustomer.set(
+      visit.customer_id,
+      (timesByCustomer.get(visit.customer_id) ?? 0) + 1,
+    );
+
+    const held = byCustomer.get(visit.customer_id);
+    if (!held || outranks(visit, held)) byCustomer.set(visit.customer_id, visit);
+  }
 
   const asStop = (customer: Customer, order: number, unplanned: boolean) => {
     const visit = byCustomer.get(customer.id) ?? null;
@@ -127,6 +157,10 @@ Deno.serve(handler(async (req, db) => {
       status: visit?.status ?? "planned",
       check_in_at: visit?.check_in_at ?? null,
       check_out_at: visit?.check_out_at ?? null,
+      // How many calls have been made on this shop today, the one the card
+      // describes included. The card says so from two upwards: without it the
+      // earlier call simply vanishes from the screen it happened on.
+      visit_count: timesByCustomer.get(customer.id) ?? 0,
     };
   };
 

@@ -68,6 +68,16 @@ data class RouteStop(
      * an order taken there is against an outlet that could still be rejected.
      */
     val unplanned: Boolean = false,
+    /**
+     * How many times this shop has been called on today, including the visit the
+     * other fields describe. Zero before the first check-in.
+     *
+     * A shop can be revisited: the owner was out, the count needs redoing, the
+     * order is agreed on the second pass. Only [status] survives into the card
+     * otherwise, and it would describe the last call as though it were the only
+     * one.
+     */
+    val visitCount: Int = 0,
 )
 
 data class GeoPoint(

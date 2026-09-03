@@ -305,7 +305,7 @@ private fun StopSheet(
                     onClick = onOpen,
                     enabled = stop.status.openable(),
                     modifier = Modifier.weight(1f),
-                ) { Text(if (stop.status == VisitStatus.IN_PROGRESS) "Vào cuộc" else "Check-in") }
+                ) { Text(stop.status.actionLabel()) }
             }
         }
     }
@@ -327,8 +327,18 @@ private fun RouteStop.hue(): Float = when (status) {
     VisitStatus.ABANDONED -> BitmapDescriptorFactory.HUE_VIOLET
 }
 
-private fun VisitStatus.openable(): Boolean =
-    this == VisitStatus.PLANNED || this == VisitStatus.IN_PROGRESS
+/**
+ * Everything but a visit the server closed overnight, which belongs to a day the
+ * rep can no longer act on. A finished stop is openable because a shop may be
+ * called on again — the same rule the list card follows.
+ */
+private fun VisitStatus.openable(): Boolean = this != VisitStatus.ABANDONED
+
+private fun VisitStatus.actionLabel(): String = when (this) {
+    VisitStatus.IN_PROGRESS -> "Vào cuộc"
+    VisitStatus.PLANNED -> "Check-in"
+    else -> "Ghé lại"
+}
 
 private fun VisitStatus.label(): String = when (this) {
     VisitStatus.PLANNED -> "Chưa ghé"

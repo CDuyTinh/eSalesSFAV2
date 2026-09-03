@@ -587,7 +587,14 @@ private fun StopCard(
                     )
                     InfoRow(
                         icon = Icons.Default.Schedule,
-                        text = stop.status.label(),
+                        // The status describes the latest call. Once there has
+                        // been more than one, saying only that would quietly
+                        // drop the earlier ones from the day they happened on.
+                        text = if (stop.visitCount > 1) {
+                            "${stop.status.label()} - đã ghé ${stop.visitCount} lần"
+                        } else {
+                            stop.status.label()
+                        },
                     )
                 }
             }
@@ -727,9 +734,14 @@ private fun InfoRow(icon: ImageVector, text: String) {
 /**
  * The one thing this stop is waiting for, or a statement that it is not waiting.
  *
- * A finished or abandoned visit gets a label rather than a disabled button: an
- * unpressable button reads as something the rep failed to earn, when in fact there
- * is nothing left to do.
+ * A finished stop offers the call again rather than a label. The owner was out,
+ * the shelf count needs redoing, the order is agreed on a second pass — all of
+ * that is an ordinary day, and the card used to end it. Nothing is lost by
+ * dropping the label: the status is already on the line above and in the colour
+ * of the code chip.
+ *
+ * Only an abandoned visit still gets a label, because it belongs to a day the
+ * rep can no longer act on.
  */
 @Composable
 private fun StopAction(status: VisitStatus, checkInBlocked: Boolean, onOpen: () -> Unit) {
@@ -753,13 +765,24 @@ private fun StopAction(status: VisitStatus, checkInBlocked: Boolean, onOpen: () 
             onClick = onOpen,
         )
 
-        VisitStatus.COMPLETED, VisitStatus.NO_ORDER -> StatusLabel(
-            text = status.label(),
-            color = status.chipColor(),
-            icon = Icons.Default.Check,
+        // Deliberately quieter than a first check-in. A rep scanning the list is
+        // looking for the shops they have not reached yet, and a second call on
+        // a finished one should not pull the eye away from them.
+        VisitStatus.COMPLETED, VisitStatus.NO_ORDER, VisitStatus.CLOSED -> ActionChip(
+            text = "Ghé lại",
+            container = if (checkInBlocked) {
+                StatusGrey
+            } else {
+                MaterialTheme.colorScheme.secondaryContainer
+            },
+            content = if (checkInBlocked) {
+                Color.White
+            } else {
+                MaterialTheme.colorScheme.onSecondaryContainer
+            },
+            enabled = !checkInBlocked,
+            onClick = onOpen,
         )
-
-        VisitStatus.CLOSED -> StatusLabel(text = "Đóng cửa", color = ActionRed)
 
         VisitStatus.ABANDONED -> StatusLabel(text = status.label(), color = StatusGrey)
     }
