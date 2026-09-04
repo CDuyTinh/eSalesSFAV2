@@ -1,7 +1,9 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -24,11 +27,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,9 +46,13 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,7 +67,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
 import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
+import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
+import com.tinhcd.myesalessfa.domain.model.StockScope
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,10 +78,19 @@ fun StockCountScreen(
     viewModel: StockCountViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var filterOpen by remember { mutableStateOf(false) }
+    var confirmLeave by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.finished) {
         if (state.finished) onDone()
     }
+
+    // Nothing is written until submit, so leaving with lines entered throws the
+    // whole sheet away. The app this replaces asks first; this one used to let a
+    // stray back press cost a rep the shop's entire count.
+    val leave = { if (state.hasUnsavedWork) confirmLeave = true else onDone() }
+
+    BackHandler(enabled = state.hasUnsavedWork) { confirmLeave = true }
 
     Scaffold(
         topBar = {
@@ -82,7 +102,16 @@ fun StockCountScreen(
                         .takeIf { it > 0 }
                         ?.let { "đã kiểm $it mặt hàng" },
                 ).joinToString(" - "),
-                onBack = onDone,
+                onBack = leave,
+                actions = {
+                    HeaderAction(
+                        icon = Icons.Default.FilterList,
+                        description = "Lọc nhóm hàng",
+                        badge = state.categories.size.takeIf { it > 0 }?.toString(),
+                        tint = MaterialTheme.brand.onHeader,
+                        onClick = { filterOpen = true },
+                    )
+                },
             )
         },
     ) { padding ->
@@ -123,13 +152,10 @@ fun StockCountScreen(
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                     )
 
-                    // Only worth offering when the outlet actually owes something.
-                    val compliance = state.count.compliance
                     LegendBoard(
-                        mustStockOnly = state.mustStockOnly,
-                        requiredCount = compliance.required.takeIf { it > 0 },
-                        uncheckedCount = compliance.unchecked,
-                        onMustStockOnlyChange = viewModel::onMustStockOnlyChange,
+                        state = state,
+                        uncheckedCount = state.count.compliance.unchecked,
+                        onScopeChange = viewModel::onScopeChange,
                     )
 
                     val visible = state.visible
@@ -159,11 +185,45 @@ fun StockCountScreen(
                     StockFooter(
                         state = state,
                         onSubmit = viewModel::submit,
-                        onBack = onDone,
+                        onBack = leave,
                     )
                 }
             }
         }
+    }
+
+    if (filterOpen) {
+        CategorySheet(
+            all = state.allCategories,
+            selected = state.categories,
+            onToggle = viewModel::onCategoryToggle,
+            onClear = viewModel::clearCategories,
+            onDismiss = { filterOpen = false },
+        )
+    }
+
+    if (confirmLeave) {
+        AlertDialog(
+            onDismissRequest = { confirmLeave = false },
+            title = { Text("Chưa gửi phiếu kiểm tồn") },
+            text = {
+                Text(
+                    "Đã kiểm ${state.count.countedProducts} mặt hàng nhưng chưa gửi. " +
+                        "Thoát bây giờ sẽ mất hết.",
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmLeave = false
+                        onDone()
+                    },
+                ) { Text("Thoát") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmLeave = false }) { Text("Ở lại") }
+            },
+        )
     }
 }
 
@@ -181,10 +241,9 @@ fun StockCountScreen(
  */
 @Composable
 private fun LegendBoard(
-    mustStockOnly: Boolean,
-    requiredCount: Int?,
+    state: StockCountUiState,
     uncheckedCount: Int,
-    onMustStockOnlyChange: (Boolean) -> Unit,
+    onScopeChange: (StockScope) -> Unit,
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -202,23 +261,43 @@ private fun LegendBoard(
                 LegendDot("Định mức", ParBlue)
             }
 
-            if (requiredCount != null) {
-                Spacer(Modifier.size(10.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            Spacer(Modifier.size(10.dp))
+
+            // Three chips rather than the one "chỉ hàng bắt buộc" toggle this
+            // had. The default is the outlet's own recent purchases, which is
+            // the sheet the legacy app builds and the only one a rep can work
+            // down without scrolling past everything the shop never stocks.
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+            ) {
+                StockScope.entries.forEach { option ->
                     FilterChip(
-                        selected = mustStockOnly,
-                        onClick = { onMustStockOnlyChange(!mustStockOnly) },
-                        label = { Text("Chỉ hàng bắt buộc ($requiredCount)") },
+                        selected = option == state.scope,
+                        onClick = { onScopeChange(option) },
+                        label = { Text("${option.label} (${state.sizeOf(option)})") },
                     )
-                    Spacer(Modifier.width(8.dp))
-                    if (uncheckedCount > 0) {
-                        Text(
-                            "còn $uncheckedCount chưa kiểm",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
                 }
+            }
+
+            if (uncheckedCount > 0) {
+                Spacer(Modifier.size(6.dp))
+                Text(
+                    "Còn $uncheckedCount hàng bắt buộc chưa kiểm",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+
+            // Said once, here, rather than left for the rep to infer from a chip
+            // whose count equals the whole catalogue's.
+            if (state.purchased.isEmpty()) {
+                Spacer(Modifier.size(6.dp))
+                Text(
+                    "Chưa có lịch sử mua của cửa hàng này - đang hiện cả danh mục",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }

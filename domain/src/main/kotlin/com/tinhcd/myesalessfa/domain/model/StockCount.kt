@@ -127,3 +127,43 @@ data class DraftStockCount(
     fun lineFor(productId: String, uomCode: String): StockCountLine? =
         lines.firstOrNull { it.productId == productId && it.uomCode == uomCode }
 }
+
+/**
+ * Which slice of the catalogue the count sheet is showing.
+ *
+ * The app this replaces does not offer a choice: its sheet *is* the outlet's own
+ * three-month order history, and anything else has to be added by hand. That is
+ * the right default and the wrong only option — a shop that has started stocking
+ * something new would be uncountable — so the history is the default and the
+ * whole catalogue stays one tap away.
+ */
+enum class StockScope(val label: String) {
+    /** What this outlet has bought recently. The legacy sheet, and the default. */
+    PURCHASED("Đã mua"),
+
+    /** What the outlet is obliged to hold, from its must-stock lists. */
+    MUST_STOCK("Bắt buộc"),
+
+    ALL("Tất cả"),
+}
+
+/**
+ * Narrows a catalogue to one scope.
+ *
+ * [purchased] empty means the history could not be read or the rep has never
+ * sold to this outlet; the scope then falls through to the whole catalogue
+ * rather than showing nothing, because a sheet with no rows on it reads as the
+ * catalogue having failed to load.
+ */
+fun List<PricedProduct>.inScope(
+    scope: StockScope,
+    purchased: Set<String>,
+    mustStock: Set<String>,
+): List<PricedProduct> = when (scope) {
+    StockScope.ALL -> this
+    StockScope.PURCHASED ->
+        if (purchased.isEmpty()) this else filter { it.product.id in purchased }
+
+    StockScope.MUST_STOCK ->
+        if (mustStock.isEmpty()) this else filter { it.product.id in mustStock }
+}

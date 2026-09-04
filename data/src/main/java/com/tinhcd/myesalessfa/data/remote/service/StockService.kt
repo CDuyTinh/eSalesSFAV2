@@ -1,5 +1,6 @@
 package com.tinhcd.myesalessfa.data.remote.service
 
+import com.tinhcd.myesalessfa.data.remote.dto.CustomerPurchasesDto
 import com.tinhcd.myesalessfa.data.remote.dto.PreviousCountDto
 import com.tinhcd.myesalessfa.data.remote.dto.StockCountPayload
 import com.tinhcd.myesalessfa.data.remote.dto.VisitCountDto
@@ -29,6 +30,16 @@ interface StockService {
      */
     @GET("visit-count")
     suspend fun visitCount(@Query("visitId") visitId: String): VisitCountDto
+
+    /**
+     * What this outlet has bought recently, so the count sheet can open on the
+     * products it actually stocks rather than on the whole catalogue.
+     */
+    @GET("customer-purchases")
+    suspend fun customerPurchases(
+        @Query("customerId") customerId: String,
+        @Query("months") months: Int = 3,
+    ): CustomerPurchasesDto
 
     @POST("submit-stock-count")
     suspend fun submitStockCount(@Body count: StockCountPayload): Response<WriteAckDto>

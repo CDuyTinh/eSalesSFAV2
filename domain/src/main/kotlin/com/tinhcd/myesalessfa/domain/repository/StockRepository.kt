@@ -20,6 +20,20 @@ interface StockRepository {
     suspend fun countedBaseQty(visitId: String): DataResult<Map<String, Int>>
 
     /**
+     * Products this outlet has bought over the last [months] months — what the
+     * count sheet should open on, rather than the whole catalogue.
+     *
+     * Empty is a real answer and not an error: the orders behind it are scoped to
+     * the reading rep, so an outlet a colleague covered last month contributes
+     * nothing. Callers fall back to the full catalogue rather than showing an
+     * empty sheet.
+     */
+    suspend fun purchasedProducts(
+        customerId: String,
+        months: Int = 3,
+    ): DataResult<Set<String>>
+
+    /**
      * Sends [count]. The server fills each line's previous figure and marks the
      * `stock_outlet` step done in the same transaction.
      */

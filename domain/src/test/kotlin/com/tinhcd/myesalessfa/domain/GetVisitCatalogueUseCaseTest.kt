@@ -105,6 +105,11 @@ class GetVisitCatalogueUseCaseTest {
             return counted
         }
 
+        override suspend fun purchasedProducts(
+            customerId: String,
+            months: Int,
+        ): DataResult<Set<String>> = DataResult.Success(emptySet())
+
         override suspend fun submit(count: DraftStockCount): DataResult<Unit> =
             DataResult.Success(Unit)
     }
