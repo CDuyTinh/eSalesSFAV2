@@ -45,6 +45,25 @@ class StockRepositoryImpl @Inject constructor(
     }
 
     /**
+     * Only the ids are taken. The endpoint also returns each product's quantity,
+     * order count and monthly average — the legacy sheet prints that average as
+     * its first column — but nothing here shows them yet, and mapping a field no
+     * screen reads is a field that quietly rots.
+     */
+    override suspend fun purchasedProducts(
+        customerId: String,
+        months: Int,
+    ): DataResult<Set<String>> = try {
+        DataResult.Success(
+            service.customerPurchases(customerId = customerId, months = months)
+                .products
+                .mapTo(mutableSetOf()) { it.productId },
+        )
+    } catch (e: Exception) {
+        DataResult.Failure(e.toAppError())
+    }
+
+    /**
      * `submit_stock_count` writes the header, the lines and the `stock_outlet` step
      * in one transaction, and fills each line's previous figure from the customer's
      * last count.

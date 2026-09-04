@@ -172,6 +172,21 @@ data class PreviousCountDto(
 )
 
 @Serializable
+data class CustomerPurchasesDto(
+    val months: Int = 3,
+    val products: List<CustomerPurchaseDto> = emptyList(),
+)
+
+@Serializable
+data class CustomerPurchaseDto(
+    @SerialName("product_id") val productId: String,
+    @SerialName("base_qty") val baseQty: Long = 0,
+    @SerialName("order_count") val orderCount: Int = 0,
+    @SerialName("avg_month_base_qty") val avgMonthBaseQty: Int = 0,
+    @SerialName("last_order_date") val lastOrderDate: String? = null,
+)
+
+@Serializable
 data class VisitCountDto(
     @SerialName("visit_id") val visitId: String,
     /** Null when this visit has not been counted yet. */

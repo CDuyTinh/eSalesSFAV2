@@ -383,12 +383,14 @@ private fun ProductsHeader(state: TakeOrderUiState, viewModel: TakeOrderViewMode
                 icon = Icons.Default.SwapVert,
                 description = "Sắp xếp",
                 badge = if (state.sort == ProductSort.DEFAULT) null else "1",
+                tint = MaterialTheme.brand.onHeader,
                 onClick = { sortOpen = true },
             )
             HeaderAction(
                 icon = Icons.Default.FilterList,
                 description = "Lọc nhóm hàng",
                 badge = state.categories.size.takeIf { it > 0 }?.toString(),
+                tint = MaterialTheme.brand.onHeader,
                 onClick = { filterOpen = true },
             )
         },
@@ -425,23 +427,6 @@ private fun ProductsHeader(state: TakeOrderUiState, viewModel: TakeOrderViewMode
             onClear = viewModel::clearCategories,
             onDismiss = { filterOpen = false },
         )
-    }
-}
-
-@Composable
-private fun HeaderAction(
-    icon: ImageVector,
-    description: String,
-    badge: String?,
-    onClick: () -> Unit,
-) {
-    val tint = MaterialTheme.brand.onHeader
-    IconButton(onClick = onClick) {
-        BadgedBox(
-            badge = { if (badge != null) Badge { Text(badge) } },
-        ) {
-            Icon(icon, contentDescription = description, tint = tint)
-        }
     }
 }
 
@@ -940,64 +925,6 @@ private fun SortSheet(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun CategorySheet(
-    all: List<String>,
-    selected: Set<String>,
-    onToggle: (String) -> Unit,
-    onClear: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-    ) {
-        Column(Modifier.navigationBarsPadding()) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(start = 20.dp, end = 12.dp, bottom = 12.dp),
-            ) {
-                Text(
-                    "Nhóm hàng",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.weight(1f),
-                )
-                TextButton(onClick = onClear) { Text("Bỏ lọc") }
-            }
-            HorizontalDivider()
-
-            if (all.isEmpty()) {
-                Text(
-                    "Danh mục chưa chia nhóm",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(20.dp),
-                )
-            } else {
-                LazyColumn {
-                    items(all, key = { it }) { name ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onToggle(name) }
-                                .padding(horizontal = 12.dp, vertical = 4.dp),
-                        ) {
-                            Checkbox(
-                                checked = name in selected,
-                                onCheckedChange = { onToggle(name) },
-                            )
-                            Text(name, style = MaterialTheme.typography.bodyLarge)
-                        }
-                    }
-                }
-            }
-            Spacer(Modifier.height(12.dp))
-        }
-    }
-}
 
 // =============================================================================
 // Small shared pieces

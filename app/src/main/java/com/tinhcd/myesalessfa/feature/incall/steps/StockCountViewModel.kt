@@ -9,6 +9,10 @@ import com.tinhcd.myesalessfa.domain.model.DraftStockCount
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
 import com.tinhcd.myesalessfa.domain.model.PricedUnit
 import com.tinhcd.myesalessfa.domain.model.StockCountLine
+import com.tinhcd.myesalessfa.domain.model.StockScope
+import com.tinhcd.myesalessfa.domain.model.browse
+import com.tinhcd.myesalessfa.domain.model.categoryNames
+import com.tinhcd.myesalessfa.domain.model.inScope
 import com.tinhcd.myesalessfa.domain.repository.StockRepository
 import com.tinhcd.myesalessfa.domain.usecase.GetVisitCatalogueUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,24 +34,38 @@ data class StockCountUiState(
     val previousUnavailable: Boolean = false,
     val chosenUnit: Map<String, String> = emptyMap(),
     val count: DraftStockCount = DraftStockCount(visitId = "", customerId = ""),
-    /** When on, the list shows only the SKUs the outlet is obliged to stock. */
-    val mustStockOnly: Boolean = false,
+    /** Which slice of the catalogue the sheet is showing. */
+    val scope: StockScope = StockScope.PURCHASED,
+    /**
+     * Products this outlet has bought in the last three months, which is what the
+     * legacy count sheet is built from. Empty when the history could not be read
+     * or the rep has never sold here; [StockScope.PURCHASED] then falls through to
+     * the whole catalogue rather than showing nothing.
+     */
+    val purchased: Set<String> = emptySet(),
+    /** Empty means every category, which is how the legacy filter starts. */
+    val categories: Set<String> = emptySet(),
     val submitting: Boolean = false,
     val error: String? = null,
     val finished: Boolean = false,
 ) {
     val visible: List<PricedProduct>
-        get() {
-            val needle = query.trim().lowercase()
-            return catalogue.filter { priced ->
-                val matchesQuery = needle.isBlank() ||
-                    priced.product.name.lowercase().contains(needle) ||
-                    priced.product.code.lowercase().contains(needle)
-                val matchesFilter = !mustStockOnly ||
-                    priced.product.id in count.mustStock
-                matchesQuery && matchesFilter
-            }
-        }
+        get() = catalogue
+            .inScope(scope, purchased, count.mustStock.keys)
+            .browse(query = query, categories = categories)
+
+    val allCategories: List<String> get() = catalogue.categoryNames()
+
+    /** How many products each scope would show, for the chips' counts. */
+    fun sizeOf(scope: StockScope): Int =
+        catalogue.inScope(scope, purchased, count.mustStock.keys).size
+
+    /**
+     * True when leaving now would throw away work. Nothing is written until the
+     * rep presses submit, so a stray back press costs the whole sheet — the app
+     * this replaces asks before letting that happen and this one did not.
+     */
+    val hasUnsavedWork: Boolean get() = count.lines.isNotEmpty() && !finished
 
     fun parFor(product: PricedProduct): Int? = count.mustStock[product.product.id]
 
@@ -87,6 +105,13 @@ class StockCountViewModel @Inject constructor(
         viewModelScope.launch {
             val previous = stockRepository.previousCount(customerId, visitId)
 
+            // What this outlet actually buys. Like the previous figures, losing it
+            // costs a narrowing and not the ability to count — the scope chip then
+            // falls through to the whole catalogue.
+            val purchased = stockRepository.purchasedProducts(customerId)
+                .getOrNull()
+                .orEmpty()
+
             // The rep counts what they can sell, so the same priced catalogue and the
             // same par levels the order step works from. A product with no price for
             // this outlet is one they cannot order, which makes counting it busywork.
@@ -100,6 +125,7 @@ class StockCountViewModel @Inject constructor(
                         // Not an error the rep has to act on: they can still
                         // count, they just do it without the comparison.
                         previousUnavailable = previous is DataResult.Failure,
+                        purchased = purchased,
                         count = DraftStockCount(
                             visitId = visitId,
                             customerId = customerId,
@@ -117,8 +143,14 @@ class StockCountViewModel @Inject constructor(
 
     fun onQueryChange(value: String) = _state.update { it.copy(query = value) }
 
-    fun onMustStockOnlyChange(enabled: Boolean) =
-        _state.update { it.copy(mustStockOnly = enabled) }
+    fun onScopeChange(scope: StockScope) = _state.update { it.copy(scope = scope) }
+
+    fun onCategoryToggle(name: String) = _state.update {
+        val next = if (name in it.categories) it.categories - name else it.categories + name
+        it.copy(categories = next)
+    }
+
+    fun clearCategories() = _state.update { it.copy(categories = emptySet()) }
 
     /** Moves any entry onto the new unit rather than leaving one behind. */
     fun onUnitChange(product: PricedProduct, uomCode: String) {
