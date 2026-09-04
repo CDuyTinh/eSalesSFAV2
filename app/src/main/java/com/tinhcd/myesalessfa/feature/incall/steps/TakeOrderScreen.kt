@@ -323,11 +323,7 @@ private fun BasketCard(line: OrderLine, onEdit: () -> Unit, onDelete: () -> Unit
 @Composable
 private fun BasketFooter(state: TakeOrderUiState, onConfirm: () -> Unit) {
     Surface(shadowElevation = 8.dp) {
-        Column(
-            Modifier
-                .navigationBarsPadding()
-                .padding(16.dp),
-        ) {
+        Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     "Tổng tiền",
@@ -571,11 +567,7 @@ private fun ProductRow(
 @Composable
 private fun ProductsFooter(state: TakeOrderUiState, onCommit: () -> Unit) {
     Surface(shadowElevation = 8.dp) {
-        Column(
-            Modifier
-                .navigationBarsPadding()
-                .padding(16.dp),
-        ) {
+        Column(Modifier.padding(16.dp)) {
             if (state.error != null) {
                 Text(
                     state.error,
@@ -676,11 +668,7 @@ private fun ConfirmPage(
         }
 
         Surface(shadowElevation = 8.dp) {
-            Column(
-                Modifier
-                    .navigationBarsPadding()
-                    .padding(16.dp),
-            ) {
+            Column(Modifier.padding(16.dp)) {
                 if (state.error != null) {
                     Text(
                         state.error,
