@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -154,7 +155,6 @@ fun StockCountScreen(
 
                     LegendBoard(
                         state = state,
-                        uncheckedCount = state.count.compliance.unchecked,
                         onScopeChange = viewModel::onScopeChange,
                     )
 
@@ -242,7 +242,6 @@ fun StockCountScreen(
 @Composable
 private fun LegendBoard(
     state: StockCountUiState,
-    uncheckedCount: Int,
     onScopeChange: (StockScope) -> Unit,
 ) {
     Card(
@@ -280,14 +279,9 @@ private fun LegendBoard(
                 }
             }
 
-            if (uncheckedCount > 0) {
-                Spacer(Modifier.size(6.dp))
-                Text(
-                    "Còn $uncheckedCount hàng bắt buộc chưa kiểm",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
+            // "Còn N hàng bắt buộc chưa kiểm" is not repeated here. It lives in
+            // the footer beside the figure it explains, and the footer is the
+            // half of the screen that stays put while the rep scrolls.
 
             // Said once, here, rather than left for the rep to infer from a chip
             // whose count equals the whole catalogue's.
@@ -690,111 +684,118 @@ private fun StepperButton(
     }
 }
 
+/**
+ * The bar the count is read off before it is sent.
+ *
+ * Three figures on one line rather than three label-and-value rows, and the two
+ * buttons side by side rather than stacked. What was here took a third of the
+ * screen to say four short things, and gave "Quay lại" a full-width outline —
+ * the same visual weight as the action that actually files the count.
+ */
 @Composable
 private fun StockFooter(
     state: StockCountUiState,
     onSubmit: () -> Unit,
     onBack: () -> Unit,
 ) {
-    Surface(shadowElevation = 8.dp) {
-        Column(Modifier.padding(16.dp)) {
+    val compliance = state.count.compliance
+    val scheme = MaterialTheme.colorScheme
+
+    Surface(
+        shadowElevation = 12.dp,
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        color = scheme.surface,
+    ) {
+        Column(Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 14.dp)) {
             Row(Modifier.fillMaxWidth()) {
-                Text(
-                    "Đã kiểm",
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                FooterStat(
+                    value = state.count.countedProducts.toString(),
+                    label = "Đã kiểm",
                 )
-                Text(
-                    "${state.count.countedProducts} mặt hàng",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
+                FooterStat(
+                    value = state.count.outOfStockCount.toString(),
+                    label = "Hết hàng",
+                    tint = if (state.count.outOfStockCount > 0) scheme.error else null,
                 )
-            }
-
-            if (state.count.outOfStockCount > 0) {
-                Row(Modifier.fillMaxWidth()) {
-                    Text(
-                        "Hết hàng",
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        "${state.count.outOfStockCount} mặt hàng",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-            }
-
-            val compliance = state.count.compliance
-            if (compliance.required > 0) {
-                Row(Modifier.fillMaxWidth()) {
-                    Text(
-                        "Hàng bắt buộc có sẵn",
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
+                if (compliance.required > 0) {
+                    FooterStat(
                         // Measured over what was checked, not over what was
-                        // required: a SKU nobody looked at is not evidence either
-                        // way, and counting it as absent would put the rep's
-                        // omission on the outlet's record.
-                        "${compliance.available}/${compliance.available + compliance.outOfStock}" +
-                            " (${compliance.availabilityPercent}%)",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = if (compliance.outOfStock > 0) {
-                            MaterialTheme.colorScheme.error
-                        } else {
-                            MaterialTheme.colorScheme.onSurface
-                        },
-                    )
-                }
-
-                if (!compliance.isComplete) {
-                    Text(
-                        "Còn ${compliance.unchecked} mặt hàng bắt buộc chưa kiểm",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-
-                if (state.count.totalShortfallBaseQty > 0) {
-                    Text(
-                        "Cần bổ sung ${state.count.totalShortfallBaseQty} đơn vị để đạt định mức",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        // required: a SKU nobody looked at is not evidence
+                        // either way, and counting it as absent would put the
+                        // rep's omission on the outlet's record.
+                        value = "${compliance.available}/" +
+                            "${compliance.available + compliance.outOfStock}",
+                        label = "Bắt buộc có sẵn",
+                        tint = if (compliance.outOfStock > 0) scheme.error else null,
                     )
                 }
             }
 
-            if (state.error != null) {
-                Text(
-                    state.error,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.padding(top = 8.dp),
+            // The two notes and any error, together and quiet. They are what to
+            // do next, not what was counted, so they sit under the figures
+            // rather than between them.
+            val notes = listOfNotNull(
+                "Còn ${compliance.unchecked} hàng bắt buộc chưa kiểm"
+                    .takeIf { compliance.required > 0 && !compliance.isComplete },
+                "Cần bổ sung ${state.count.totalShortfallBaseQty} đơn vị để đạt định mức"
+                    .takeIf { state.count.totalShortfallBaseQty > 0 },
+                state.error,
+            )
+            if (notes.isNotEmpty()) {
+                Spacer(Modifier.height(10.dp))
+                notes.forEach { note ->
+                    Text(
+                        note,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (note == state.error) scheme.error else scheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(
+                    onClick = onBack,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp),
+                ) { Text("Quay lại") }
+
+                PrimaryButton(
+                    text = "Gửi phiếu kiểm tồn",
+                    onClick = onSubmit,
+                    enabled = state.count.canSubmit,
+                    loading = state.submitting,
+                    modifier = Modifier.weight(1.7f),
                 )
             }
-
-            PrimaryButton(
-                text = "Gửi phiếu kiểm tồn",
-                onClick = onSubmit,
-                enabled = state.count.canSubmit,
-                loading = state.submitting,
-                modifier = Modifier.padding(top = 8.dp),
-            )
-
-            OutlinedButton(
-                onClick = onBack,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp),
-            ) { Text("Quay lại") }
         }
+    }
+}
+
+/**
+ * One figure and its name, stacked. The number leads because it is what the rep
+ * is checking; the name is only there to say which number it is.
+ */
+@Composable
+private fun RowScope.FooterStat(value: String, label: String, tint: Color? = null) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.weight(1f),
+    ) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = tint ?: MaterialTheme.colorScheme.onSurface,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+        )
     }
 }
