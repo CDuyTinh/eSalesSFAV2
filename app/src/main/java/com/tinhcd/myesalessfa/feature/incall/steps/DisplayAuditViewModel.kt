@@ -73,6 +73,8 @@ class DisplayAuditViewModel @Inject constructor(
                         // Defaults to one, not zero: this step exists to produce a
                         // picture, and an unconfigured market still means at least one.
                         photoMin = step?.configInt(StepConfig.PHOTO_MIN, default = 1) ?: 1,
+                        // Six is the legacy's own DISPLAY_IMAGE default.
+                        photoMax = step?.configInt(StepConfig.PHOTO_MAX, default = 6) ?: 6,
                     ),
                 )
             }

@@ -44,6 +44,15 @@ object StepConfig {
     const val PHOTO_MIN = "photo_min"
 
     /**
+     * Most photos a step will take, the legacy's `DISPLAY_IMAGE`.
+     *
+     * A ceiling rather than a suggestion: these upload over a phone connection in
+     * a shop doorway, and there is no reading of a display that forty photographs
+     * of it improves.
+     */
+    const val PHOTO_MAX = "photo_max"
+
+    /**
      * Whether a step offers voice recording. The seed has claimed this for `feedback`
      * since the workflow was first built and nothing read it — a config key no build
      * honours is a promise the data is making on the app's behalf.

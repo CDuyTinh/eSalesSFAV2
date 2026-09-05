@@ -1,5 +1,6 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
+import androidx.activity.compose.BackHandler
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -9,16 +10,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -28,9 +33,13 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -68,11 +77,22 @@ fun DisplayAuditScreen(
         if (state.finished) onDone()
     }
 
+    var confirmLeave by remember { mutableStateOf(false) }
+
+    // Photos live on the device until the step is submitted, so leaving throws
+    // them away — and they are the one thing here that cannot be typed again from
+    // memory, because the shelf will have been restocked by tomorrow. The legacy
+    // screen asks before letting that happen (msg_display_remark_back_screen).
+    val unsaved = state.audit.photos.isNotEmpty() && !state.finished
+    val leave = { if (unsaved) confirmLeave = true else onDone() }
+
+    BackHandler(enabled = unsaved) { confirmLeave = true }
+
     Scaffold(
         topBar = {
             StepHeader(
                 title = state.title.ifBlank { "Chấm trưng bày" },
-                onBack = onDone,
+                onBack = leave,
             )
         },
     ) { padding ->
@@ -85,10 +105,34 @@ fun DisplayAuditScreen(
                 onRemove = viewModel::onRemovePhoto,
                 onNoteChange = viewModel::onNoteChange,
                 onSubmit = viewModel::submit,
-                onBack = onDone,
+                onBack = leave,
                 modifier = Modifier.padding(padding),
             )
         }
+    }
+
+    if (confirmLeave) {
+        AlertDialog(
+            onDismissRequest = { confirmLeave = false },
+            title = { Text("Chưa gửi ảnh trưng bày") },
+            text = {
+                Text(
+                    "Đã chụp ${state.audit.photoCount} ảnh nhưng chưa gửi. " +
+                        "Thoát bây giờ sẽ mất hết.",
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmLeave = false
+                        onDone()
+                    },
+                ) { Text("Thoát") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmLeave = false }) { Text("Ở lại") }
+            },
+        )
     }
 }
 
@@ -112,31 +156,49 @@ private fun AuditForm(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
-            if (audit.photoMin > 0) {
-                "Chụp ảnh trưng bày - cần ít nhất ${audit.photoMin} ảnh"
-            } else {
-                "Chụp ảnh trưng bày"
+            buildString {
+                append("Chụp ảnh trưng bày")
+                if (audit.photoMin > 0) append(" - cần ít nhất ${audit.photoMin} ảnh")
+                append(" (tối đa ${audit.photoMax})")
             },
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
+        // Two across, as the legacy grid is. A display photo is taken to be looked
+        // at — the row of 110dp tiles this replaces was too small to tell a full
+        // shelf from an empty one, which is the only question it has to answer.
         if (audit.photos.isNotEmpty()) {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.heightIn(max = 420.dp),
+            ) {
                 items(audit.photos, key = { it.localPath }) { photo ->
                     PhotoThumbnail(photo = photo, onRemove = { onRemove(photo.localPath) })
                 }
             }
         }
 
-        OutlinedButton(
-            onClick = onCapture,
-            enabled = !state.capturing && !state.submitting,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Icon(Icons.Default.PhotoCamera, contentDescription = null)
+        if (audit.canAddPhoto) {
+            OutlinedButton(
+                onClick = onCapture,
+                enabled = !state.capturing && !state.submitting,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Default.PhotoCamera, contentDescription = null)
+                Text(
+                    if (audit.photos.isEmpty()) "  Chụp ảnh" else "  Chụp thêm ảnh",
+                )
+            }
+        } else {
+            // Gone rather than greyed. A disabled button reads as something the
+            // rep failed to earn; there is simply nothing more to take.
             Text(
-                if (audit.photos.isEmpty()) "  Chụp ảnh" else "  Chụp thêm ảnh",
+                "Đã đủ ${audit.photoMax} ảnh. Bỏ bớt một ảnh nếu muốn chụp lại.",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
 
@@ -194,8 +256,12 @@ private fun AuditForm(
 
 @Composable
 private fun PhotoThumbnail(photo: AuditPhoto, onRemove: () -> Unit) {
-    Card(shape = RoundedCornerShape(8.dp)) {
-        Box(Modifier.size(110.dp)) {
+    Card(shape = RoundedCornerShape(12.dp)) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f),
+        ) {
             // Loaded from the local file: nothing has been uploaded yet, and the rep
             // needs to see the shot they just took to judge whether to keep it.
             AsyncImage(
