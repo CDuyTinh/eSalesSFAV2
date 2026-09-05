@@ -7,6 +7,7 @@ import com.tinhcd.myesalessfa.data.remote.service.DisplayAuditService
 import com.tinhcd.myesalessfa.data.remote.storage.PhotoUploader
 import com.tinhcd.myesalessfa.data.session.SessionStore
 import com.tinhcd.myesalessfa.domain.DataResult
+import com.tinhcd.myesalessfa.domain.model.DisplayProgram
 import com.tinhcd.myesalessfa.domain.model.DraftDisplayAudit
 import com.tinhcd.myesalessfa.domain.repository.DisplayAuditRepository
 import java.time.Instant
@@ -31,6 +32,34 @@ class DisplayAuditRepositoryImpl @Inject constructor(
     private val uploader: PhotoUploader,
     private val session: SessionStore,
 ) : DisplayAuditRepository {
+
+    override suspend fun programs(
+        customerId: String,
+        visitId: String,
+    ): DataResult<List<DisplayProgram>> = try {
+        val body = service.programs(customerId, visitId).orThrow()
+        DataResult.Success(
+            body.programs.map {
+                DisplayProgram(
+                    programId = it.programId,
+                    programCode = it.programCode,
+                    programName = it.programName,
+                    specification = it.specification,
+                    levelId = it.levelId,
+                    levelName = it.levelName,
+                    requiredFaces = it.requiredFaces,
+                    bonusAmount = it.bonusAmount,
+                    registered = it.registered,
+                    registrationStatus = it.registrationStatus,
+                    countedFaces = it.countedFaces,
+                    achieved = it.achieved,
+                    photoCount = it.photoCount,
+                )
+            },
+        )
+    } catch (e: Exception) {
+        DataResult.Failure(e.toAppError())
+    }
 
     override suspend fun submit(audit: DraftDisplayAudit): DataResult<Unit> = try {
         // The rep owns the storage folder the policies authorise on, so without a
@@ -65,6 +94,12 @@ class DisplayAuditRepositoryImpl @Inject constructor(
                 note = audit.note.trim().ifBlank { null },
                 clientCreatedAt = OffsetDateTime.now(ZoneOffset.UTC).toString(),
                 photos = uploaded,
+                // Null together when there is no programme, which is exactly what
+                // `submit_display_audit` requires of the pair.
+                programId = audit.program?.programId,
+                levelId = audit.program?.levelId,
+                countedFaces = audit.countedFaces,
+                achieved = audit.achieved,
             ),
         ).orThrow()
 

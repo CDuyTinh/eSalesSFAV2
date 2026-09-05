@@ -641,3 +641,32 @@ data class CartPayload(
     @SerialName("customer_id") val customerId: String,
     val items: List<CartItemDto>,
 )
+
+/**
+ * The display programmes an outlet is audited on, with this visit's own result.
+ *
+ * Empty is a real answer, not an error: an outlet in no programme is audited on
+ * none, and the step falls back to the plain photo record it used to be.
+ */
+@Serializable
+data class DisplayProgramsDto(
+    val programs: List<DisplayProgramDto> = emptyList(),
+)
+
+@Serializable
+data class DisplayProgramDto(
+    @SerialName("program_id") val programId: String,
+    @SerialName("program_code") val programCode: String,
+    @SerialName("program_name") val programName: String,
+    val specification: String? = null,
+    val registered: Boolean = false,
+    @SerialName("registration_status") val registrationStatus: String? = null,
+    @SerialName("level_id") val levelId: String,
+    @SerialName("level_name") val levelName: String,
+    @SerialName("required_faces") val requiredFaces: Int = 0,
+    @SerialName("bonus_amount") val bonusAmount: Long = 0,
+    /** Null until this visit scores the programme. */
+    @SerialName("counted_faces") val countedFaces: Int? = null,
+    val achieved: Boolean? = null,
+    @SerialName("photo_count") val photoCount: Int = 0,
+)
