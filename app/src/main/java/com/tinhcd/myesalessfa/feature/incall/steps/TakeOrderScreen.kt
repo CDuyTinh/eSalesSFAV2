@@ -352,6 +352,7 @@ private fun BasketFooter(state: TakeOrderUiState, onConfirm: () -> Unit) {
                 text = "Xác nhận",
                 onClick = onConfirm,
                 enabled = state.order.canSubmit,
+                height = 44.dp,
                 modifier = Modifier.padding(top = 12.dp),
             )
         }
@@ -561,6 +562,7 @@ private fun ProductsFooter(state: TakeOrderUiState, onCommit: () -> Unit) {
                 text = "Cập nhật giỏ hàng",
                 onClick = onCommit,
                 enabled = state.hasDraft,
+                height = 44.dp,
             )
         }
     }
@@ -663,6 +665,7 @@ private fun ConfirmPage(
                     onClick = viewModel::submit,
                     enabled = state.order.canSubmit,
                     loading = state.submitting,
+                    height = 44.dp,
                 )
                 OutlinedButton(
                     onClick = onDone,
