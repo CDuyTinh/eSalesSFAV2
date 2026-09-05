@@ -75,6 +75,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
 import com.tinhcd.myesalessfa.core.ui.LoadingBox
+import com.tinhcd.myesalessfa.core.ui.SearchBox
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.Customer
@@ -333,69 +334,9 @@ private fun RouteHeader(
             SearchBox(
                 query = query,
                 onQueryChanged = onQueryChanged,
+                placeholder = "Tìm tên, mã khách hàng, địa chỉ",
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             )
-        }
-    }
-}
-
-@Composable
-private fun SearchBox(
-    query: String,
-    onQueryChanged: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surface,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(44.dp),
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(start = 12.dp, end = 4.dp),
-        ) {
-            Icon(
-                Icons.Default.Search,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp),
-            )
-            Box(
-                Modifier
-                    .weight(1f)
-                    .padding(horizontal = 8.dp),
-            ) {
-                if (query.isEmpty()) {
-                    Text(
-                        text = "Tìm tên, mã khách hàng, địa chỉ",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                BasicTextField(
-                    value = query,
-                    onValueChange = onQueryChanged,
-                    singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(
-                        color = MaterialTheme.colorScheme.onSurface,
-                    ),
-                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChanged("") }) {
-                    Icon(
-                        Icons.Default.Close,
-                        contentDescription = "Xoá từ khoá",
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
         }
     }
 }

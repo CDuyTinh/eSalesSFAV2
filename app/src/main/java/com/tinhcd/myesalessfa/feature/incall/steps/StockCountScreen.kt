@@ -7,6 +7,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -68,6 +69,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
 import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
+import com.tinhcd.myesalessfa.core.ui.SearchBox
 import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
 import com.tinhcd.myesalessfa.domain.model.StockScope
@@ -142,15 +144,20 @@ fun StockCountScreen(
                         )
                     }
 
-                    OutlinedTextField(
-                        value = state.query,
-                        onValueChange = viewModel::onQueryChange,
-                        label = { Text("Tìm sản phẩm") },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                        singleLine = true,
+                    SearchBox(
+                        query = state.query,
+                        onQueryChanged = viewModel::onQueryChange,
+                        placeholder = "Tìm sản phẩm",
+                        // Outlined here, unlike on the blue header bands, because
+                        // this one sits on the page ground: a white box on a
+                        // near-white page needs an edge to read as a field.
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.outlineVariant,
+                                RoundedCornerShape(12.dp),
+                            ),
                     )
 
                     LegendBoard(
@@ -754,12 +761,16 @@ private fun StockFooter(
 
             Spacer(Modifier.height(12.dp))
 
+            // 44dp rather than the app's usual 52. This bar carries two buttons
+            // above a list the rep is working down, and the list is what they
+            // came for.
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedButton(
                     onClick = onBack,
+                    contentPadding = PaddingValues(horizontal = 12.dp),
                     modifier = Modifier
                         .weight(1f)
-                        .height(52.dp),
+                        .height(44.dp),
                 ) { Text("Quay lại") }
 
                 PrimaryButton(
@@ -767,6 +778,7 @@ private fun StockFooter(
                     onClick = onSubmit,
                     enabled = state.count.canSubmit,
                     loading = state.submitting,
+                    height = 44.dp,
                     modifier = Modifier.weight(1.7f),
                 )
             }

@@ -25,7 +25,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.AlertDialog
@@ -45,7 +44,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -73,6 +71,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
 import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
+import com.tinhcd.myesalessfa.core.ui.SearchBox
 import com.tinhcd.myesalessfa.core.ui.formatDong
 import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.OrderLine
@@ -391,15 +390,10 @@ private fun ProductsHeader(state: TakeOrderUiState, viewModel: TakeOrderViewMode
             )
         },
         below = {
-            OutlinedTextField(
-                value = state.query,
-                onValueChange = viewModel::onQueryChange,
-                placeholder = { Text("Tìm tên hoặc mã sản phẩm") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = searchFieldColors(),
-                modifier = Modifier.fillMaxWidth(),
+            SearchBox(
+                query = state.query,
+                onQueryChanged = viewModel::onQueryChange,
+                placeholder = "Tìm tên hoặc mã sản phẩm",
             )
         },
     )
@@ -425,19 +419,6 @@ private fun ProductsHeader(state: TakeOrderUiState, viewModel: TakeOrderViewMode
         )
     }
 }
-
-/**
- * White field on the blue band, the way the route header's search box sits on it.
- * Left to the defaults it would inherit outline and label colours meant for the
- * page background and all but disappear.
- */
-@Composable
-private fun searchFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedContainerColor = MaterialTheme.colorScheme.surface,
-    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-    focusedBorderColor = Color.Transparent,
-    unfocusedBorderColor = Color.Transparent,
-)
 
 /**
  * The catalogue, with a quantity field on every row.
