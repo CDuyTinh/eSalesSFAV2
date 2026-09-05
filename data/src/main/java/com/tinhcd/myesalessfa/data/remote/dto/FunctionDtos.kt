@@ -623,3 +623,21 @@ data class CustomerOrderDto(
 data class CustomerOrdersDto(
     val orders: List<CustomerOrderDto> = emptyList(),
 )
+
+@Serializable
+data class CartDto(
+    val items: List<CartItemDto> = emptyList(),
+)
+
+@Serializable
+data class CartItemDto(
+    @SerialName("product_id") val productId: String,
+    @SerialName("uom_code") val uomCode: String,
+    val qty: Int,
+)
+
+@Serializable
+data class CartPayload(
+    @SerialName("customer_id") val customerId: String,
+    val items: List<CartItemDto>,
+)

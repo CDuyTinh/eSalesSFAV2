@@ -81,7 +81,7 @@ class OrderMoneyTest {
     fun `order VAT is summed per line because the catalogue mixes rates`() {
         // 2 cases of Coca at 10% and 1 case of Aquafina at 8%. Applying either
         // rate to the subtotal would be wrong for the other line.
-        val order = DraftOrder(visitId = "v1", customerId = "c1")
+        val order = DraftOrder(visitId = "v1", customerId = "c1", id = "o1")
             .withLine(line(qty = 2, unitPrice = 222_000, vatBasisPoints = 1000, productId = "coca"))
             .withLine(line(qty = 1, unitPrice = 112_000, vatBasisPoints = 800, productId = "aqua"))
 
@@ -94,7 +94,7 @@ class OrderMoneyTest {
     fun `the order total equals the sum of its line totals`() {
         // subTotal + vatAmount and the sum of lineAmount are two routes to the
         // same figure; the rep reads one out and the ERP reconciles the other.
-        val order = DraftOrder(visitId = "v1", customerId = "c1")
+        val order = DraftOrder(visitId = "v1", customerId = "c1", id = "o1")
             .withLine(line(qty = 4, unitPrice = 12_345, vatBasisPoints = 1000, productId = "a"))
             .withLine(line(qty = 3, unitPrice = 5_555, vatBasisPoints = 800, productId = "b"))
             .withLine(line(qty = 1, unitPrice = 690_000, vatBasisPoints = 1000, productId = "c"))
@@ -105,7 +105,7 @@ class OrderMoneyTest {
 
     @Test
     fun `an empty order cannot be submitted`() {
-        val empty = DraftOrder(visitId = "v1", customerId = "c1")
+        val empty = DraftOrder(visitId = "v1", customerId = "c1", id = "o1")
         assertFalse(empty.canSubmit)
         assertEquals(0L, empty.totalAmount)
         assertTrue(empty.withLine(line(qty = 1, unitPrice = 1_000)).canSubmit)
@@ -115,7 +115,7 @@ class OrderMoneyTest {
     fun `re-adding the same product and unit replaces the line instead of stacking`() {
         // The rep tapping a product twice must not double the order, and the
         // server's unique (order, product, unit) would reject it anyway.
-        val order = DraftOrder(visitId = "v1", customerId = "c1")
+        val order = DraftOrder(visitId = "v1", customerId = "c1", id = "o1")
             .withLine(line(qty = 2, unitPrice = 222_000))
             .withLine(line(qty = 5, unitPrice = 222_000))
 
@@ -127,7 +127,7 @@ class OrderMoneyTest {
     @Test
     fun `the same product in two different units is two lines`() {
         // 2 cases plus 3 loose is a real order, not a mistake.
-        val order = DraftOrder(visitId = "v1", customerId = "c1")
+        val order = DraftOrder(visitId = "v1", customerId = "c1", id = "o1")
             .withLine(line(qty = 2, unitPrice = 222_000, uomCode = "CASE", conversionRate = 24))
             .withLine(line(qty = 3, unitPrice = 10_000, uomCode = "PCS", conversionRate = 1))
 
@@ -138,7 +138,7 @@ class OrderMoneyTest {
 
     @Test
     fun `removing a line leaves the others priced as they were`() {
-        val order = DraftOrder(visitId = "v1", customerId = "c1")
+        val order = DraftOrder(visitId = "v1", customerId = "c1", id = "o1")
             .withLine(line(qty = 2, unitPrice = 222_000, productId = "coca"))
             .withLine(line(qty = 1, unitPrice = 112_000, productId = "aqua"))
             .withoutLine("coca", "CASE")
