@@ -62,6 +62,15 @@ data class DisplayAuditPayload(
     val note: String? = null,
     @SerialName("client_created_at") val clientCreatedAt: String,
     val photos: List<AuditPhotoPayload>,
+    /**
+     * The programme scored, and the level it is scored against. Null together for
+     * the plain photo record a market with no display programmes still gets;
+     * `submit_display_audit` refuses one without the other.
+     */
+    @SerialName("program_id") val programId: String? = null,
+    @SerialName("level_id") val levelId: String? = null,
+    @SerialName("counted_faces") val countedFaces: Int? = null,
+    val achieved: Boolean? = null,
 )
 
 @Serializable

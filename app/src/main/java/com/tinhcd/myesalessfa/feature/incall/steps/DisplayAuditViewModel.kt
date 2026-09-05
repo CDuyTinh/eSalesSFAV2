@@ -8,6 +8,7 @@ import com.tinhcd.myesalessfa.core.photo.PhotoStore
 import com.tinhcd.myesalessfa.core.photo.PhotoTarget
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.AuditPhoto
+import com.tinhcd.myesalessfa.domain.model.DisplayProgram
 import com.tinhcd.myesalessfa.domain.model.DraftDisplayAudit
 import com.tinhcd.myesalessfa.domain.model.StepConfig
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
@@ -21,15 +22,34 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Two pages, because the step asks two different questions.
+ *
+ * [PROGRAMS] is "which commitment am I checking" — the legacy's programme sheet.
+ * [AUDIT] is "how does this one look", one programme at a time.
+ *
+ * An outlet in no programme never sees the first page: there is nothing to pick,
+ * and the step is the plain photo record it has always been.
+ */
+enum class DisplayAuditPage { PROGRAMS, AUDIT }
+
 data class DisplayAuditUiState(
     val loading: Boolean = true,
     val title: String = "",
+    val page: DisplayAuditPage = DisplayAuditPage.PROGRAMS,
+    val programs: List<DisplayProgram> = emptyList(),
     val audit: DraftDisplayAudit = DraftDisplayAudit(visitId = "", customerId = ""),
     val capturing: Boolean = false,
     val submitting: Boolean = false,
     val error: String? = null,
     val finished: Boolean = false,
-)
+) {
+    /** Programmes already scored on this visit — what the list page counts down. */
+    val scoredCount: Int get() = programs.count { it.isScored }
+
+    /** True once nothing is left to score, which is when the step goes green. */
+    val allScored: Boolean get() = programs.isNotEmpty() && scoredCount == programs.size
+}
 
 /**
  * Backs the `display_remark` step.
@@ -58,27 +78,78 @@ class DisplayAuditViewModel @Inject constructor(
     /** The file the camera is currently writing into, if any. */
     private var pending: PhotoTarget? = null
 
+    /** From the step's config, and reused for every programme's draft. */
+    private var photoMin = 1
+    private var photoMax = 6
+
     init {
         viewModelScope.launch {
             val step = (workflowRepository.step(FORM_ID) as? DataResult.Success)?.data
             val title = step?.let { configRepository.translate(it.titleKey) }.orEmpty()
 
+            // Defaults to one, not zero: this step exists to produce a picture, and
+            // an unconfigured market still means at least one. Six is the legacy's
+            // own DISPLAY_IMAGE default.
+            photoMin = step?.configInt(StepConfig.PHOTO_MIN, default = 1) ?: 1
+            photoMax = step?.configInt(StepConfig.PHOTO_MAX, default = 6) ?: 6
+
+            val programs = when (val r = displayAuditRepository.programs(customerId, visitId)) {
+                is DataResult.Success -> r.data
+                // A listing that will not load must not block the step. The rep
+                // still records the shelf; the programmes simply go unscored.
+                is DataResult.Failure -> emptyList()
+            }
+
             _state.update {
                 it.copy(
                     loading = false,
                     title = title,
-                    audit = DraftDisplayAudit(
-                        visitId = visitId,
-                        customerId = customerId,
-                        // Defaults to one, not zero: this step exists to produce a
-                        // picture, and an unconfigured market still means at least one.
-                        photoMin = step?.configInt(StepConfig.PHOTO_MIN, default = 1) ?: 1,
-                        // Six is the legacy's own DISPLAY_IMAGE default.
-                        photoMax = step?.configInt(StepConfig.PHOTO_MAX, default = 6) ?: 6,
-                    ),
+                    programs = programs,
+                    page = if (programs.isEmpty()) {
+                        DisplayAuditPage.AUDIT
+                    } else {
+                        DisplayAuditPage.PROGRAMS
+                    },
+                    audit = newDraft(program = null),
                 )
             }
         }
+    }
+
+    private fun newDraft(program: DisplayProgram?) = DraftDisplayAudit(
+        visitId = visitId,
+        customerId = customerId,
+        photoMin = photoMin,
+        photoMax = photoMax,
+        program = program,
+        // Prefilled when the programme was already scored on this visit, so
+        // rescoring starts from what was recorded rather than from blank. The
+        // photos deliberately do not come back: they live on the server now, and
+        // rescoring replaces them with what the rep is looking at.
+        countedFaces = program?.countedFaces,
+        achieved = program?.achieved,
+    )
+
+    /** Opens one programme for scoring. Anything half-shot on another is discarded. */
+    fun onOpenProgram(program: DisplayProgram) {
+        discardPhotos()
+        _state.update {
+            it.copy(page = DisplayAuditPage.AUDIT, audit = newDraft(program), error = null)
+        }
+    }
+
+    /** Backs out of a programme without scoring it, dropping its photos. */
+    fun onLeaveProgram() {
+        if (_state.value.programs.isEmpty()) return
+        discardPhotos()
+        _state.update {
+            it.copy(page = DisplayAuditPage.PROGRAMS, audit = newDraft(null), error = null)
+        }
+    }
+
+    /** Nothing has been uploaded yet, so the files go with the draft. */
+    private fun discardPhotos() {
+        _state.value.audit.photos.forEach { photoStore.delete(it.localPath) }
     }
 
     /**
@@ -149,6 +220,19 @@ class DisplayAuditViewModel @Inject constructor(
     fun onNoteChange(value: String) =
         _state.update { it.copy(audit = it.audit.copy(note = value), error = null) }
 
+    /** FaceRemark. Floored at zero: a shelf cannot hold a negative number of facings. */
+    fun onCountedFacesChange(value: Int) = _state.update {
+        it.copy(audit = it.audit.copy(countedFaces = value.coerceAtLeast(0)), error = null)
+    }
+
+    /**
+     * Evaluate — the rep's own verdict, kept separate from the count on purpose.
+     * A display can miss the facing target and still be built to specification, or
+     * hit it with the wrong products, which is why the legacy asks for both.
+     */
+    fun onAchievedChange(value: Boolean) =
+        _state.update { it.copy(audit = it.audit.copy(achieved = value), error = null) }
+
     fun submit() {
         val current = _state.value
         if (current.submitting || !current.audit.canSubmit) return
@@ -156,14 +240,53 @@ class DisplayAuditViewModel @Inject constructor(
         _state.update { it.copy(submitting = true, error = null) }
         viewModelScope.launch {
             when (displayAuditRepository.submit(current.audit)) {
-                is DataResult.Success -> _state.update {
-                    it.copy(submitting = false, finished = true)
-                }
+                is DataResult.Success -> onSubmitted(current)
 
                 is DataResult.Failure -> _state.update {
                     it.copy(submitting = false, error = "Không lưu được phiếu chấm trưng bày")
                 }
             }
+        }
+    }
+
+    /**
+     * With no programmes the step is over the moment the photos land. With them,
+     * the rep is returned to the list to score whatever is left — and the step only
+     * finishes when nothing is, which is the same rule `submit_display_audit`
+     * applies before it marks the step done.
+     */
+    private suspend fun onSubmitted(before: DisplayAuditUiState) {
+        if (before.programs.isEmpty()) {
+            _state.update { it.copy(submitting = false, finished = true) }
+            return
+        }
+
+        val refreshed =
+            when (val r = displayAuditRepository.programs(customerId, visitId)) {
+                is DataResult.Success -> r.data
+                // The write went through; a failed re-read is not worth losing it
+                // over, so the just-scored programme is marked from what was sent.
+                is DataResult.Failure -> before.programs.map {
+                    if (it.programId == before.audit.program?.programId) {
+                        it.copy(
+                            countedFaces = before.audit.countedFaces,
+                            achieved = before.audit.achieved,
+                            photoCount = before.audit.photoCount,
+                        )
+                    } else {
+                        it
+                    }
+                }
+            }
+
+        _state.update {
+            it.copy(
+                submitting = false,
+                programs = refreshed,
+                page = DisplayAuditPage.PROGRAMS,
+                audit = newDraft(null),
+                finished = refreshed.isNotEmpty() && refreshed.all { p -> p.isScored },
+            )
         }
     }
 
