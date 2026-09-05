@@ -157,6 +157,15 @@ data class OrderLine(
 data class DraftOrder(
     val visitId: String,
     val customerId: String,
+    /**
+     * The id this order will be booked under, minted once when the basket opens.
+     *
+     * It is the key `submit_order` conflicts on, so it has to survive a retry:
+     * minting a fresh one per send — which the repository used to do — means a
+     * send that timed out after the server had already written it books the
+     * order a second time when the rep presses again.
+     */
+    val id: String,
     val lines: List<OrderLine> = emptyList(),
     val note: String = "",
 ) {
@@ -215,3 +224,21 @@ data class DraftOrder(
     fun quantityOf(productId: String, uomCode: String): Int =
         lines.firstOrNull { it.productId == productId && it.uomCode == uomCode }?.qty ?: 0
 }
+
+/**
+ * One line of the basket as it is stored: what, in which unit, how many.
+ *
+ * Deliberately not an [OrderLine]. That one carries the price, the name and the
+ * conversion it was agreed at, because an order must not move when the catalogue
+ * does. A basket is the opposite — it is unfinished, and it should be priced by
+ * whatever the catalogue says when the rep next looks at it.
+ */
+data class CartLine(
+    val productId: String,
+    val uomCode: String,
+    val qty: Int,
+)
+
+/** The basket as it should be stored. */
+fun DraftOrder.toCartLines(): List<CartLine> =
+    lines.map { CartLine(it.productId, it.uomCode, it.qty) }

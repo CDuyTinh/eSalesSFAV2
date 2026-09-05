@@ -165,6 +165,27 @@ private fun BasketPage(state: TakeOrderUiState, viewModel: TakeOrderViewModel) {
     var pendingDelete by remember { mutableStateOf<OrderLine?>(null) }
 
     Column(Modifier.fillMaxSize()) {
+        // The basket is stored on the server between edits, so the rep can leave
+        // and come back to it. When that stops working they need to know, because
+        // the whole reason the safety net is invisible is that it usually works.
+        val cartWarning = when {
+            state.cartUnavailable ->
+                "Không đọc được giỏ hàng đã lưu. Vẫn đặt được, chỉ bắt đầu từ trống."
+
+            state.cartSyncFailed ->
+                "Chưa lưu được giỏ hàng lên hệ thống. Gửi đơn ngay để khỏi mất."
+
+            else -> null
+        }
+        if (cartWarning != null) {
+            Text(
+                cartWarning,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            )
+        }
+
         // The button floats over the list, not over the screen: anchoring it to the
         // window put it across the total, and a total is the one thing on this page
         // a rep must be able to read.

@@ -1,10 +1,13 @@
 package com.tinhcd.myesalessfa.data.repository
 
+import com.tinhcd.myesalessfa.data.remote.dto.CartItemDto
+import com.tinhcd.myesalessfa.data.remote.dto.CartPayload
 import com.tinhcd.myesalessfa.data.remote.dto.OrderLinePayload
 import com.tinhcd.myesalessfa.data.remote.dto.OrderPayload
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import com.tinhcd.myesalessfa.data.remote.service.OrderService
 import com.tinhcd.myesalessfa.domain.DataResult
+import com.tinhcd.myesalessfa.domain.model.CartLine
 import com.tinhcd.myesalessfa.domain.model.DraftOrder
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository
 import java.time.LocalDate
@@ -29,10 +32,11 @@ class OrderRepositoryImpl @Inject constructor(
     override suspend fun submit(order: DraftOrder): DataResult<Unit> = try {
         service.submitOrder(
             OrderPayload(
-                // Minted here rather than by the server. It is the idempotency key
-                // `submit_order` conflicts on, so a retry after a timeout that in
-                // fact succeeded books nothing twice.
-                id = UUID.randomUUID().toString(),
+                // The draft's own id, minted once when the basket was opened. It
+                // is the key `submit_order` conflicts on, so a retry after a
+                // timeout that in fact succeeded books nothing twice — which a
+                // fresh UUID per call, as this used to do, could not deliver.
+                id = order.id,
                 visitId = order.visitId,
                 // The day the rep agreed it, which is what the server prices against.
                 orderDate = LocalDate.now().toString(),
@@ -47,6 +51,29 @@ class OrderRepositoryImpl @Inject constructor(
                         qty = line.qty,
                     )
                 },
+            ),
+        ).orThrow()
+        DataResult.Success(Unit)
+    } catch (e: Exception) {
+        DataResult.Failure(e.toAppError())
+    }
+
+    override suspend fun cart(customerId: String): DataResult<List<CartLine>> = try {
+        DataResult.Success(
+            service.cart(customerId).items.map { CartLine(it.productId, it.uomCode, it.qty) },
+        )
+    } catch (e: Exception) {
+        DataResult.Failure(e.toAppError())
+    }
+
+    override suspend fun saveCart(
+        customerId: String,
+        lines: List<CartLine>,
+    ): DataResult<Unit> = try {
+        service.saveCart(
+            CartPayload(
+                customerId = customerId,
+                items = lines.map { CartItemDto(it.productId, it.uomCode, it.qty) },
             ),
         ).orThrow()
         DataResult.Success(Unit)

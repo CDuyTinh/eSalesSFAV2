@@ -13,16 +13,19 @@ import com.tinhcd.myesalessfa.domain.model.PricedUnit
 import com.tinhcd.myesalessfa.domain.model.ProductSort
 import com.tinhcd.myesalessfa.domain.model.browse
 import com.tinhcd.myesalessfa.domain.model.categoryNames
+import com.tinhcd.myesalessfa.domain.model.toCartLines
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository
 import com.tinhcd.myesalessfa.domain.repository.SiteStockRepository
 import com.tinhcd.myesalessfa.domain.usecase.GetOrderSuggestionsUseCase
 import com.tinhcd.myesalessfa.domain.usecase.GetVisitCatalogueUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.UUID
 import javax.inject.Inject
 
 /**
@@ -80,7 +83,7 @@ data class TakeOrderUiState(
      * currently showing.
      */
     val draftQty: Map<String, Int> = emptyMap(),
-    val order: DraftOrder = DraftOrder(visitId = "", customerId = ""),
+    val order: DraftOrder = DraftOrder(visitId = "", customerId = "", id = ""),
     /**
      * Replenishment for must-stock SKUs the count found below par. Offered, never
      * applied on arrival — see [TakeOrderViewModel.applySuggestions].
@@ -88,6 +91,17 @@ data class TakeOrderUiState(
     val suggestions: List<OrderSuggestion> = emptyList(),
     val suggestionsApplied: Boolean = false,
     val editing: EditingLine? = null,
+    /** The stored basket could not be read, so the screen started from nothing. */
+    val cartUnavailable: Boolean = false,
+    /**
+     * The basket on screen is ahead of the stored one — the last push failed.
+     *
+     * Worth saying, quietly: the rep can keep working and send the order, which
+     * goes through its own call. What they lose is the safety net, and finding
+     * that out by coming back to an empty basket is the thing this whole table
+     * exists to prevent.
+     */
+    val cartSyncFailed: Boolean = false,
     val submitting: Boolean = false,
     val error: String? = null,
     val finished: Boolean = false,
@@ -176,6 +190,9 @@ class TakeOrderViewModel @Inject constructor(
     private val _state = MutableStateFlow(TakeOrderUiState())
     val state: StateFlow<TakeOrderUiState> = _state.asStateFlow()
 
+    /** The in-flight basket push, cancelled by the next one. */
+    private var cartPush: Job? = null
+
     init {
         load()
     }
@@ -201,6 +218,23 @@ class TakeOrderViewModel @Inject constructor(
                         ?.associate { it.productId to it.qtyBase }
                         .orEmpty()
 
+                    // The basket the rep left here, priced against today's
+                    // catalogue. A line whose product or unit has since gone from
+                    // the catalogue is dropped rather than carried at a stale
+                    // price — the server would refuse to book it anyway.
+                    val stored = orderRepository.cart(customerId)
+                    val restored = stored.getOrNull()
+                        .orEmpty()
+                        .mapNotNull { cartLine ->
+                            val product = visit.data.catalogue
+                                .firstOrNull { it.product.id == cartLine.productId }
+                                ?: return@mapNotNull null
+                            val unit = product.units
+                                .firstOrNull { it.unit.uomCode == cartLine.uomCode }
+                                ?: return@mapNotNull null
+                            lineFor(product, unit, cartLine.qty)
+                        }
+
                     _state.update {
                         it.copy(
                             loading = false,
@@ -209,7 +243,17 @@ class TakeOrderViewModel @Inject constructor(
                             available = available,
                             suggestions = suggestions,
                             suggestionsApplied = false,
-                            order = DraftOrder(visitId = visitId, customerId = customerId),
+                            order = DraftOrder(
+                                visitId = visitId,
+                                customerId = customerId,
+                                id = UUID.randomUUID().toString(),
+                                lines = restored,
+                            ),
+                            // Not an error to act on: the rep can build the
+                            // basket again. Said out loud because a basket that
+                            // came back empty when they left one is otherwise
+                            // indistinguishable from having sold nothing here.
+                            cartUnavailable = stored is DataResult.Failure,
                         )
                     }
                 }
@@ -318,6 +362,8 @@ class TakeOrderViewModel @Inject constructor(
                 error = null,
             )
         }
+
+        pushCart()
     }
 
     /**
@@ -364,6 +410,8 @@ class TakeOrderViewModel @Inject constructor(
                 error = null,
             )
         }
+
+        pushCart()
     }
 
     // -------------------------------------------------------------------------
@@ -423,14 +471,20 @@ class TakeOrderViewModel @Inject constructor(
                 error = null,
             )
         }
+
+        pushCart()
     }
 
-    fun removeLine(line: OrderLine) = _state.update {
-        it.copy(
-            order = it.order.withoutLine(line.productId, line.uomCode),
-            editing = null,
-            error = null,
-        )
+    fun removeLine(line: OrderLine) {
+        _state.update {
+            it.copy(
+                order = it.order.withoutLine(line.productId, line.uomCode),
+                editing = null,
+                error = null,
+            )
+        }
+
+        pushCart()
     }
 
     // -------------------------------------------------------------------------
@@ -458,6 +512,26 @@ class TakeOrderViewModel @Inject constructor(
                     it.copy(submitting = false, error = "Không lưu được đơn hàng")
                 }
             }
+        }
+    }
+
+    /**
+     * Stores the basket as it now stands.
+     *
+     * Fire and forget, and the screen never waits on it: the rep is typing
+     * quantities at a counter, and a spinner between keystrokes would make the
+     * step unusable to protect against a failure they can see reported instead.
+     *
+     * The previous push is cancelled rather than queued. Every push carries the
+     * whole basket, so an older one landing after a newer one would put the
+     * stored basket a step behind the screen — last write must be the last edit.
+     */
+    private fun pushCart() {
+        val order = _state.value.order
+        cartPush?.cancel()
+        cartPush = viewModelScope.launch {
+            val saved = orderRepository.saveCart(customerId, order.toCartLines())
+            _state.update { it.copy(cartSyncFailed = saved is DataResult.Failure) }
         }
     }
 
