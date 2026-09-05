@@ -102,9 +102,12 @@ fun PrimaryButton(
     enabled: Boolean = true,
     loading: Boolean = false,
     /**
-     * Shorter only where the button shares a bar with several others and the
-     * list above it is what the rep came for. A screen whose single action is
-     * this button should leave it at 52.
+     * 44 for a bar pinned to the bottom of a working screen — a count sheet, a
+     * check-in, a visit's step list. Those bars sit over content the rep is
+     * reading, and every dp the bar takes is a dp of it.
+     *
+     * The 52 default is for a button that *is* the screen: sign in, open the
+     * selling day, finish a step whose form scrolls above it.
      */
     height: Dp = 52.dp,
 ) {
