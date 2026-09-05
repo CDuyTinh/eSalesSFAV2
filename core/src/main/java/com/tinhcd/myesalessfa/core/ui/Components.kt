@@ -3,24 +3,34 @@ package com.tinhcd.myesalessfa.core.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -91,13 +101,19 @@ fun PrimaryButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     loading: Boolean = false,
+    /**
+     * Shorter only where the button shares a bar with several others and the
+     * list above it is what the rep came for. A screen whose single action is
+     * this button should leave it at 52.
+     */
+    height: Dp = 52.dp,
 ) {
     Button(
         onClick = onClick,
         enabled = enabled && !loading,
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp),
+            .height(height),
     ) {
         if (loading) {
             CircularProgressIndicator(
@@ -107,6 +123,80 @@ fun PrimaryButton(
             )
         } else {
             Text(text, style = MaterialTheme.typography.bodyLarge)
+        }
+    }
+}
+
+/**
+ * The one-line field every list in the app filters itself with.
+ *
+ * 44dp, which is under a Material text field's 56dp minimum and deliberately so:
+ * it sits above a list the rep is trying to read, sometimes inside a header band
+ * already carrying a title and two buttons, and a full-height field with a
+ * floating label spends screen on a control that holds a few characters.
+ *
+ * Built from a BasicTextField because OutlinedTextField's height is a minimum
+ * and its content padding is not reachable without rebuilding the decoration box
+ * anyway.
+ */
+@Composable
+fun SearchBox(
+    query: String,
+    onQueryChanged: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(44.dp),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(start = 12.dp, end = 4.dp),
+        ) {
+            Icon(
+                Icons.Default.Search,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp),
+            )
+            Box(
+                Modifier
+                    .weight(1f)
+                    .padding(horizontal = 8.dp),
+            ) {
+                if (query.isEmpty()) {
+                    Text(
+                        text = placeholder,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                BasicTextField(
+                    value = query,
+                    onValueChange = onQueryChanged,
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(
+                        color = MaterialTheme.colorScheme.onSurface,
+                    ),
+                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            if (query.isNotEmpty()) {
+                IconButton(onClick = { onQueryChanged("") }) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Xoá từ khoá",
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
         }
     }
 }
