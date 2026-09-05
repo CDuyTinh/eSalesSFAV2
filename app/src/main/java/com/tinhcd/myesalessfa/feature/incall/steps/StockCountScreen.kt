@@ -450,7 +450,13 @@ private fun StockRow(
                         color = PreviousInk,
                     )
 
-                    CountStepper(qty = line?.qty, onQtyChange = onQtyChange)
+                    QtyStepper(
+                        qty = line?.qty,
+                        onQtyChange = onQtyChange,
+                        // Green, matching the legend dot for the figure the rep
+                        // is the one writing.
+                        valueColor = CountedGreen,
+                    )
 
                     Text(
                         text = par?.toString().orEmpty(),
@@ -583,113 +589,6 @@ private fun OutOfStockToggle(checked: Boolean, onToggle: () -> Unit) {
 private val PreviousInk = Color(0xFF0D0C22)
 private val CountedGreen = Color(0xFF04A489)
 private val ParBlue = Color(0xFF2D2DFE)
-
-/**
- * Null [qty] means the product has not been checked; 0 means checked and empty.
- * The field is blank in the first case and shows "0" in the second, so the two
- * are distinguishable at a glance.
- */
-@Composable
-private fun CountStepper(
-    qty: Int?,
-    onQtyChange: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-        modifier = modifier,
-    ) {
-        StepperButton(
-            icon = Icons.Default.Remove,
-            description = "Giảm",
-            enabled = (qty ?: 0) > 0,
-            onClick = { onQtyChange((qty ?: 0) - 1) },
-        )
-
-        // A bordered box around a bare text field rather than an OutlinedTextField,
-        // which carries a 56dp minimum height and its own internal padding — half
-        // the card's height went to one input.
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .padding(horizontal = 8.dp)
-                .width(52.dp)
-                .height(32.dp)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp)),
-        ) {
-            BasicTextField(
-                value = qty?.toString() ?: "",
-                onValueChange = { typed ->
-                    val digits = typed.filter { it.isDigit() }.take(5)
-                    onQtyChange(digits.toIntOrNull() ?: 0)
-                },
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                    // Green, matching the legend dot for the figure being written.
-                    color = CountedGreen,
-                    textAlign = TextAlign.Center,
-                ),
-                cursorBrush = SolidColor(CountedGreen),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                decorationBox = { field ->
-                    Box(contentAlignment = Alignment.Center) {
-                        if (qty == null) {
-                            Text(
-                                "-",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        field()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-
-        StepperButton(
-            icon = Icons.Default.Add,
-            description = "Tăng",
-            enabled = true,
-            onClick = { onQtyChange((qty ?: 0) + 1) },
-        )
-    }
-}
-
-/**
- * 30dp, tonal rather than filled.
- *
- * The filled 36dp pair this replaces was the loudest thing on a card whose
- * subject is three numbers — two solid blue discs either side of the figure they
- * were meant to be adjusting. Still comfortably tappable; the row is 32dp tall
- * and a thumb lands on the whole of it.
- */
-@Composable
-private fun StepperButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    description: String,
-    enabled: Boolean,
-    onClick: () -> Unit,
-) {
-    val scheme = MaterialTheme.colorScheme
-    Surface(
-        shape = CircleShape,
-        color = if (enabled) scheme.secondaryContainer else scheme.surfaceVariant,
-        modifier = Modifier
-            .size(30.dp)
-            .clickable(enabled = enabled, onClick = onClick),
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                icon,
-                contentDescription = description,
-                tint = if (enabled) scheme.onSecondaryContainer else scheme.outline,
-                modifier = Modifier.size(16.dp),
-            )
-        }
-    }
-}
 
 /**
  * The bar the count is read off before it is sent.
