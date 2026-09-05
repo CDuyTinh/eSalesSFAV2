@@ -19,12 +19,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.AlertDialog
@@ -38,7 +38,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -61,8 +60,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -444,7 +441,7 @@ private fun ProductsPage(state: TakeOrderUiState, viewModel: TakeOrderViewModel)
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(12.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(visible, key = { it.product.id }) { product ->
                     ProductRow(
@@ -470,78 +467,116 @@ private fun ProductRow(
     val qty = state.listQtyOf(product)
     val available = state.availableIn(product)
 
+    val suggestion = state.suggestionFor(product.product.id)
+
     Card(
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(Modifier.padding(12.dp)) {
-            Text(
-                text = product.product.name,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+        Row(Modifier.padding(12.dp)) {
+            ProductTile(inStock = available == null || available > 0)
 
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = buildString {
-                    append(product.product.code)
-                    append(" | ")
-                    append(unit.unit.uomName)
-                    // The legacy row prints the warehouse's figure here, in the
-                    // unit the row is priced in. Absent rather than zero when the
-                    // warehouse could not be read: "0" would read as sold out.
-                    if (available != null) append(" (Tồn kho: $available)")
-                },
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Spacer(Modifier.width(12.dp))
 
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = formatDong(unit.price),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-
-            val suggestion = state.suggestionFor(product.product.id)
-            if (suggestion != null) {
+            Column(Modifier.weight(1f)) {
                 Text(
-                    text = "Thiếu ${suggestion.shortfallBaseQty} " +
-                        "${product.product.baseUomCode.lowercase()} so với định mức " +
-                        "- gợi ý ${suggestion.parts.describe()}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 6.dp),
-                )
-            }
-
-            Spacer(Modifier.height(10.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = if (qty > 0) formatDong(qty * unit.price) else "",
+                    text = product.product.name,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
-                    modifier = Modifier.weight(1f),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
 
-                OutlinedTextField(
-                    value = if (qty == 0) "" else qty.toString(),
-                    onValueChange = { typed ->
-                        // Ignore anything that is not a number rather than clearing
-                        // the field: a fat-fingered letter should not lose the qty.
-                        onQtyChange(typed.filter { it.isDigit() }.take(5).toIntOrNull() ?: 0)
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = buildString {
+                        append(product.product.code)
+                        append("  ·  ")
+                        append(unit.unit.uomName)
+                        // The legacy row prints the warehouse's figure here, in
+                        // the unit the row is priced in. Absent rather than zero
+                        // when the warehouse could not be read: "0" would read as
+                        // sold out.
+                        if (available != null) append("  ·  Tồn kho $available")
                     },
-                    placeholder = { Text("0", textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth()) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    shape = RoundedCornerShape(8.dp),
-                    textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
-                    modifier = Modifier.width(104.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+
+                if (suggestion != null) {
+                    Text(
+                        text = "Thiếu ${suggestion.shortfallBaseQty} " +
+                            "${product.product.baseUomCode.lowercase()} - gợi ý " +
+                            suggestion.parts.describe(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                // Price on the left, quantity on the right, on one line. The two
+                // used to be a screen apart on the card with the line total
+                // sitting under the unit price in the same words — a rep reading
+                // "300.000 đ" twice cannot tell which is which.
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            text = formatDong(unit.price),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
+                        )
+                        // Only once there is one, and labelled, so it cannot be
+                        // mistaken for the unit price above it.
+                        if (qty > 0) {
+                            Text(
+                                text = "Thành tiền ${formatDong(qty * unit.price)}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
+
+                    QtyStepper(
+                        // Null rather than 0 for "nothing ordered", so the box
+                        // shows its placeholder instead of a 0 the rep has to
+                        // clear before typing.
+                        qty = qty.takeIf { it > 0 },
+                        onQtyChange = onQtyChange,
+                        placeholder = "0",
+                    )
+                }
             }
+        }
+    }
+}
+
+/**
+ * The square the card hangs off, standing in for the product photo the legacy
+ * row carries and this build has no source for.
+ *
+ * Not decoration: it is what makes a list of forty rows scannable, and it earns
+ * the space by carrying one fact — greyed when the warehouse has none, which is
+ * the row a rep should not be writing an order against.
+ */
+@Composable
+private fun ProductTile(inStock: Boolean) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = if (inStock) scheme.secondaryContainer else scheme.surfaceVariant,
+        modifier = Modifier.size(44.dp),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                Icons.Default.Inventory2,
+                contentDescription = null,
+                tint = if (inStock) scheme.onSecondaryContainer else scheme.outline,
+                modifier = Modifier.size(20.dp),
+            )
         }
     }
 }
@@ -583,25 +618,34 @@ private fun SuggestionBanner(state: TakeOrderUiState, onApply: () -> Unit) {
     // could span two units; now it would be actively wrong.
     val totalLines = state.suggestions.sumOf { it.parts.size }
 
+    // Inset and rounded like the cards below it rather than a full-bleed band.
+    // Edge to edge it read as part of the header, which is the one thing on the
+    // page that is not about a product.
     Surface(
         color = MaterialTheme.colorScheme.secondaryContainer,
-        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 12.dp, end = 12.dp, top = 12.dp),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.padding(start = 12.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
         ) {
+            // Two short lines rather than one long one wrapping into three. The
+            // banner sits above the list it is about, and every line it takes is
+            // a product the rep cannot see.
             Column(Modifier.weight(1f)) {
                 Text(
-                    "Gợi ý từ kiểm tồn: ${state.suggestions.size} mặt hàng dưới định mức",
-                    style = MaterialTheme.typography.bodyLarge,
+                    "${state.suggestions.size} mặt hàng dưới định mức",
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
                     if (state.suggestionsApplied) {
-                        "Đã thêm $totalLines dòng vào giỏ - sửa lại trước khi gửi nếu cần"
+                        "Đã thêm $totalLines dòng vào giỏ - sửa lại nếu cần"
                     } else {
-                        "Sẽ thêm $totalLines dòng"
+                        "Từ phiếu kiểm tồn · sẽ thêm $totalLines dòng"
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -609,7 +653,11 @@ private fun SuggestionBanner(state: TakeOrderUiState, onApply: () -> Unit) {
             }
 
             if (!state.suggestionsApplied) {
-                OutlinedButton(onClick = onApply) { Text("Áp dụng") }
+                OutlinedButton(
+                    onClick = onApply,
+                    contentPadding = PaddingValues(horizontal = 14.dp),
+                    modifier = Modifier.height(36.dp),
+                ) { Text("Áp dụng") }
             }
         }
     }
@@ -811,19 +859,13 @@ private fun EditLineSheet(state: TakeOrderUiState, viewModel: TakeOrderViewModel
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Số lượng", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                OutlinedTextField(
-                    value = if (editing.qty == 0) "" else editing.qty.toString(),
-                    onValueChange = { typed ->
-                        viewModel.onEditQtyChange(
-                            typed.filter { it.isDigit() }.take(5).toIntOrNull() ?: 0,
-                        )
-                    },
-                    placeholder = { Text("0", textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth()) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    shape = RoundedCornerShape(8.dp),
-                    textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
-                    modifier = Modifier.width(120.dp),
+                // The same control as the catalogue row and the count sheet. A
+                // rep who has just typed quantities down a list should not meet
+                // a different-shaped box for the same number one tap later.
+                QtyStepper(
+                    qty = editing.qty.takeIf { it > 0 },
+                    onQtyChange = viewModel::onEditQtyChange,
+                    placeholder = "0",
                 )
             }
 
