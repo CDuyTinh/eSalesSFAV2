@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -60,11 +62,15 @@ internal fun StepHeader(
             ),
     ) {
         Column(Modifier.statusBarsPadding()) {
+            // The title shares the back arrow's line and nothing else does. Pairing
+            // it with the subtitle in a column centred the pair against the arrow,
+            // which floated the title above the button it belongs beside — the
+            // heading and the way back out are one row of the same band.
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .padding(horizontal = 4.dp)
-                    .padding(bottom = 12.dp, top = 4.dp),
+                    .padding(top = 4.dp),
             ) {
                 IconButton(onClick = onBack) {
                     Icon(
@@ -74,30 +80,36 @@ internal fun StepHeader(
                     )
                 }
 
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontSize = 18.sp,
-                        color = brand.onHeader,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (!subtitle.isNullOrBlank()) {
-                        Text(
-                            text = subtitle,
-                            style = MaterialTheme.typography.labelSmall,
-                            // Dimmed rather than a second full-strength line: it
-                            // is context for the title, not a second title.
-                            color = brand.onHeader.copy(alpha = 0.85f),
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                }
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontSize = 18.sp,
+                    color = brand.onHeader,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
 
                 actions()
             }
+
+            if (!subtitle.isNullOrBlank()) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    // Dimmed rather than a second full-strength line: it is context
+                    // for the title, not a second title.
+                    color = brand.onHeader.copy(alpha = 0.85f),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    // Indented to the title's own left edge — 4dp of row padding
+                    // plus the 48dp icon button — so it reads as hanging off the
+                    // heading rather than starting a new column at the margin.
+                    modifier = Modifier.padding(start = 52.dp, end = 16.dp, top = 4.dp),
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
 
             // Inside the band rather than under it, the way the Viếng thăm header
             // carries its search box: a control that filters a list belongs to the
