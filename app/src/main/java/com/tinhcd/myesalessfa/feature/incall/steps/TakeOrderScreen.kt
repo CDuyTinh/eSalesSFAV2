@@ -21,7 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Inventory2
@@ -252,58 +252,70 @@ private fun BasketCard(line: OrderLine, onEdit: () -> Unit, onDelete: () -> Unit
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(Modifier.padding(12.dp)) {
-            Row(verticalAlignment = Alignment.Top) {
+        // Same shape as the legacy basket card: the picture down the left, and
+        // everything else in a column beside it — name with the remove control on
+        // its line, code and unit, unit price, then quantity and line total.
+        Row(Modifier.padding(12.dp)) {
+            ProductTile()
+
+            Spacer(Modifier.width(12.dp))
+
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.Top) {
+                    Text(
+                        text = line.productName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    // A circled cross, as the legacy card has it, not a bin. This
+                    // takes the line off the order; nothing is destroyed, and a
+                    // bin over a basket reads like it is.
+                    IconButton(onClick = onDelete, modifier = Modifier.size(28.dp)) {
+                        Icon(
+                            Icons.Default.Cancel,
+                            contentDescription = "Bỏ ${line.productName}",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(4.dp))
                 Text(
-                    text = line.productName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
+                    text = "${line.productCode} | ${line.uomName}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                IconButton(onClick = onDelete, modifier = Modifier.size(28.dp)) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Bỏ ${line.productName}",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp),
+                Text(
+                    text = formatDong(line.unitPrice),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                Spacer(Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = line.qty.toString(),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    IconButton(onClick = onEdit, modifier = Modifier.size(28.dp)) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Sửa ${line.productName}",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
+                    Spacer(Modifier.weight(1f))
+                    Text(
+                        text = formatDong(line.grossAmount),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
                     )
                 }
-            }
-
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = "${line.productCode} | ${line.uomName}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = formatDong(line.unitPrice),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            Spacer(Modifier.height(10.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = line.qty.toString(),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                IconButton(onClick = onEdit, modifier = Modifier.size(28.dp)) {
-                    Icon(
-                        Icons.Default.Edit,
-                        contentDescription = "Sửa ${line.productName}",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
-                Spacer(Modifier.weight(1f))
-                Text(
-                    text = formatDong(line.grossAmount),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
             }
         }
     }
@@ -491,15 +503,16 @@ private fun ProductRow(
 
                 Spacer(Modifier.height(2.dp))
                 Text(
+                    // `MÃ | ĐVT (Tồn kho: N)`, the legacy row's own wording and
+                    // punctuation. The figure is the warehouse's, in the unit the
+                    // row is priced in; absent rather than zero when the
+                    // warehouse could not be read, since "0" would read as sold
+                    // out.
                     text = buildString {
                         append(product.product.code)
-                        append("  ·  ")
+                        append(" | ")
                         append(unit.unit.uomName)
-                        // The legacy row prints the warehouse's figure here, in
-                        // the unit the row is priced in. Absent rather than zero
-                        // when the warehouse could not be read: "0" would read as
-                        // sold out.
-                        if (available != null) append("  ·  Tồn kho $available")
+                        if (available != null) append(" (Tồn kho: $available)")
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -555,27 +568,28 @@ private fun ProductRow(
 }
 
 /**
- * The square the card hangs off, standing in for the product photo the legacy
- * row carries and this build has no source for.
+ * The square both cards hang off, standing in for the product photo the legacy
+ * rows carry down their left edge and this build has no source for.
  *
- * Not decoration: it is what makes a list of forty rows scannable, and it earns
- * the space by carrying one fact — greyed when the warehouse has none, which is
- * the row a rep should not be writing an order against.
+ * 56dp against the legacy's 70-72dp: the same anchor, without a placeholder that
+ * big sitting where a picture is not. It also earns the space by carrying a fact
+ * the photo does not — greyed when the warehouse has none, which is the row a
+ * rep should not be writing an order against.
  */
 @Composable
-private fun ProductTile(inStock: Boolean) {
+private fun ProductTile(inStock: Boolean = true) {
     val scheme = MaterialTheme.colorScheme
     Surface(
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(12.dp),
         color = if (inStock) scheme.secondaryContainer else scheme.surfaceVariant,
-        modifier = Modifier.size(44.dp),
+        modifier = Modifier.size(56.dp),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
                 Icons.Default.Inventory2,
                 contentDescription = null,
                 tint = if (inStock) scheme.onSecondaryContainer else scheme.outline,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(24.dp),
             )
         }
     }
