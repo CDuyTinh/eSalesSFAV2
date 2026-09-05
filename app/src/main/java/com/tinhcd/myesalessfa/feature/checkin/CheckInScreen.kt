@@ -180,6 +180,7 @@ fun CheckInScreen(
                         onClick = viewModel::submit,
                         enabled = state.canSubmit,
                         loading = state.submitting,
+                        height = 44.dp,
                         // The bar is pinned to the bottom of the window, so on a
                         // phone with three-button navigation the button lands
                         // under it and only its top edge is left tappable.

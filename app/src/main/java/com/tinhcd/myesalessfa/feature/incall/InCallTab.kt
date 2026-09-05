@@ -147,6 +147,7 @@ fun InCallTab(
                                 onClick = viewModel::checkOut,
                                 enabled = workflow.canCheckOut,
                                 loading = state.submitting,
+                                height = 44.dp,
                             )
                         }
                     }
