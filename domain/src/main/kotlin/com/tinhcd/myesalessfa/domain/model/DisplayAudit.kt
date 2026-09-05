@@ -28,19 +28,30 @@ data class DraftDisplayAudit(
      * configured it: this step exists to produce a picture.
      */
     val photoMin: Int = 1,
+    /**
+     * From the step's `photo_max`, the legacy's `DISPLAY_IMAGE`, whose default is
+     * six. A ceiling matters more than it looks: every photo is uploaded from a
+     * shop doorway, and nothing about a display is better understood from the
+     * fortieth picture of it.
+     */
+    val photoMax: Int = 6,
 ) {
     val photoCount: Int get() = photos.size
 
     /** Photos still needed before this can be submitted. */
     val photosStillNeeded: Int get() = (photoMin - photoCount).coerceAtLeast(0)
 
+    /** False once the ceiling is reached, which is when the camera stops offering. */
+    val canAddPhoto: Boolean get() = photoCount < photoMax
+
     val canSubmit: Boolean get() = photosStillNeeded == 0
 
     /** Total bytes queued for upload, which is what the rep is waiting on. */
     val totalSizeBytes: Long get() = photos.sumOf { it.sizeBytes }
 
+    /** Ignored once the ceiling is reached, so no path can slip past it. */
     fun withPhoto(photo: AuditPhoto): DraftDisplayAudit =
-        copy(photos = photos + photo)
+        if (canAddPhoto) copy(photos = photos + photo) else this
 
     /**
      * Removes a photo the rep rejected. Matched on path because that is what
