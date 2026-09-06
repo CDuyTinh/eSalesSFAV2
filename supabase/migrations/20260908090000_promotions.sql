@@ -31,11 +31,15 @@
 --     BreakBoundType, ChoiceType, IsDeductQtyAmt, ExactQty, PctDiscountByLevel,
 --     ConvertDiscAmtToFreeItem, FirstOrder and the rest — are *not* here.
 --     `CalcPromo.cs` reads every one of them off the row and then uses none of
---     them, and no stored procedure in the 1707-proc dump evaluates them either:
---     the only routines that mention them are the admin CRUD screens and the
---     sync that pushed master data to the old handheld. Whatever implements them
---     lives in that handheld's code, which is not in either repository. Adding
---     columns nothing reads would suggest a fidelity this does not have.
+--     them, and no stored procedure in the dump evaluates them either: the only
+--     routines that mention them are the admin CRUD screens and the sync that
+--     ships the master data to the phone.
+--
+--     Written when neither repository to hand implemented them. They are
+--     implemented, in the ERP order screen OM10100 — the "CalDiscountService"
+--     an earlier note called unavailable — and 20260909090000 ports the four
+--     whose meaning is self-contained. The rest still wait on required items,
+--     budgets and warehouse stock.
 -- =============================================================================
 
 -- OM_Discount.DiscType. The order of evaluation, and the reason it matters: a
