@@ -149,6 +149,7 @@ class OrderRepositoryImpl @Inject constructor(
                             uomCode = g.uomCode,
                             uomName = g.uomName.ifBlank { g.uomCode },
                             qty = g.qty,
+                            availableQty = g.availableQty,
                             chosen = g.chosen,
                         )
                     },

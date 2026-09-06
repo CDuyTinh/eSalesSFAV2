@@ -775,6 +775,8 @@ data class PromotionGiftDto(
     /** The unit as the rep reads it; the code is what the server matches on. */
     @SerialName("uom_name") val uomName: String = "",
     val qty: Int = 0,
+    /** What the depot can actually give, in this gift's own unit. */
+    @SerialName("available_qty") val availableQty: Int = 0,
     val chosen: Boolean = false,
 )
 
