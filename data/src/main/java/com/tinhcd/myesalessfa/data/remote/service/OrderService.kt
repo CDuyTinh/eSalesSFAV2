@@ -2,6 +2,7 @@ package com.tinhcd.myesalessfa.data.remote.service
 
 import com.tinhcd.myesalessfa.data.remote.dto.CartDto
 import com.tinhcd.myesalessfa.data.remote.dto.CartPayload
+import com.tinhcd.myesalessfa.data.remote.dto.ManualPromotionsDto
 import com.tinhcd.myesalessfa.data.remote.dto.OrderPayload
 import com.tinhcd.myesalessfa.data.remote.dto.PromotionsDto
 import com.tinhcd.myesalessfa.data.remote.dto.PromotionsRequest
@@ -28,6 +29,16 @@ interface OrderService {
      */
     @POST("promotions")
     suspend fun promotions(@Body request: PromotionsRequest): Response<PromotionsDto>
+
+    /**
+     * Discounts the rep may apply by hand here today. Fetched once when the
+     * order screen opens: unlike the automatic preview it does not depend on
+     * the basket, so there is nothing to refresh it against.
+     */
+    @GET("manual-promotions")
+    suspend fun manualPromotions(
+        @Query("customerId") customerId: String,
+    ): Response<ManualPromotionsDto>
 
     /** The basket this rep has building for one outlet. */
     @GET("cart")

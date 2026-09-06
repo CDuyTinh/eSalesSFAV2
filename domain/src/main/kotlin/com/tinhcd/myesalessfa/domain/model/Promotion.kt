@@ -42,7 +42,9 @@ data class PromotionGift(
     val productId: String,
     val productCode: String,
     val productName: String,
+    /** The code the server matches on; [uomName] is what the rep reads. */
     val uomCode: String,
+    val uomName: String,
     val qty: Int,
     val chosen: Boolean,
 )
@@ -107,6 +109,10 @@ data class PromotionSummary(
     val earned: List<EarnedPromotion> = emptyList(),
     /** The nearest levels still out of reach. Advice, not a commitment. */
     val suggestions: List<PromotionSuggestion> = emptyList(),
+    /** Discounts the rep may apply by hand here. Loaded once, not per keystroke. */
+    val manualCatalogue: List<ManualPromotion> = emptyList(),
+    /** The ones they have applied, by catalogue id. */
+    val appliedManual: Map<String, AppliedManualPromotion> = emptyMap(),
     val choices: Map<String, PromotionChoice> = emptyMap(),
 ) {
     val isEmpty: Boolean get() = earned.isEmpty()
@@ -144,6 +150,34 @@ data class PromotionSummary(
             else -> promo.gifts.filter { it.chosen }
         }
     }
+
+    /**
+     * Money the rep has given by hand, against a gross the caller supplies.
+     *
+     * The gross has to come from outside because a percentage entry is taken on
+     * the order, and this type knows about rules rather than about baskets. The
+     * server computes the same figure from the lines it books, so the two agree
+     * as long as both are given the same gross — which is why the caller here is
+     * the draft order that owns those lines.
+     */
+    fun manualDiscountOn(gross: Long): Long = appliedManual.values.sumOf { applied ->
+        val entry = manualCatalogue.firstOrNull { it.id == applied.promotionId }
+        when (entry?.type) {
+            ManualPromotionType.PERCENT -> gross * entry.value / 100
+            // An editable entry is a ceiling, so the applied figure never rises
+            // above it — and the server refuses one that tries.
+            ManualPromotionType.AMOUNT ->
+                (applied.amount ?: entry.value).coerceAtMost(entry.value)
+
+            else -> 0L
+        }
+    }
+
+    fun withManual(applied: AppliedManualPromotion): PromotionSummary =
+        copy(appliedManual = appliedManual + (applied.promotionId to applied))
+
+    fun withoutManual(promotionId: String): PromotionSummary =
+        copy(appliedManual = appliedManual - promotionId)
 
     fun withChoice(choice: PromotionChoice): PromotionSummary =
         copy(choices = choices + (choice.sequenceId to choice))
@@ -204,3 +238,53 @@ data class PromotionSuggestion(
     /** Measured in units rather than dong — the two read differently to a rep. */
     val isByQty: Boolean get() = neededQty > 0
 }
+
+/** OM_DiscDescr.PromoType. */
+enum class ManualPromotionType(val wireValue: String) {
+    PERCENT("percent"),
+    AMOUNT("amount"),
+    FREE_ITEM("free_item"),
+    ;
+
+    companion object {
+        fun fromWire(value: String?): ManualPromotionType =
+            entries.firstOrNull { it.wireValue == value } ?: AMOUNT
+    }
+}
+
+/** One item a manual promotion gives away. */
+data class ManualPromotionItem(
+    val productName: String,
+    val uomName: String,
+    val qty: Int,
+)
+
+/**
+ * A discount head office approved in advance and left the rep to apply by
+ * judgement — closing a difficult shop, a gesture on a late delivery.
+ *
+ * [allowEdit] is the only place a rep may move a number, and the catalogue value
+ * is then a ceiling rather than a fixed amount.
+ */
+data class ManualPromotion(
+    val id: String,
+    val code: String,
+    val name: String,
+    val type: ManualPromotionType,
+    /** Percent, dong, or unread for goods — as the catalogue stores it. */
+    val value: Long,
+    val allowEdit: Boolean,
+    val items: List<ManualPromotionItem>,
+) {
+    val isGoods: Boolean get() = type == ManualPromotionType.FREE_ITEM
+}
+
+/**
+ * One applied manual discount. [amount] is only sent for an editable entry, and
+ * the server refuses anything above the catalogue's ceiling rather than clamping
+ * it — a rep who typed 500.000 and got 50.000 would find out from the customer.
+ */
+data class AppliedManualPromotion(
+    val promotionId: String,
+    val amount: Long? = null,
+)

@@ -185,7 +185,8 @@ data class DraftOrder(
     val vatAmount: Long get() = lines.sumOf { it.vatAmount }
 
     /** Money off, as the rep has chosen it. See [PromotionSummary.totalDiscount]. */
-    val discountAmount: Long get() = promotions.totalDiscount
+    val discountAmount: Long
+        get() = promotions.totalDiscount + promotions.manualDiscountOn(subTotal)
 
     /**
      * What the customer owes. The discount comes off the total rather than the
