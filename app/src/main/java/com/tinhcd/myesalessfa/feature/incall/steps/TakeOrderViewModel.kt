@@ -9,6 +9,8 @@ import com.tinhcd.myesalessfa.domain.model.DraftOrder
 import com.tinhcd.myesalessfa.domain.model.OrderLine
 import com.tinhcd.myesalessfa.domain.model.OrderSuggestion
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
+import com.tinhcd.myesalessfa.domain.model.PromotionChoice
+import com.tinhcd.myesalessfa.domain.model.PromotionSummary
 import com.tinhcd.myesalessfa.domain.model.PricedUnit
 import com.tinhcd.myesalessfa.domain.model.ProductSort
 import com.tinhcd.myesalessfa.domain.model.browse
@@ -193,6 +195,9 @@ class TakeOrderViewModel @Inject constructor(
     /** The in-flight basket push, cancelled by the next one. */
     private var cartPush: Job? = null
 
+    /** The in-flight promotion preview, cancelled whenever the basket moves on. */
+    private var promoRefresh: Job? = null
+
     init {
         load()
     }
@@ -256,6 +261,10 @@ class TakeOrderViewModel @Inject constructor(
                             cartUnavailable = stored is DataResult.Failure,
                         )
                     }
+
+                    // A basket restored from the server has earned whatever it
+                    // earns; the rep should see that before touching anything.
+                    refreshPromotions()
                 }
 
                 is DataResult.Failure -> _state.update {
@@ -533,6 +542,53 @@ class TakeOrderViewModel @Inject constructor(
             val saved = orderRepository.saveCart(customerId, order.toCartLines())
             _state.update { it.copy(cartSyncFailed = saved is DataResult.Failure) }
         }
+        refreshPromotions()
+    }
+
+    /**
+     * What the basket has earned, asked again because the basket changed.
+     *
+     * Cancelled and reissued like the cart push, and for the same reason: an
+     * older answer landing after a newer one would show the rep a discount for a
+     * basket they have already edited. A failure is silent — the order can still
+     * be sent, the server works the promotions out again when it books it, and a
+     * red banner over a discount nobody has been promised yet helps no one.
+     */
+    private fun refreshPromotions() {
+        val lines = _state.value.order.toCartLines()
+
+        promoRefresh?.cancel()
+
+        if (lines.isEmpty()) {
+            _state.update {
+                it.copy(order = it.order.copy(promotions = PromotionSummary()))
+            }
+            return
+        }
+
+        promoRefresh = viewModelScope.launch {
+            when (val r = orderRepository.promotions(customerId, lines)) {
+                is DataResult.Success -> _state.update {
+                    it.copy(
+                        order = it.order.copy(
+                            // Answers to rules that no longer apply go with them.
+                            promotions = it.order.promotions.prunedTo(r.data),
+                        ),
+                    )
+                }
+
+                is DataResult.Failure -> Unit
+            }
+        }
+    }
+
+    /**
+     * The rep's answer to a rule that offered one — money or goods, or which
+     * goods. Nothing is recalculated here: the amounts already came from the
+     * server, and `submit_order` applies the choice against its own recount.
+     */
+    fun onPromotionChoice(choice: PromotionChoice) = _state.update {
+        it.copy(order = it.order.copy(promotions = it.order.promotions.withChoice(choice)))
     }
 
     private fun lineFor(product: PricedProduct, unit: PricedUnit, qty: Int) = OrderLine(

@@ -168,6 +168,12 @@ data class DraftOrder(
     val id: String,
     val lines: List<OrderLine> = emptyList(),
     val note: String = "",
+    /**
+     * What the basket has earned, and what the rep decided about it. Refreshed
+     * from the server as the basket changes; the discount here is a preview, and
+     * `submit_order` recomputes it from the lines it books.
+     */
+    val promotions: PromotionSummary = PromotionSummary(),
 ) {
     val subTotal: Long get() = lines.sumOf { it.grossAmount }
 
@@ -178,7 +184,15 @@ data class DraftOrder(
      */
     val vatAmount: Long get() = lines.sumOf { it.vatAmount }
 
-    val totalAmount: Long get() = subTotal + vatAmount
+    /** Money off, as the rep has chosen it. See [PromotionSummary.totalDiscount]. */
+    val discountAmount: Long get() = promotions.totalDiscount
+
+    /**
+     * What the customer owes. The discount comes off the total rather than the
+     * subtotal, so gross and VAT stay the figures an invoice prints, and the
+     * server does the same subtraction when it books the order.
+     */
+    val totalAmount: Long get() = (subTotal + vatAmount - discountAmount).coerceAtLeast(0)
 
     /**
      * Units ordered, added across lines.

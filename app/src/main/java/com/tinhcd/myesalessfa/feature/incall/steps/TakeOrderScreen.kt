@@ -22,9 +22,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.AlertDialog
@@ -71,7 +73,11 @@ import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.core.ui.SearchBox
 import com.tinhcd.myesalessfa.core.ui.formatDong
 import com.tinhcd.myesalessfa.core.ui.theme.brand
+import com.tinhcd.myesalessfa.domain.model.EarnedPromotion
 import com.tinhcd.myesalessfa.domain.model.OrderLine
+import com.tinhcd.myesalessfa.domain.model.PromotionChoice
+import com.tinhcd.myesalessfa.domain.model.PromotionGift
+import com.tinhcd.myesalessfa.domain.model.PromotionSummary
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
 import com.tinhcd.myesalessfa.domain.model.ProductSort
 import com.tinhcd.myesalessfa.domain.model.SuggestedPart
@@ -720,6 +726,27 @@ private fun ConfirmPage(
         ) {
             item { OrderSummaryCard(state, viewModel) }
 
+            if (!state.order.promotions.isEmpty) {
+                item {
+                    Text(
+                        "Khuyến mãi",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+
+                items(
+                    state.order.promotions.earned,
+                    key = { it.sequenceId + it.breakId },
+                ) { promo ->
+                    PromotionCard(
+                        promo = promo,
+                        summary = state.order.promotions,
+                        onChoice = viewModel::onPromotionChoice,
+                    )
+                }
+            }
+
             item {
                 Text(
                     "Sản phẩm",
@@ -775,6 +802,13 @@ private fun OrderSummaryCard(state: TakeOrderUiState, viewModel: TakeOrderViewMo
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
             AmountRow("Tiền hàng (chưa VAT)", formatDong(state.order.subTotal))
             AmountRow("Thuế VAT", formatDong(state.order.vatAmount))
+            if (state.order.discountAmount > 0) {
+                AmountRow(
+                    label = "Khuyến mãi",
+                    value = "-" + formatDong(state.order.discountAmount),
+                    valueColor = MoneyGreen,
+                )
+            }
             Spacer(Modifier.height(8.dp))
             AmountRow(
                 label = "Tổng cộng",
@@ -980,7 +1014,12 @@ private fun SortSheet(
 // =============================================================================
 
 @Composable
-private fun AmountRow(label: String, value: String, emphasise: Boolean = false) {
+private fun AmountRow(
+    label: String,
+    value: String,
+    emphasise: Boolean = false,
+    valueColor: Color? = null,
+) {
     Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
         Text(
             label,
@@ -997,7 +1036,8 @@ private fun AmountRow(label: String, value: String, emphasise: Boolean = false) 
             style = MaterialTheme.typography.bodyLarge,
             fontSize = if (emphasise) 18.sp else MaterialTheme.typography.bodyLarge.fontSize,
             fontWeight = if (emphasise) FontWeight.Bold else FontWeight.Normal,
-            color = if (emphasise) MoneyGreen else MaterialTheme.colorScheme.onSurface,
+            color = valueColor
+                ?: if (emphasise) MoneyGreen else MaterialTheme.colorScheme.onSurface,
         )
     }
 }
@@ -1011,3 +1051,213 @@ private fun List<SuggestedPart>.describe(): String =
 
 /** The green the legacy screens print money in. */
 private val MoneyGreen = Color(0xFF04A489)
+
+/**
+ * One rule the basket has earned.
+ *
+ * A rule that gives something outright is a statement — it says what was won and
+ * why. A rule that offers a choice is a question, and the choice belongs on the
+ * card rather than behind a dialog: the rep is reading the order back to the
+ * customer, and the answer belongs where the customer can see it.
+ */
+@Composable
+private fun PromotionCard(
+    promo: EarnedPromotion,
+    summary: PromotionSummary,
+    onChoice: (PromotionChoice) -> Unit,
+) {
+    val choice = summary.choices[promo.sequenceId]
+    val takingAmount = !promo.offersEither || choice?.takeAmount != false
+    val gifts = summary.giftsOf(promo)
+
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Row(verticalAlignment = Alignment.Top) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        promo.programName,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Text(
+                        buildString {
+                            append(promo.sequenceName)
+                            // How many times the level was earned. "x3" is the
+                            // difference between a discount the rep can read back
+                            // and a number they have to take on trust.
+                            if (promo.portion > 1) append(" (x${promo.portion})")
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                if (takingAmount && promo.discountAmount > 0) {
+                    Text(
+                        "-" + formatDong(promo.discountAmount),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = MoneyGreen,
+                    )
+                }
+            }
+
+            val percent = promo.percent
+            if (percent != null) {
+                Text(
+                    "Giảm ${percent.toInt()}%",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MoneyGreen,
+                )
+            }
+
+            // Money or goods. Two buttons rather than a switch: neither is the
+            // obvious answer, and a switch would make one of them look like it.
+            if (promo.offersEither) {
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    PromotionOption(
+                        text = "Nhận tiền",
+                        selected = takingAmount,
+                        onClick = {
+                            onChoice(PromotionChoice(promo.sequenceId, takeAmount = true))
+                        },
+                        modifier = Modifier.weight(1f),
+                    )
+                    PromotionOption(
+                        text = "Nhận quà",
+                        selected = !takingAmount,
+                        onClick = {
+                            val first = promo.gifts.firstOrNull { it.chosen }
+                                ?: promo.gifts.firstOrNull()
+                            onChoice(
+                                PromotionChoice(
+                                    sequenceId = promo.sequenceId,
+                                    takeAmount = false,
+                                    freeProductId = first?.productId,
+                                    freeUomCode = first?.uomCode,
+                                ),
+                            )
+                        },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+
+            // The goods themselves: a bundle to read, or alternatives to pick from.
+            val showingGifts = promo.gifts.isNotEmpty() &&
+                (!promo.offersEither || !takingAmount)
+
+            if (showingGifts) {
+                Spacer(Modifier.height(10.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Spacer(Modifier.height(8.dp))
+
+                if (promo.needsChoice) {
+                    Text(
+                        "Chọn một phần quà",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                }
+
+                promo.gifts.forEach { gift ->
+                    GiftRow(
+                        gift = gift,
+                        selected = gifts.any { it.productId == gift.productId },
+                        selectable = promo.needsChoice,
+                        onClick = {
+                            onChoice(
+                                PromotionChoice(
+                                    sequenceId = promo.sequenceId,
+                                    takeAmount = false,
+                                    freeProductId = gift.productId,
+                                    freeUomCode = gift.uomCode,
+                                ),
+                            )
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PromotionOption(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = if (selected) MoneyGreen else MaterialTheme.colorScheme.surfaceVariant,
+        modifier = modifier
+            .height(38.dp)
+            .clickable(onClick = onClick),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = if (selected) {
+                    Color.White
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun GiftRow(
+    gift: PromotionGift,
+    selected: Boolean,
+    selectable: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(if (selectable) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(vertical = 4.dp),
+    ) {
+        Icon(
+            // A bundle is a list of what is coming; alternatives are a list of
+            // what could. The tick only means "chosen" where there is a choice.
+            if (selected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+            contentDescription = null,
+            tint = if (selected) MoneyGreen else MaterialTheme.colorScheme.outline,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(8.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                gift.productName,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                gift.productCode,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Text(
+            "x${gift.qty} ${gift.uomCode}",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = MoneyGreen,
+        )
+    }
+}
