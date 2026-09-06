@@ -105,6 +105,8 @@ data class PromotionChoice(
 data class PromotionSummary(
     val orderAmount: Long = 0,
     val earned: List<EarnedPromotion> = emptyList(),
+    /** The nearest levels still out of reach. Advice, not a commitment. */
+    val suggestions: List<PromotionSuggestion> = emptyList(),
     val choices: Map<String, PromotionChoice> = emptyMap(),
 ) {
     val isEmpty: Boolean get() = earned.isEmpty()
@@ -151,8 +153,54 @@ data class PromotionSummary(
      * where a rule no longer applies must not carry that rule's answer into the
      * order.
      */
-    fun prunedTo(fresh: List<EarnedPromotion>): PromotionSummary {
+    fun prunedTo(
+        fresh: List<EarnedPromotion>,
+        freshSuggestions: List<PromotionSuggestion> = emptyList(),
+    ): PromotionSummary {
         val live = fresh.map { it.sequenceId }.toSet()
-        return copy(earned = fresh, choices = choices.filterKeys { it in live })
+        return copy(
+            earned = fresh,
+            suggestions = freshSuggestions,
+            choices = choices.filterKeys { it in live },
+        )
     }
+}
+
+/** One thing the customer would get by clearing the next level of a rule. */
+data class SuggestionReward(
+    val productName: String,
+    val uomCode: String,
+    val qty: Int,
+)
+
+/**
+ * "Mua thêm 2 thùng nữa được tặng 1."
+ *
+ * The nearest level this basket has not reached, per rule. Shown while the
+ * basket is still open rather than on the confirmation page: a promotion the rep
+ * reads after they have finished choosing is a receipt, and one they read while
+ * choosing is an argument the customer is still in the room to hear.
+ */
+data class PromotionSuggestion(
+    val sequenceId: String,
+    val programName: String,
+    val sequenceName: String,
+    val breakName: String,
+    val scope: PromotionScope,
+    val reward: PromotionReward,
+    /** One of these is meaningful, depending on how the level is measured. */
+    val neededQty: Int,
+    val neededAmount: Long,
+    /**
+     * The product to buy more of, for a per-product rule. Null for group and
+     * order rules, where the answer is "spend more", not "buy more of this".
+     */
+    val productName: String?,
+    val uomCode: String?,
+    /** Money off, when clearing the level pays in money. */
+    val rewardAmount: Long,
+    val rewardItems: List<SuggestionReward>,
+) {
+    /** Measured in units rather than dong — the two read differently to a rep. */
+    val isByQty: Boolean get() = neededQty > 0
 }

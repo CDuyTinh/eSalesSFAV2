@@ -31,7 +31,7 @@ Deno.serve(handler(async (req, db) => {
   // An empty basket earns nothing, and asking the database to prove it is a
   // round trip the order screen makes on every keystroke.
   if (lines.length === 0) {
-    return json({ order_amount: 0, total_discount: 0, earned: [] });
+    return json({ order_amount: 0, total_discount: 0, earned: [], suggestions: [] });
   }
 
   const clean = lines
@@ -43,15 +43,24 @@ Deno.serve(handler(async (req, db) => {
     }));
 
   if (clean.length === 0) {
-    return json({ order_amount: 0, total_discount: 0, earned: [] });
+    return json({ order_amount: 0, total_discount: 0, earned: [], suggestions: [] });
   }
 
-  const result = unwrap(
-    await db.rpc("calculate_promotions", {
+  // Two questions about one basket, asked together because the screen asks them
+  // together: what has this earned, and what would one more case earn.
+  const [earned, suggestions] = await Promise.all([
+    db.rpc("calculate_promotions", {
       p_customer_id: customerId,
       p_lines: clean,
     }),
-  );
+    db.rpc("promotion_suggestions", {
+      p_customer_id: customerId,
+      p_lines: clean,
+    }),
+  ]);
 
-  return json(result);
+  return json({
+    ...(unwrap(earned) as Record<string, unknown>),
+    suggestions: unwrap(suggestions),
+  });
 }));
