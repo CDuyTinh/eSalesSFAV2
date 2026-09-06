@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -770,6 +771,34 @@ private fun ConfirmPage(
                         summary = state.order.promotions,
                         onChoice = viewModel::onPromotionChoice,
                     )
+                }
+            }
+
+            if (state.order.promotions.outOfBudget.isNotEmpty()) {
+                items(
+                    state.order.promotions.outOfBudget,
+                    key = { "budget-" + it.sequenceId },
+                ) { over ->
+                    // Not a card: this is the absence of a promotion, and giving
+                    // it the same weight as one the customer has actually won
+                    // would read as though they had won it.
+                    Row(
+                        verticalAlignment = Alignment.Top,
+                        modifier = Modifier.padding(horizontal = 2.dp),
+                    ) {
+                        Icon(
+                            Icons.Default.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.outline,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "${over.programName} không áp dụng được: đã hết ngân sách",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
 

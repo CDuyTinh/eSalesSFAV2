@@ -593,6 +593,7 @@ class TakeOrderViewModel @Inject constructor(
                             promotions = it.order.promotions.prunedTo(
                                 r.data.earned,
                                 r.data.suggestions,
+                                r.data.outOfBudget,
                             ),
                         ),
                     )

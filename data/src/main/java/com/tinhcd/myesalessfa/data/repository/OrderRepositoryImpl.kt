@@ -17,6 +17,7 @@ import com.tinhcd.myesalessfa.domain.model.EarnedPromotion
 import com.tinhcd.myesalessfa.domain.model.ManualPromotion
 import com.tinhcd.myesalessfa.domain.model.ManualPromotionItem
 import com.tinhcd.myesalessfa.domain.model.ManualPromotionType
+import com.tinhcd.myesalessfa.domain.model.OutOfBudgetPromotion
 import com.tinhcd.myesalessfa.domain.model.PromotionGift
 import com.tinhcd.myesalessfa.domain.model.PromotionReward
 import com.tinhcd.myesalessfa.domain.model.PromotionScope
@@ -153,6 +154,14 @@ class OrderRepositoryImpl @Inject constructor(
                             chosen = g.chosen,
                         )
                     },
+                    )
+                },
+                outOfBudget = body.outOfBudget.map { o ->
+                    OutOfBudgetPromotion(
+                        sequenceId = o.sequenceId,
+                        programName = o.programName,
+                        sequenceName = o.sequenceName,
+                        budgetName = o.budgetName,
                     )
                 },
                 suggestions = body.suggestions.map { s ->

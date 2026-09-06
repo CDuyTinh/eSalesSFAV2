@@ -723,6 +723,16 @@ data class PromotionsDto(
     @SerialName("total_discount") val totalDiscount: Long = 0,
     val earned: List<EarnedPromotionDto> = emptyList(),
     val suggestions: List<PromotionSuggestionDto> = emptyList(),
+    @SerialName("out_of_budget")
+    val outOfBudget: List<OutOfBudgetDto> = emptyList(),
+)
+
+@Serializable
+data class OutOfBudgetDto(
+    @SerialName("sequence_id") val sequenceId: String,
+    @SerialName("program_name") val programName: String = "",
+    @SerialName("sequence_name") val sequenceName: String = "",
+    @SerialName("budget_name") val budgetName: String = "",
 )
 
 @Serializable
