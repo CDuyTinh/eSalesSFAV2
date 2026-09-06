@@ -3,7 +3,7 @@ package com.tinhcd.myesalessfa.domain.repository
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.CartLine
 import com.tinhcd.myesalessfa.domain.model.DraftOrder
-import com.tinhcd.myesalessfa.domain.model.EarnedPromotion
+import com.tinhcd.myesalessfa.domain.model.PromotionSummary
 
 interface OrderRepository {
     /**
@@ -42,5 +42,5 @@ interface OrderRepository {
     suspend fun promotions(
         customerId: String,
         lines: List<CartLine>,
-    ): DataResult<List<EarnedPromotion>>
+    ): DataResult<PromotionSummary>
 }

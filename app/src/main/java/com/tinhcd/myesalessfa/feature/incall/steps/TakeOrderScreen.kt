@@ -77,6 +77,9 @@ import com.tinhcd.myesalessfa.domain.model.EarnedPromotion
 import com.tinhcd.myesalessfa.domain.model.OrderLine
 import com.tinhcd.myesalessfa.domain.model.PromotionChoice
 import com.tinhcd.myesalessfa.domain.model.PromotionGift
+import com.tinhcd.myesalessfa.domain.model.PromotionReward
+import com.tinhcd.myesalessfa.domain.model.PromotionScope
+import com.tinhcd.myesalessfa.domain.model.PromotionSuggestion
 import com.tinhcd.myesalessfa.domain.model.PromotionSummary
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
 import com.tinhcd.myesalessfa.domain.model.ProductSort
@@ -210,6 +213,25 @@ private fun BasketPage(state: TakeOrderUiState, viewModel: TakeOrderViewModel) {
                             onEdit = { viewModel.startEdit(line) },
                             onDelete = { pendingDelete = line },
                         )
+                    }
+
+                    // Under the basket rather than over it: the rep reads what
+                    // the customer has agreed to first, and the argument for one
+                    // more case second. Two at most — a rep reads two of these,
+                    // and the nearest are the ones a customer says yes to.
+                    val suggestions = state.order.promotions.suggestions.take(2)
+                    if (suggestions.isNotEmpty()) {
+                        item(key = "sugg-head") {
+                            Text(
+                                "Mua thêm để được khuyến mãi",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 4.dp),
+                            )
+                        }
+                        items(suggestions, key = { "sugg-" + it.sequenceId }) {
+                            SuggestionCard(it)
+                        }
                     }
                 }
             }
@@ -1259,5 +1281,90 @@ private fun GiftRow(
             fontWeight = FontWeight.Medium,
             color = MoneyGreen,
         )
+    }
+}
+
+/**
+ * "Mua thêm 2 thùng nữa được tặng 1 thùng Pepsi."
+ *
+ * Deliberately quieter than an earned promotion: this one has not happened. A
+ * card that looks like money already won would have the rep reading out a
+ * discount the customer has not qualified for.
+ */
+@Composable
+private fun SuggestionCard(suggestion: PromotionSuggestion) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MoneyGreen.copy(alpha = 0.08f),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(12.dp),
+        ) {
+            Icon(
+                Icons.Default.Add,
+                contentDescription = null,
+                tint = MoneyGreen,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(Modifier.width(10.dp))
+
+            Column(Modifier.weight(1f)) {
+                Text(
+                    buildString {
+                        append("Mua thêm ")
+                        if (suggestion.isByQty) {
+                            append(suggestion.neededQty)
+                            suggestion.uomCode?.let { append(" ").append(it) }
+                            // Naming the product is what turns a number into an
+                            // instruction. Group and order rules have no single
+                            // product, and say "spend more" instead.
+                            suggestion.productName?.let { append(" ").append(it) }
+                        } else {
+                            append(formatDong(suggestion.neededAmount))
+                            if (suggestion.scope == PromotionScope.ORDER) {
+                                append(" cho đơn hàng")
+                            }
+                        }
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                )
+
+                Text(
+                    buildString {
+                        append("để ")
+                        val gifts = suggestion.rewardItems
+                        when {
+                            gifts.isNotEmpty() -> {
+                                append("được tặng ")
+                                append(
+                                    gifts.joinToString(", ") { g ->
+                                        "${g.qty} ${g.uomCode} ${g.productName}"
+                                    },
+                                )
+                            }
+
+                            suggestion.reward == PromotionReward.PERCENT ->
+                                append("được giảm ${suggestion.rewardAmount}%")
+
+                            suggestion.rewardAmount > 0 ->
+                                append("được giảm ${formatDong(suggestion.rewardAmount)}")
+
+                            else -> append("đạt ${suggestion.breakName}")
+                        }
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                Text(
+                    suggestion.programName,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline,
+                )
+            }
+        }
     }
 }

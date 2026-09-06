@@ -722,6 +722,31 @@ data class PromotionsDto(
     @SerialName("order_amount") val orderAmount: Long = 0,
     @SerialName("total_discount") val totalDiscount: Long = 0,
     val earned: List<EarnedPromotionDto> = emptyList(),
+    val suggestions: List<PromotionSuggestionDto> = emptyList(),
+)
+
+@Serializable
+data class PromotionSuggestionDto(
+    @SerialName("sequence_id") val sequenceId: String,
+    @SerialName("program_name") val programName: String = "",
+    @SerialName("sequence_name") val sequenceName: String = "",
+    @SerialName("break_name") val breakName: String = "",
+    val scope: String = "line",
+    @SerialName("break_by") val breakBy: String = "qty",
+    val reward: String = "amount",
+    @SerialName("needed_qty") val neededQty: Int = 0,
+    @SerialName("needed_amount") val neededAmount: Long = 0,
+    @SerialName("product_name") val productName: String? = null,
+    @SerialName("uom_code") val uomCode: String? = null,
+    @SerialName("reward_amount") val rewardAmount: Double = 0.0,
+    @SerialName("reward_items") val rewardItems: List<SuggestionRewardDto> = emptyList(),
+)
+
+@Serializable
+data class SuggestionRewardDto(
+    @SerialName("product_name") val productName: String = "",
+    @SerialName("uom_code") val uomCode: String = "",
+    val qty: Int = 0,
 )
 
 @Serializable

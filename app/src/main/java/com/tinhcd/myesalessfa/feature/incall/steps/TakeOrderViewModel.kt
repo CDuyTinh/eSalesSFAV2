@@ -572,7 +572,10 @@ class TakeOrderViewModel @Inject constructor(
                     it.copy(
                         order = it.order.copy(
                             // Answers to rules that no longer apply go with them.
-                            promotions = it.order.promotions.prunedTo(r.data),
+                            promotions = it.order.promotions.prunedTo(
+                                r.data.earned,
+                                r.data.suggestions,
+                            ),
                         ),
                     )
                 }

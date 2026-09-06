@@ -16,6 +16,9 @@ import com.tinhcd.myesalessfa.domain.model.EarnedPromotion
 import com.tinhcd.myesalessfa.domain.model.PromotionGift
 import com.tinhcd.myesalessfa.domain.model.PromotionReward
 import com.tinhcd.myesalessfa.domain.model.PromotionScope
+import com.tinhcd.myesalessfa.domain.model.PromotionSuggestion
+import com.tinhcd.myesalessfa.domain.model.PromotionSummary
+import com.tinhcd.myesalessfa.domain.model.SuggestionReward
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -101,7 +104,7 @@ class OrderRepositoryImpl @Inject constructor(
     override suspend fun promotions(
         customerId: String,
         lines: List<CartLine>,
-    ): DataResult<List<EarnedPromotion>> = try {
+    ): DataResult<PromotionSummary> = try {
         val body = service.promotions(
             PromotionsRequest(
                 customerId = customerId,
@@ -110,7 +113,9 @@ class OrderRepositoryImpl @Inject constructor(
         ).orThrow()
 
         DataResult.Success(
-            body.earned.map { e ->
+            PromotionSummary(
+                orderAmount = body.orderAmount,
+                earned = body.earned.map { e ->
                 EarnedPromotion(
                     sequenceId = e.sequenceId,
                     programCode = e.programCode,
@@ -134,8 +139,27 @@ class OrderRepositoryImpl @Inject constructor(
                             chosen = g.chosen,
                         )
                     },
-                )
-            },
+                    )
+                },
+                suggestions = body.suggestions.map { s ->
+                    PromotionSuggestion(
+                        sequenceId = s.sequenceId,
+                        programName = s.programName,
+                        sequenceName = s.sequenceName,
+                        breakName = s.breakName,
+                        scope = PromotionScope.fromWire(s.scope),
+                        reward = PromotionReward.fromWire(s.reward),
+                        neededQty = s.neededQty,
+                        neededAmount = s.neededAmount,
+                        productName = s.productName,
+                        uomCode = s.uomCode,
+                        rewardAmount = s.rewardAmount.toLong(),
+                        rewardItems = s.rewardItems.map { r ->
+                            SuggestionReward(r.productName, r.uomCode, r.qty)
+                        },
+                    )
+                },
+            ),
         )
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())
