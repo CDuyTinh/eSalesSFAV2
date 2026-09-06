@@ -133,3 +133,24 @@ data class SurveyAnswerPayload(
     @SerialName("answer_value") val answerValue: Double? = null,
     @SerialName("answer_bool") val answerBool: Boolean? = null,
 )
+
+/**
+ * One asset's check. `posm_item_id` absent is the deliberate second shape: an
+ * outlet holding no POSM, where the rep is recording that they looked and there
+ * was nothing to count.
+ */
+@Serializable
+data class PosmCheckPayload(
+    val id: String,
+    @SerialName("visit_id") val visitId: String,
+    @SerialName("program_id") val programId: String? = null,
+    @SerialName("posm_item_id") val itemId: String? = null,
+    @SerialName("counted_qty") val countedQty: Int? = null,
+    /** usable | repairable | unusable, the legacy's three Result codes. */
+    val condition: String? = null,
+    val remark: String? = null,
+    val suggestion: String? = null,
+    @SerialName("check_date") val checkDate: String? = null,
+    @SerialName("client_created_at") val clientCreatedAt: String,
+    val photos: List<AuditPhotoPayload> = emptyList(),
+)

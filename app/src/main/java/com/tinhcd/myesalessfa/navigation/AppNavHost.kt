@@ -22,6 +22,7 @@ import com.tinhcd.myesalessfa.feature.leave.LeaveScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.DisplayAuditScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.FeedbackScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.NoteStepScreen
+import com.tinhcd.myesalessfa.feature.incall.steps.PosmScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.StockCountScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.SurveyScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.TakeOrderScreen
@@ -259,6 +260,9 @@ fun AppNavHost(
 
                 SupportedSteps.DISPLAY_REMARK ->
                     DisplayAuditScreen(onDone = { navController.popBackStack() })
+
+                SupportedSteps.POSM_STATUS ->
+                    PosmScreen(onDone = { navController.popBackStack() })
 
                 // Every questionnaire step shares this screen. Adding another is a
                 // survey_type row naming its form id, plus that id in SupportedSteps —

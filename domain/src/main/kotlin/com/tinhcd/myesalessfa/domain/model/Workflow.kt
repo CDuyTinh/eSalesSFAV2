@@ -80,14 +80,18 @@ object SupportedSteps {
     /**
      * The questionnaire steps, which all share one screen. A step added here needs no
      * new screen — only a `survey_type` row naming its form id.
+     *
+     * POSM used to be one of them and is not: it turned out to be an asset check
+     * rather than a questionnaire, and it now has a screen of its own.
      */
-    val surveyFormIds: Set<String> = setOf(POSM_STATUS, MARKET_INFO)
+    val surveyFormIds: Set<String> = setOf(MARKET_INFO)
 
     val formIds: Set<String> = setOf(
         OUTSIDE_CHECKING,
         STOCK_OUTLET,
         TAKE_ORDER,
         DISPLAY_REMARK,
+        POSM_STATUS,
         FEEDBACK,
     ) + surveyFormIds
 }

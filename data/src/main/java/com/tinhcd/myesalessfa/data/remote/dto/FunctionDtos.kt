@@ -670,3 +670,48 @@ data class DisplayProgramDto(
     val achieved: Boolean? = null,
     @SerialName("photo_count") val photoCount: Int = 0,
 )
+
+/**
+ * POSM at an outlet and the outlet's outstanding requests, in one read. Both
+ * halves of the legacy's two-tab screen, which loaded them from one proc.
+ */
+@Serializable
+data class PosmDto(
+    val placed: List<PosmPlacedDto> = emptyList(),
+    val registrations: List<PosmRegistrationDto> = emptyList(),
+)
+
+@Serializable
+data class PosmPlacedDto(
+    @SerialName("program_id") val programId: String,
+    @SerialName("program_code") val programCode: String,
+    @SerialName("program_name") val programName: String,
+    @SerialName("posm_item_id") val itemId: String,
+    @SerialName("item_code") val itemCode: String,
+    @SerialName("item_name") val itemName: String,
+    @SerialName("unit_name") val unitName: String = "Cái",
+    @SerialName("image_url") val imageUrl: String? = null,
+    @SerialName("placed_qty") val placedQty: Int = 0,
+    /** Null until this visit checks the asset. */
+    @SerialName("counted_qty") val countedQty: Int? = null,
+    val condition: String? = null,
+    val remark: String? = null,
+    val suggestion: String? = null,
+    @SerialName("photo_count") val photoCount: Int = 0,
+)
+
+@Serializable
+data class PosmRegistrationDto(
+    @SerialName("program_id") val programId: String,
+    @SerialName("program_code") val programCode: String,
+    @SerialName("program_name") val programName: String,
+    @SerialName("posm_item_id") val itemId: String,
+    @SerialName("item_code") val itemCode: String,
+    @SerialName("item_name") val itemName: String,
+    @SerialName("unit_name") val unitName: String = "Cái",
+    @SerialName("regis_qty") val regisQty: Int = 0,
+    @SerialName("approved_qty") val approvedQty: Int = 0,
+    @SerialName("delivered_qty") val deliveredQty: Int = 0,
+    val status: String = "pending",
+    @SerialName("registered_at") val registeredAt: String? = null,
+)
