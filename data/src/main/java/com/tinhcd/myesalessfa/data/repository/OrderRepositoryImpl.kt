@@ -3,6 +3,7 @@ package com.tinhcd.myesalessfa.data.repository
 import com.tinhcd.myesalessfa.data.remote.dto.CartItemDto
 import com.tinhcd.myesalessfa.data.remote.dto.CartPayload
 import com.tinhcd.myesalessfa.data.remote.dto.OrderLinePayload
+import com.tinhcd.myesalessfa.data.remote.dto.OrderManualPromotionPayload
 import com.tinhcd.myesalessfa.data.remote.dto.OrderPayload
 import com.tinhcd.myesalessfa.data.remote.dto.OrderPromotionChoicePayload
 import com.tinhcd.myesalessfa.data.remote.dto.PromotionsLineDto
@@ -13,6 +14,9 @@ import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.CartLine
 import com.tinhcd.myesalessfa.domain.model.DraftOrder
 import com.tinhcd.myesalessfa.domain.model.EarnedPromotion
+import com.tinhcd.myesalessfa.domain.model.ManualPromotion
+import com.tinhcd.myesalessfa.domain.model.ManualPromotionItem
+import com.tinhcd.myesalessfa.domain.model.ManualPromotionType
 import com.tinhcd.myesalessfa.domain.model.PromotionGift
 import com.tinhcd.myesalessfa.domain.model.PromotionReward
 import com.tinhcd.myesalessfa.domain.model.PromotionScope
@@ -69,6 +73,14 @@ class OrderRepositoryImpl @Inject constructor(
                         takeAmount = choice.takeAmount,
                         freeProductId = choice.freeProductId,
                         freeUomCode = choice.freeUomCode,
+                    )
+                },
+                // What the rep gave by hand. The server reads each entry's own
+                // value from the catalogue; only an editable one honours a number.
+                manualPromotions = order.promotions.appliedManual.values.map { applied ->
+                    OrderManualPromotionPayload(
+                        promotionId = applied.promotionId,
+                        amount = applied.amount,
                     )
                 },
             ),
@@ -135,6 +147,7 @@ class OrderRepositoryImpl @Inject constructor(
                             productCode = g.productCode,
                             productName = g.productName,
                             uomCode = g.uomCode,
+                            uomName = g.uomName.ifBlank { g.uomCode },
                             qty = g.qty,
                             chosen = g.chosen,
                         )
@@ -160,6 +173,28 @@ class OrderRepositoryImpl @Inject constructor(
                     )
                 },
             ),
+        )
+    } catch (e: Exception) {
+        DataResult.Failure(e.toAppError())
+    }
+
+    override suspend fun manualPromotions(
+        customerId: String,
+    ): DataResult<List<ManualPromotion>> = try {
+        DataResult.Success(
+            service.manualPromotions(customerId).orThrow().promotions.map { m ->
+                ManualPromotion(
+                    id = m.promotionId,
+                    code = m.code,
+                    name = m.name,
+                    type = ManualPromotionType.fromWire(m.promoType),
+                    value = m.value.toLong(),
+                    allowEdit = m.allowEdit,
+                    items = m.items.map { i ->
+                        ManualPromotionItem(i.productName, i.uomName, i.qty)
+                    },
+                )
+            },
         )
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())

@@ -48,6 +48,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -77,6 +78,9 @@ import com.tinhcd.myesalessfa.domain.model.EarnedPromotion
 import com.tinhcd.myesalessfa.domain.model.OrderLine
 import com.tinhcd.myesalessfa.domain.model.PromotionChoice
 import com.tinhcd.myesalessfa.domain.model.PromotionGift
+import com.tinhcd.myesalessfa.domain.model.AppliedManualPromotion
+import com.tinhcd.myesalessfa.domain.model.ManualPromotion
+import com.tinhcd.myesalessfa.domain.model.ManualPromotionType
 import com.tinhcd.myesalessfa.domain.model.PromotionReward
 import com.tinhcd.myesalessfa.domain.model.PromotionScope
 import com.tinhcd.myesalessfa.domain.model.PromotionSuggestion
@@ -769,6 +773,29 @@ private fun ConfirmPage(
                 }
             }
 
+            if (state.order.promotions.manualCatalogue.isNotEmpty()) {
+                item {
+                    Text(
+                        "Khuyến mãi tay",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+
+                items(
+                    state.order.promotions.manualCatalogue,
+                    key = { "manual-" + it.id },
+                ) { promo ->
+                    ManualPromotionCard(
+                        promo = promo,
+                        applied = state.order.promotions.appliedManual[promo.id],
+                        gross = state.order.subTotal,
+                        onApply = { viewModel.onManualPromotion(promo.id, it) },
+                        onRemove = { viewModel.onRemoveManualPromotion(promo.id) },
+                    )
+                }
+            }
+
             item {
                 Text(
                     "Sản phẩm",
@@ -1276,7 +1303,7 @@ private fun GiftRow(
             )
         }
         Text(
-            "x${gift.qty} ${gift.uomCode}",
+            "x${gift.qty} ${gift.uomName}",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             color = MoneyGreen,
@@ -1363,6 +1390,126 @@ private fun SuggestionCard(suggestion: PromotionSuggestion) {
                     suggestion.programName,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Discounts the rep gives by judgement rather than by rule.
+ *
+ * Below the earned promotions, and visually separate from them, because the two
+ * answer different questions: one is what the basket qualified for, the other is
+ * what this rep decided to give. An invoice has to be able to tell them apart and
+ * so does the person reading the screen.
+ */
+@Composable
+private fun ManualPromotionCard(
+    promo: ManualPromotion,
+    applied: AppliedManualPromotion?,
+    gross: Long,
+    onApply: (Long?) -> Unit,
+    onRemove: () -> Unit,
+) {
+    val isOn = applied != null
+
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        promo.name,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Text(
+                        buildString {
+                            append(promo.code)
+                            when (promo.type) {
+                                ManualPromotionType.PERCENT ->
+                                    append(" | giảm ${promo.value}%")
+
+                                ManualPromotionType.AMOUNT -> {
+                                    append(" | ")
+                                    // "Up to" is the whole meaning of an editable
+                                    // entry, and hiding it would make a ceiling
+                                    // look like a fixed amount.
+                                    if (promo.allowEdit) append("tối đa ")
+                                    append(formatDong(promo.value))
+                                }
+
+                                ManualPromotionType.FREE_ITEM ->
+                                    append(
+                                        " | " + promo.items.joinToString(", ") { i ->
+                                            "${i.qty} ${i.uomName} ${i.productName}"
+                                        },
+                                    )
+                            }
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                Switch(
+                    checked = isOn,
+                    onCheckedChange = { on ->
+                        if (on) {
+                            // An editable entry starts at its ceiling: the rep
+                            // reduces it if this shop has earned less, which is
+                            // the way round that needs the fewest taps.
+                            onApply(if (promo.allowEdit) promo.value else null)
+                        } else {
+                            onRemove()
+                        }
+                    },
+                )
+            }
+
+            // The amount, when the entry lets the rep set one.
+            if (isOn && promo.allowEdit && promo.type == ManualPromotionType.AMOUNT) {
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "Số tiền",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f),
+                    )
+                    QtyStepper(
+                        qty = ((applied?.amount ?: promo.value) / 1000).toInt(),
+                        // Stepped in thousands. A rep giving support money moves
+                        // in notes, not in dong, and a stepper that took ten taps
+                        // to reach 10.000 would be used once.
+                        onQtyChange = { thousands ->
+                            onApply(
+                                (thousands.toLong() * 1000)
+                                    .coerceIn(0L, promo.value),
+                            )
+                        },
+                        placeholder = "0",
+                    )
+                }
+                Text(
+                    formatDong(applied?.amount ?: promo.value) +
+                        " (tối đa ${formatDong(promo.value)})",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            if (isOn && promo.type == ManualPromotionType.PERCENT) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "-" + formatDong(gross * promo.value / 100),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = MoneyGreen,
                 )
             }
         }

@@ -649,6 +649,10 @@ begin
                             'product_code', p.code,
                             'product_name', p.name,
                             'uom_code', fi.uom_code,
+                            -- The code is what submit_order matches a product_uom
+                            -- on; the name is what the rep reads. Both travel,
+                            -- because neither can stand in for the other.
+                            'uom_name', fu.name,
                             'qty', fi.free_qty * v_p,
                             -- Everything is given when the list is a bundle; when
                             -- it is a set of alternatives only the first arrives
@@ -659,6 +663,7 @@ begin
                         ) as item
                     from discount_free_item fi
                     join product p on p.id = fi.product_id
+                    join uom fu on fu.code = fi.uom_code
                     where fi.sequence_id = v_seq.sequence_id
                 ) ranked;
             end if;

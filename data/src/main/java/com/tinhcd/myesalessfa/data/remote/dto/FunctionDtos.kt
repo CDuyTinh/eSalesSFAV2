@@ -772,6 +772,8 @@ data class PromotionGiftDto(
     @SerialName("product_code") val productCode: String = "",
     @SerialName("product_name") val productName: String = "",
     @SerialName("uom_code") val uomCode: String,
+    /** The unit as the rep reads it; the code is what the server matches on. */
+    @SerialName("uom_name") val uomName: String = "",
     val qty: Int = 0,
     val chosen: Boolean = false,
 )
@@ -788,4 +790,31 @@ data class PromotionsLineDto(
     @SerialName("product_id") val productId: String,
     @SerialName("uom_code") val uomCode: String,
     val qty: Int,
+)
+
+/** The manual-discount catalogue a rep may draw on at one outlet. */
+@Serializable
+data class ManualPromotionsDto(
+    val promotions: List<ManualPromotionDto> = emptyList(),
+)
+
+@Serializable
+data class ManualPromotionDto(
+    @SerialName("promotion_id") val promotionId: String,
+    val code: String = "",
+    val name: String = "",
+    @SerialName("promo_type") val promoType: String = "amount",
+    val value: Double = 0.0,
+    @SerialName("allow_edit") val allowEdit: Boolean = false,
+    val items: List<ManualPromotionItemDto> = emptyList(),
+)
+
+@Serializable
+data class ManualPromotionItemDto(
+    @SerialName("product_id") val productId: String,
+    @SerialName("product_code") val productCode: String = "",
+    @SerialName("product_name") val productName: String = "",
+    @SerialName("uom_code") val uomCode: String,
+    @SerialName("uom_name") val uomName: String = "",
+    val qty: Int = 0,
 )

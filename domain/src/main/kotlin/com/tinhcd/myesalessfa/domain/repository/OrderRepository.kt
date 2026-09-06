@@ -3,6 +3,7 @@ package com.tinhcd.myesalessfa.domain.repository
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.CartLine
 import com.tinhcd.myesalessfa.domain.model.DraftOrder
+import com.tinhcd.myesalessfa.domain.model.ManualPromotion
 import com.tinhcd.myesalessfa.domain.model.PromotionSummary
 
 interface OrderRepository {
@@ -43,4 +44,13 @@ interface OrderRepository {
         customerId: String,
         lines: List<CartLine>,
     ): DataResult<PromotionSummary>
+
+    /**
+     * Discounts the rep may apply by hand at this outlet today.
+     *
+     * Separate from [promotions] because it does not depend on the basket: the
+     * order screen loads it once when it opens, while the automatic preview is
+     * refreshed on every edit.
+     */
+    suspend fun manualPromotions(customerId: String): DataResult<List<ManualPromotion>>
 }

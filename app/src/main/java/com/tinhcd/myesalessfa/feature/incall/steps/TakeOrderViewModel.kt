@@ -9,6 +9,7 @@ import com.tinhcd.myesalessfa.domain.model.DraftOrder
 import com.tinhcd.myesalessfa.domain.model.OrderLine
 import com.tinhcd.myesalessfa.domain.model.OrderSuggestion
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
+import com.tinhcd.myesalessfa.domain.model.AppliedManualPromotion
 import com.tinhcd.myesalessfa.domain.model.PromotionChoice
 import com.tinhcd.myesalessfa.domain.model.PromotionSummary
 import com.tinhcd.myesalessfa.domain.model.PricedUnit
@@ -265,6 +266,23 @@ class TakeOrderViewModel @Inject constructor(
                     // A basket restored from the server has earned whatever it
                     // earns; the rep should see that before touching anything.
                     refreshPromotions()
+
+                    // The manual catalogue does not depend on the basket, so it
+                    // is fetched once here rather than on every edit. A failure
+                    // is silent: the rep loses the ability to give a discount by
+                    // hand, not the ability to take the order.
+                    when (val m = orderRepository.manualPromotions(customerId)) {
+                        is DataResult.Success -> _state.update {
+                            it.copy(
+                                order = it.order.copy(
+                                    promotions = it.order.promotions
+                                        .copy(manualCatalogue = m.data),
+                                ),
+                            )
+                        }
+
+                        is DataResult.Failure -> Unit
+                    }
                 }
 
                 is DataResult.Failure -> _state.update {
@@ -590,7 +608,33 @@ class TakeOrderViewModel @Inject constructor(
      * goods. Nothing is recalculated here: the amounts already came from the
      * server, and `submit_order` applies the choice against its own recount.
      */
+    /**
+     * Applies a discount by hand, or takes it back off.
+     *
+     * Nothing is recalculated here beyond the total the rep is reading: the
+     * server values the entry from its own catalogue when the order is booked,
+     * and refuses an amount above the entry's ceiling rather than clamping it.
+     */
+    fun onManualPromotion(promotionId: String, amount: Long?) = _state.update {
+        it.copy(
+            order = it.order.copy(
+                promotions = it.order.promotions.withManual(
+                    AppliedManualPromotion(promotionId, amount),
+                ),
+            ),
+        )
+    }
+
+    fun onRemoveManualPromotion(promotionId: String) = _state.update {
+        it.copy(
+            order = it.order.copy(
+                promotions = it.order.promotions.withoutManual(promotionId),
+            ),
+        )
+    }
+
     fun onPromotionChoice(choice: PromotionChoice) = _state.update {
+
         it.copy(order = it.order.copy(promotions = it.order.promotions.withChoice(choice)))
     }
 

@@ -28,6 +28,9 @@ data class OrderPayload(
      * really offers and nothing more.
      */
     val promotions: List<OrderPromotionChoicePayload> = emptyList(),
+    /** Discounts the rep applied by hand, named rather than valued. */
+    @SerialName("manual_promotions")
+    val manualPromotions: List<OrderManualPromotionPayload> = emptyList(),
 )
 
 @Serializable
@@ -167,4 +170,15 @@ data class PosmCheckPayload(
     @SerialName("check_date") val checkDate: String? = null,
     @SerialName("client_created_at") val clientCreatedAt: String,
     val photos: List<AuditPhotoPayload> = emptyList(),
+)
+
+/**
+ * A manual discount the rep applied. The client names the catalogue entry; the
+ * server reads its value. `amount` is only honoured on an entry whose
+ * `allow_edit` says so, and only downwards.
+ */
+@Serializable
+data class OrderManualPromotionPayload(
+    @SerialName("promotion_id") val promotionId: String,
+    val amount: Long? = null,
 )
