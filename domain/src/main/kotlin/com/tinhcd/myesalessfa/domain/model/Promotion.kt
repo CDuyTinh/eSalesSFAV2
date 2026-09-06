@@ -121,6 +121,8 @@ data class PromotionSummary(
     val earned: List<EarnedPromotion> = emptyList(),
     /** The nearest levels still out of reach. Advice, not a commitment. */
     val suggestions: List<PromotionSuggestion> = emptyList(),
+    /** Rules a budget could not pay for. Advice about why, not money. */
+    val outOfBudget: List<OutOfBudgetPromotion> = emptyList(),
     /** Discounts the rep may apply by hand here. Loaded once, not per keystroke. */
     val manualCatalogue: List<ManualPromotion> = emptyList(),
     /** The ones they have applied, by catalogue id. */
@@ -202,11 +204,13 @@ data class PromotionSummary(
     fun prunedTo(
         fresh: List<EarnedPromotion>,
         freshSuggestions: List<PromotionSuggestion> = emptyList(),
+        freshOutOfBudget: List<OutOfBudgetPromotion> = emptyList(),
     ): PromotionSummary {
         val live = fresh.map { it.sequenceId }.toSet()
         return copy(
             earned = fresh,
             suggestions = freshSuggestions,
+            outOfBudget = freshOutOfBudget,
             choices = choices.filterKeys { it in live },
         )
     }
@@ -299,4 +303,18 @@ data class ManualPromotion(
 data class AppliedManualPromotion(
     val promotionId: String,
     val amount: Long? = null,
+)
+
+/**
+ * A rule the basket qualified for that a budget could not pay for.
+ *
+ * Shown rather than hidden. A promotion that silently stops applying looks like
+ * a bug to the person standing in the shop, and the rep is the one who has to
+ * explain it to the customer.
+ */
+data class OutOfBudgetPromotion(
+    val sequenceId: String,
+    val programName: String,
+    val sequenceName: String,
+    val budgetName: String,
 )
