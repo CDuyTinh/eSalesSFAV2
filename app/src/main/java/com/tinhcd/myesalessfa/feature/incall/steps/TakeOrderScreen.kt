@@ -1296,12 +1296,23 @@ private fun GiftRow(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            Text(
-                gift.productCode,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            // What the depot can cover, said only when it cannot cover it all.
+            // Silence is the ordinary case and deserves no line of its own.
+            if (selected && gift.isShort) {
+                Text(
+                    "Kho chỉ còn ${gift.availableQty} ${gift.uomName}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            } else {
+                Text(
+                    gift.productCode,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
+
         Text(
             "x${gift.qty} ${gift.uomName}",
             style = MaterialTheme.typography.bodyMedium,

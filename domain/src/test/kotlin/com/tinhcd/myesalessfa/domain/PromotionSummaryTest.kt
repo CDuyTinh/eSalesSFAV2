@@ -26,8 +26,8 @@ import org.junit.Test
  */
 class PromotionSummaryTest {
 
-    private val oreo = PromotionGift("p-oreo", "BK001", "Bánh Oreo", "PCS", "Le", 2, chosen = true)
-    private val cosy = PromotionGift("p-cosy", "BK002", "Bánh Cosy", "PCS", "Le", 1, chosen = false)
+    private val oreo = PromotionGift("p-oreo", "BK001", "Bánh Oreo", "PCS", "Le", 2, availableQty = 20, chosen = true)
+    private val cosy = PromotionGift("p-cosy", "BK002", "Bánh Cosy", "PCS", "Le", 1, availableQty = 0, chosen = false)
 
     private fun promo(
         id: String = "s1",
@@ -227,5 +227,17 @@ class PromotionSummaryTest {
         val summary = catalogue().withManual(AppliedManualPromotion("m-gone", 50_000))
 
         assertEquals(0, summary.manualDiscountOn(1_000_000))
+    }
+
+    @Test
+    fun `a gift the depot cannot cover is short, and one it can is not`() {
+        // Earned is not the same as deliverable. The screen says so on the row
+        // rather than quietly handing over fewer, because the rep is the one
+        // making the promise to the customer.
+        assertFalse(oreo.isShort)
+        assertTrue(cosy.isShort)
+        assertTrue(oreo.copy(qty = 50).isShort)
+        // Exactly enough is enough.
+        assertFalse(oreo.copy(qty = 20).isShort)
     }
 }

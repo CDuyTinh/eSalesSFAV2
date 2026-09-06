@@ -46,8 +46,20 @@ data class PromotionGift(
     val uomCode: String,
     val uomName: String,
     val qty: Int,
+    /**
+     * What the depot can actually give, in this gift's own unit.
+     *
+     * A promotion can be earned and still not be deliverable. The rep is told
+     * rather than handed a smaller gift silently: the promise they make to the
+     * customer is theirs to make, and finding out from the shop is the worst
+     * possible place to find out.
+     */
+    val availableQty: Int = 0,
     val chosen: Boolean,
-)
+) {
+    /** Fewer in the depot than the rule just promised. */
+    val isShort: Boolean get() = availableQty < qty
+}
 
 /**
  * One level of one rule, earned by the basket as it stands.
