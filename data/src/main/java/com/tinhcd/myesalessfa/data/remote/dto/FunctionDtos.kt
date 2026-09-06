@@ -715,3 +715,52 @@ data class PosmRegistrationDto(
     val status: String = "pending",
     @SerialName("registered_at") val registeredAt: String? = null,
 )
+
+/** What a basket has earned, as `calculate_promotions` computed it. */
+@Serializable
+data class PromotionsDto(
+    @SerialName("order_amount") val orderAmount: Long = 0,
+    @SerialName("total_discount") val totalDiscount: Long = 0,
+    val earned: List<EarnedPromotionDto> = emptyList(),
+)
+
+@Serializable
+data class EarnedPromotionDto(
+    @SerialName("sequence_id") val sequenceId: String,
+    @SerialName("program_code") val programCode: String = "",
+    @SerialName("program_name") val programName: String = "",
+    @SerialName("sequence_name") val sequenceName: String = "",
+    val scope: String = "line",
+    val reward: String = "amount",
+    @SerialName("break_id") val breakId: String,
+    @SerialName("break_name") val breakName: String = "",
+    val portion: Int = 1,
+    @SerialName("discount_amount") val discountAmount: Long = 0,
+    val percent: Double? = null,
+    @SerialName("needs_choice") val needsChoice: Boolean = false,
+    @SerialName("free_items") val freeItems: List<PromotionGiftDto> = emptyList(),
+)
+
+@Serializable
+data class PromotionGiftDto(
+    @SerialName("product_id") val productId: String,
+    @SerialName("product_code") val productCode: String = "",
+    @SerialName("product_name") val productName: String = "",
+    @SerialName("uom_code") val uomCode: String,
+    val qty: Int = 0,
+    val chosen: Boolean = false,
+)
+
+/** The basket a preview is asked about. */
+@Serializable
+data class PromotionsRequest(
+    @SerialName("customer_id") val customerId: String,
+    val lines: List<PromotionsLineDto>,
+)
+
+@Serializable
+data class PromotionsLineDto(
+    @SerialName("product_id") val productId: String,
+    @SerialName("uom_code") val uomCode: String,
+    val qty: Int,
+)

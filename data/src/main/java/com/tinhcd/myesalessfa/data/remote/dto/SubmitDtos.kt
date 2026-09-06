@@ -22,6 +22,20 @@ data class OrderPayload(
     @SerialName("client_total_amount") val clientTotalAmount: Long,
     @SerialName("client_created_at") val clientCreatedAt: String,
     val lines: List<OrderLinePayload>,
+    /**
+     * What the rep decided where a rule asked. `submit_order` recomputes every
+     * rule and every amount around these, so they choose between gifts a rule
+     * really offers and nothing more.
+     */
+    val promotions: List<OrderPromotionChoicePayload> = emptyList(),
+)
+
+@Serializable
+data class OrderPromotionChoicePayload(
+    @SerialName("sequence_id") val sequenceId: String,
+    @SerialName("take_amount") val takeAmount: Boolean = true,
+    @SerialName("free_product_id") val freeProductId: String? = null,
+    @SerialName("free_uom_code") val freeUomCode: String? = null,
 )
 
 @Serializable

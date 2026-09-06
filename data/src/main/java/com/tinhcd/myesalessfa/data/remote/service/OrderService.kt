@@ -3,6 +3,8 @@ package com.tinhcd.myesalessfa.data.remote.service
 import com.tinhcd.myesalessfa.data.remote.dto.CartDto
 import com.tinhcd.myesalessfa.data.remote.dto.CartPayload
 import com.tinhcd.myesalessfa.data.remote.dto.OrderPayload
+import com.tinhcd.myesalessfa.data.remote.dto.PromotionsDto
+import com.tinhcd.myesalessfa.data.remote.dto.PromotionsRequest
 import com.tinhcd.myesalessfa.data.remote.dto.WriteAckDto
 import retrofit2.Response
 import retrofit2.http.Body
@@ -18,6 +20,14 @@ interface OrderService {
      */
     @POST("submit-order")
     suspend fun submitOrder(@Body order: OrderPayload): Response<WriteAckDto>
+
+    /**
+     * What this basket would earn if it were sent now. A preview the order
+     * screen refreshes as the cart changes; `submit_order` recomputes all of it
+     * from the lines it actually books.
+     */
+    @POST("promotions")
+    suspend fun promotions(@Body request: PromotionsRequest): Response<PromotionsDto>
 
     /** The basket this rep has building for one outlet. */
     @GET("cart")

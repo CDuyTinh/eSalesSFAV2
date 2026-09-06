@@ -4,11 +4,18 @@ import com.tinhcd.myesalessfa.data.remote.dto.CartItemDto
 import com.tinhcd.myesalessfa.data.remote.dto.CartPayload
 import com.tinhcd.myesalessfa.data.remote.dto.OrderLinePayload
 import com.tinhcd.myesalessfa.data.remote.dto.OrderPayload
+import com.tinhcd.myesalessfa.data.remote.dto.OrderPromotionChoicePayload
+import com.tinhcd.myesalessfa.data.remote.dto.PromotionsLineDto
+import com.tinhcd.myesalessfa.data.remote.dto.PromotionsRequest
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import com.tinhcd.myesalessfa.data.remote.service.OrderService
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.CartLine
 import com.tinhcd.myesalessfa.domain.model.DraftOrder
+import com.tinhcd.myesalessfa.domain.model.EarnedPromotion
+import com.tinhcd.myesalessfa.domain.model.PromotionGift
+import com.tinhcd.myesalessfa.domain.model.PromotionReward
+import com.tinhcd.myesalessfa.domain.model.PromotionScope
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -51,6 +58,16 @@ class OrderRepositoryImpl @Inject constructor(
                         qty = line.qty,
                     )
                 },
+                // Only the rules the rep actually answered. The server recomputes
+                // every rule and every amount around these.
+                promotions = order.promotions.choices.values.map { choice ->
+                    OrderPromotionChoicePayload(
+                        sequenceId = choice.sequenceId,
+                        takeAmount = choice.takeAmount,
+                        freeProductId = choice.freeProductId,
+                        freeUomCode = choice.freeUomCode,
+                    )
+                },
             ),
         ).orThrow()
         DataResult.Success(Unit)
@@ -77,6 +94,49 @@ class OrderRepositoryImpl @Inject constructor(
             ),
         ).orThrow()
         DataResult.Success(Unit)
+    } catch (e: Exception) {
+        DataResult.Failure(e.toAppError())
+    }
+
+    override suspend fun promotions(
+        customerId: String,
+        lines: List<CartLine>,
+    ): DataResult<List<EarnedPromotion>> = try {
+        val body = service.promotions(
+            PromotionsRequest(
+                customerId = customerId,
+                lines = lines.map { PromotionsLineDto(it.productId, it.uomCode, it.qty) },
+            ),
+        ).orThrow()
+
+        DataResult.Success(
+            body.earned.map { e ->
+                EarnedPromotion(
+                    sequenceId = e.sequenceId,
+                    programCode = e.programCode,
+                    programName = e.programName,
+                    sequenceName = e.sequenceName,
+                    scope = PromotionScope.fromWire(e.scope),
+                    reward = PromotionReward.fromWire(e.reward),
+                    breakId = e.breakId,
+                    breakName = e.breakName,
+                    portion = e.portion,
+                    discountAmount = e.discountAmount,
+                    percent = e.percent,
+                    needsChoice = e.needsChoice,
+                    gifts = e.freeItems.map { g ->
+                        PromotionGift(
+                            productId = g.productId,
+                            productCode = g.productCode,
+                            productName = g.productName,
+                            uomCode = g.uomCode,
+                            qty = g.qty,
+                            chosen = g.chosen,
+                        )
+                    },
+                )
+            },
+        )
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())
     }

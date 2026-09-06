@@ -3,6 +3,7 @@ package com.tinhcd.myesalessfa.domain.repository
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.CartLine
 import com.tinhcd.myesalessfa.domain.model.DraftOrder
+import com.tinhcd.myesalessfa.domain.model.EarnedPromotion
 
 interface OrderRepository {
     /**
@@ -29,4 +30,17 @@ interface OrderRepository {
      * it is got wrong.
      */
     suspend fun saveCart(customerId: String, lines: List<CartLine>): DataResult<Unit>
+
+    /**
+     * What this basket would earn if it were sent now.
+     *
+     * A preview, refreshed as the cart changes so the rep can say "two more cases
+     * and there is one free" while the customer is still deciding. `submit_order`
+     * recomputes every rule from the lines it actually books, so nothing read
+     * here can move money on its own.
+     */
+    suspend fun promotions(
+        customerId: String,
+        lines: List<CartLine>,
+    ): DataResult<List<EarnedPromotion>>
 }
