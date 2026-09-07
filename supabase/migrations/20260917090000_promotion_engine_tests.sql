@@ -570,6 +570,80 @@ begin
         return next;
 
         -- =====================================================================
+        -- Combo: the ladder counts complete bundles
+        -- =====================================================================
+
+        -- One bundle is 2 Coca and 1 Pepsi. Levels are read as bundle counts, so
+        -- "Mua 10" here means ten bundles.
+        update discount_sequence
+        set is_bundle = true, reward = 'amount', budget_id = null
+        where id = c_seq;
+        update discount_condition_item set bundle_qty = 2 where sequence_id = c_seq;
+        insert into discount_condition_item (sequence_id, product_id, uom_code, bundle_qty)
+        values (c_seq, c_pepsi, 'CASE', 1);
+        update discount_break set break_qty = 3, name = 'Ba bộ' where id = c_hi;
+        update discount_break set break_qty = 1, name = 'Một bộ' where id = c_lo;
+
+        -- 12 Coca makes 6, 4 Pepsi makes 4: four bundles, so the three-bundle
+        -- level once, with one bundle left for the one-bundle level.
+        case_name := 'combo: số bộ là min của các tỉ lệ';
+        expected  := 'Ba bộ|1,Một bộ|1';
+        select coalesce(string_agg((e ->> 'break_name') || '|' || (e ->> 'portion'), ','), '-')
+        into actual
+        from jsonb_array_elements(
+            calculate_promotions(c_cust, jsonb_build_array(
+                jsonb_build_object('product_id', c_coca, 'uom_code', 'CASE', 'qty', 12),
+                jsonb_build_object('product_id', c_pepsi, 'uom_code', 'CASE', 'qty', 4))
+            ) -> 'earned') e;
+        passed := actual = expected;
+        return next;
+
+        case_name := 'combo: thiếu một thành phần thì không có bộ nào';
+        expected  := '-';
+        select coalesce(string_agg(e ->> 'break_name', ','), '-')
+        into actual
+        from jsonb_array_elements(
+            calculate_promotions(c_cust, jsonb_build_array(
+                jsonb_build_object('product_id', c_coca, 'uom_code', 'CASE', 'qty', 30))
+            ) -> 'earned') e;
+        passed := actual = expected;
+        return next;
+
+        -- Six Coca and three Pepsi is three bundles of each, evenly. Seven Coca
+        -- is three bundles and one case spare, which an exact rule refuses.
+        update discount_sequence set exact_qty = true where id = c_seq;
+
+        case_name := 'combo đúng chằn: chia hết và bằng nhau thì ăn';
+        expected  := 'Ba bộ';
+        select coalesce(string_agg(e ->> 'break_name', ','), '-')
+        into actual
+        from jsonb_array_elements(
+            calculate_promotions(c_cust, jsonb_build_array(
+                jsonb_build_object('product_id', c_coca, 'uom_code', 'CASE', 'qty', 6),
+                jsonb_build_object('product_id', c_pepsi, 'uom_code', 'CASE', 'qty', 3))
+            ) -> 'earned') e;
+        passed := actual = expected;
+        return next;
+
+        case_name := 'combo đúng chằn: dư một thành phần thì không ăn';
+        expected  := '-';
+        select coalesce(string_agg(e ->> 'break_name', ','), '-')
+        into actual
+        from jsonb_array_elements(
+            calculate_promotions(c_cust, jsonb_build_array(
+                jsonb_build_object('product_id', c_coca, 'uom_code', 'CASE', 'qty', 7),
+                jsonb_build_object('product_id', c_pepsi, 'uom_code', 'CASE', 'qty', 3))
+            ) -> 'earned') e;
+        passed := actual = expected;
+        return next;
+
+        update discount_sequence set exact_qty = false, is_bundle = false where id = c_seq;
+        delete from discount_condition_item where sequence_id = c_seq and product_id = c_pepsi;
+        update discount_condition_item set bundle_qty = 0 where sequence_id = c_seq;
+        update discount_break set break_qty = 10, name = 'Mua 10' where id = c_hi;
+        update discount_break set break_qty = 5, name = 'Mua 5' where id = c_lo;
+
+        -- =====================================================================
         -- An empty basket earns nothing and does not fall over
         -- =====================================================================
 
