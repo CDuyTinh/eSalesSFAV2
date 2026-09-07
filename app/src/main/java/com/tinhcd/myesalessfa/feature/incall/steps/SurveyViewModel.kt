@@ -41,6 +41,12 @@ class SurveyViewModel @Inject constructor(
     private val customerId: String = checkNotNull(savedStateHandle["customerId"])
     private val formId: String = checkNotNull(savedStateHandle["formId"])
 
+    /**
+     * Which questionnaire, when the step opened a named one. Null on the plain
+     * step route, where the step has only ever had one.
+     */
+    private val surveyTypeId: String? = savedStateHandle["surveyTypeId"]
+
     private val _state = MutableStateFlow(SurveyUiState())
     val state: StateFlow<SurveyUiState> = _state.asStateFlow()
 
@@ -51,7 +57,7 @@ class SurveyViewModel @Inject constructor(
     fun load() {
         _state.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
-            when (val result = surveyRepository.definition(formId)) {
+            when (val result = surveyRepository.definition(formId, surveyTypeId)) {
                 is DataResult.Success -> {
                     val definition = result.data
                     _state.update {

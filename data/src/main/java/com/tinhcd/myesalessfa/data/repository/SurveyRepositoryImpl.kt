@@ -41,8 +41,17 @@ class SurveyRepositoryImpl @Inject constructor(
      * server has no active questionnaire for it — which the screen reports rather than
      * showing an empty form the rep cannot submit.
      */
-    override suspend fun definition(formId: String): DataResult<SurveyDefinition?> = try {
-        val raw = configDao.surveyDefinition(formId)
+    override suspend fun definition(
+        formId: String,
+        surveyTypeId: String?,
+    ): DataResult<SurveyDefinition?> = try {
+        // Named where the step holds a list — market_info can run several at once,
+        // and picking the first would put the answers under the wrong campaign.
+        val raw = if (surveyTypeId != null) {
+            configDao.surveyDefinitionById(surveyTypeId)
+        } else {
+            configDao.surveyDefinitions(formId).firstOrNull()
+        }
         val dto = raw?.let { runCatching { json.decodeFromString<SurveyTypeDto>(it) }.getOrNull() }
         DataResult.Success(dto?.toDomain())
     } catch (e: Exception) {
@@ -58,6 +67,9 @@ class SurveyRepositoryImpl @Inject constructor(
                 id = UUID.randomUUID().toString(),
                 visitId = survey.visitId,
                 formId = survey.definition.formId,
+                // Named rather than left to the server to guess, which matters once
+                // a step holds more than one questionnaire.
+                surveyTypeId = survey.definition.id,
                 surveyDate = LocalDate.now().toString(),
                 note = survey.note.trim().ifBlank { null },
                 clientCreatedAt = OffsetDateTime.now(ZoneOffset.UTC).toString(),

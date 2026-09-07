@@ -181,7 +181,11 @@ class ConfigRepositoryImpl @Inject constructor(
         dao.clearSurveyDefinitions()
         dao.upsertSurveyDefinitions(
             bootstrap.surveys.map {
-                SurveyDefinitionEntity(formId = it.formId, json = json.encodeToString(it))
+                SurveyDefinitionEntity(
+                    id = it.id,
+                    formId = it.formId,
+                    json = json.encodeToString(it),
+                )
             },
         )
 

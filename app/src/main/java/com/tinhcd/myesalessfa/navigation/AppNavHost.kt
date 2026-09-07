@@ -22,6 +22,7 @@ import com.tinhcd.myesalessfa.feature.leave.LeaveScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.DisplayAuditScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.FeedbackScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.NoteStepScreen
+import com.tinhcd.myesalessfa.feature.incall.steps.MarketInfoScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.PosmScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.StockCountScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.SurveyScreen
@@ -70,15 +71,23 @@ object Routes {
     // The customer travels with the step, not just the visit: take_order prices
     // against the outlet's customer class, and re-deriving it from the visit
     // would be a second round trip inside a screen that already has one.
-    const val STEP = "step/{visitId}/{customerId}/{formId}"
+    // `surveyTypeId` names one questionnaire out of several, which only
+    // market_info has: its step opens a list, and the questionnaires on that list
+    // are reached through this same route with the chosen one named.
+    const val STEP = "step/{visitId}/{customerId}/{formId}?surveyTypeId={surveyTypeId}"
 
     fun checkIn(customerId: String) = "checkin/$customerId"
 
     fun customer(customerId: String, visitId: String? = null) =
         "customer/$customerId" + if (visitId != null) "?visitId=$visitId" else ""
 
-    fun step(visitId: String, customerId: String, formId: String) =
-        "step/$visitId/$customerId/$formId"
+    fun step(
+        visitId: String,
+        customerId: String,
+        formId: String,
+        surveyTypeId: String? = null,
+    ) = "step/$visitId/$customerId/$formId" +
+        if (surveyTypeId != null) "?surveyTypeId=$surveyTypeId" else ""
 }
 
 @Composable
@@ -240,10 +249,18 @@ fun AppNavHost(
                 navArgument("visitId") { type = NavType.StringType },
                 navArgument("customerId") { type = NavType.StringType },
                 navArgument("formId") { type = NavType.StringType },
+                navArgument("surveyTypeId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
             ),
         ) { entry ->
+            val formId = entry.arguments?.getString("formId")
+            val surveyTypeId = entry.arguments?.getString("surveyTypeId")
+
             // The registry of what this build can render lives in SupportedSteps.
-            when (entry.arguments?.getString("formId")) {
+            when (formId) {
                 // The last step still served by the generic note form. Feedback used
                 // to share it and outgrew it: it needs a topic and a voice note.
                 SupportedSteps.OUTSIDE_CHECKING ->
@@ -264,9 +281,36 @@ fun AppNavHost(
                 SupportedSteps.POSM_STATUS ->
                     PosmScreen(onDone = { navController.popBackStack() })
 
+                // The only step that opens a list rather than a form: an outlet owes
+                // every survey live for its branch today. A questionnaire on that
+                // list comes back through this same route with its id named, which
+                // is the `surveyTypeId != null` arm below.
+                SupportedSteps.MARKET_INFO ->
+                    if (surveyTypeId == null) {
+                        MarketInfoScreen(
+                            onDone = { navController.popBackStack() },
+                            onOpenQuestionnaire = { id ->
+                                navController.navigate(
+                                    Routes.step(
+                                        visitId = entry.arguments
+                                            ?.getString("visitId").orEmpty(),
+                                        customerId = entry.arguments
+                                            ?.getString("customerId").orEmpty(),
+                                        formId = SupportedSteps.MARKET_INFO,
+                                        surveyTypeId = id,
+                                    ),
+                                )
+                            },
+                        )
+                    } else {
+                        SurveyScreen(onDone = { navController.popBackStack() })
+                    }
+
                 // Every questionnaire step shares this screen. Adding another is a
                 // survey_type row naming its form id, plus that id in SupportedSteps —
-                // no branch of its own.
+                // no branch of its own. market_info is spoken for above: it opens a
+                // list first, and reaches this screen through the arm that names a
+                // questionnaire.
                 in SupportedSteps.surveyFormIds ->
                     SurveyScreen(onDone = { navController.popBackStack() })
 

@@ -132,6 +132,11 @@ data class SurveyPayload(
     val id: String,
     @SerialName("visit_id") val visitId: String,
     @SerialName("form_id") val formId: String,
+    /**
+     * Which questionnaire, where the step holds more than one. Omitted by the
+     * older shape, which the server still answers with the single active one.
+     */
+    @SerialName("survey_type_id") val surveyTypeId: String? = null,
     @SerialName("survey_date") val surveyDate: String,
     val note: String? = null,
     @SerialName("client_created_at") val clientCreatedAt: String,
@@ -181,4 +186,26 @@ data class PosmCheckPayload(
 data class OrderManualPromotionPayload(
     @SerialName("promotion_id") val promotionId: String,
     val amount: Long? = null,
+)
+
+/**
+ * A competitor survey, whole. `InsertAnswersCompetitorSurvey` took one answer at
+ * a time; a half-filed grid is not a state the rep ever meant to leave behind, so
+ * the whole thing travels at once.
+ */
+@Serializable
+data class CompetitorSurveyPayload(
+    @SerialName("visit_id") val visitId: String,
+    @SerialName("survey_id") val surveyId: String,
+    @SerialName("client_created_at") val clientCreatedAt: String,
+    val answers: List<CompetitorAnswerPayload> = emptyList(),
+)
+
+@Serializable
+data class CompetitorAnswerPayload(
+    @SerialName("product_id") val productId: String,
+    @SerialName("competitor_product_id") val competitorProductId: String,
+    @SerialName("criteria_id") val criteriaId: String,
+    val content: String,
+    val photos: List<AuditPhotoPayload> = emptyList(),
 )
