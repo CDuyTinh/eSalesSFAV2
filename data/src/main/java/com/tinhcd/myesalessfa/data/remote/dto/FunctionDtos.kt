@@ -830,3 +830,66 @@ data class ManualPromotionItemDto(
     @SerialName("uom_name") val uomName: String = "",
     val qty: Int = 0,
 )
+
+// -----------------------------------------------------------------------------
+// Thông tin thị trường
+//
+// The step returns a list of surveys rather than one questionnaire, of two kinds
+// that share nothing but the row shape the rep reads them in.
+// -----------------------------------------------------------------------------
+
+@Serializable
+data class MarketInfoDto(
+    val surveys: List<MarketInfoSurveyDto> = emptyList(),
+)
+
+@Serializable
+data class MarketInfoSurveyDto(
+    /** market | competitor. Anything else is read as a questionnaire. */
+    val kind: String,
+    val id: String,
+    val code: String,
+    val name: String,
+    @SerialName("from_date") val fromDate: String? = null,
+    @SerialName("to_date") val toDate: String? = null,
+    @SerialName("is_completed") val isCompleted: Boolean = false,
+    @SerialName("item_count") val itemCount: Int = 0,
+)
+
+@Serializable
+data class CompetitorSurveyDto(
+    val id: String,
+    val code: String,
+    val name: String,
+    val criteria: List<CompetitorCriterionDto> = emptyList(),
+    val items: List<CompetitorPairingDto> = emptyList(),
+)
+
+@Serializable
+data class CompetitorCriterionDto(
+    val id: String,
+    val code: String,
+    val name: String,
+    val hint: String? = null,
+    @SerialName("is_required") val isRequired: Boolean = true,
+)
+
+@Serializable
+data class CompetitorPairingDto(
+    @SerialName("product_id") val productId: String,
+    @SerialName("product_code") val productCode: String,
+    @SerialName("product_name") val productName: String,
+    @SerialName("competitor_product_id") val competitorProductId: String,
+    @SerialName("competitor_product") val competitorProduct: String,
+    @SerialName("competitor_id") val competitorId: String,
+    @SerialName("competitor_name") val competitorName: String,
+    /** Keyed by criterion id; empty until this visit answers something. */
+    val answers: Map<String, CompetitorAnswerDto> = emptyMap(),
+)
+
+@Serializable
+data class CompetitorAnswerDto(
+    val content: String = "",
+    /** Storage object names of what an earlier submission of this visit left. */
+    val photos: List<String> = emptyList(),
+)

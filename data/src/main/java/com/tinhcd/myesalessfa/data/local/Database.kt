@@ -5,6 +5,7 @@ import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.DeleteTable
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
@@ -13,6 +14,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.AutoMigrationSpec
 
 /**
+
  * The local store holds one kind of thing: reference data that is read on nearly
  * every screen and changes rarely — settings, the workflow definition, labels,
  * reason codes, questionnaires, and the product catalogue an order is priced from.
@@ -41,6 +43,7 @@ data class ReasonEntity(
 )
 
 /**
+
  * The in-call workflow definition, cached so the step list renders instantly
  * and still works in a shop with no signal.
  */
@@ -55,6 +58,7 @@ data class SalesStepEntity(
 )
 
 /**
+
  * The shell's tab list. Flat, with [parentCode] carrying the nesting, matching
  * both the table it came from and the shape the shell renders.
  */
@@ -77,12 +81,15 @@ data class TranslationEntity(
  *
  * Deliberately not four relational tables. The definition is only ever read whole —
  * the survey screen wants the entire tree or nothing — so normalising it on the device
- * would buy a join and cost the reassembly. Keyed by form id because that is how a
- * workflow step finds its own questionnaire.
+ * would buy a join and cost the reassembly.
+ *
+ * Keyed by its own id rather than by form id: market_info holds a list of
+ * questionnaires, and a table keyed by step would keep only the last of them.
  */
-@Entity(tableName = "survey_definition")
+@Entity(tableName = "survey_definition", indices = [Index("formId")])
 data class SurveyDefinitionEntity(
-    @PrimaryKey val formId: String,
+    @PrimaryKey val id: String,
+    val formId: String,
     val json: String,
 )
 
@@ -137,8 +144,12 @@ interface ConfigDao {
     @Query("DELETE FROM survey_definition")
     suspend fun clearSurveyDefinitions()
 
+    /** Every questionnaire configured for a step, in the order the server sent them. */
     @Query("SELECT json FROM survey_definition WHERE formId = :formId")
-    suspend fun surveyDefinition(formId: String): String?
+    suspend fun surveyDefinitions(formId: String): List<String>
+
+    @Query("SELECT json FROM survey_definition WHERE id = :id")
+    suspend fun surveyDefinitionById(id: String): String?
 }
 
 // -----------------------------------------------------------------------------
@@ -187,6 +198,7 @@ data class PriceRuleEntity(
 )
 
 /**
+
  * Must-stock lists, cached with the rest of the catalogue. Which ones apply to an
  * outlet depends on its channel and shop type, so the resolution happens on the
  * device — that is what lets the stock screen mark required SKUs with no signal.
@@ -263,6 +275,7 @@ interface CatalogDao {
 }
 
 /**
+
  * Drops the two tables that existed to let the app work offline: the outbox of
  * unsent writes, and the cached copy of a day's route.
  *
@@ -290,7 +303,7 @@ class DropOfflineTables : AutoMigrationSpec
         SurveyDefinitionEntity::class,
         MenuItemEntity::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = true,
     // Everything in here is reference data the app re-fetches on launch, so these
     // migrations are a courtesy rather than a safeguard — nothing kept locally is

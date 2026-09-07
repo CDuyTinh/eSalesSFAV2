@@ -12,6 +12,7 @@ import com.tinhcd.myesalessfa.data.remote.service.FeedbackService
 import com.tinhcd.myesalessfa.data.remote.service.FocusProductService
 import com.tinhcd.myesalessfa.data.remote.service.LeaveService
 import com.tinhcd.myesalessfa.data.remote.service.OrderService
+import com.tinhcd.myesalessfa.data.remote.service.MarketInfoService
 import com.tinhcd.myesalessfa.data.remote.service.PosmService
 import com.tinhcd.myesalessfa.data.remote.service.ReceivableService
 import com.tinhcd.myesalessfa.data.remote.service.ReportService
@@ -230,6 +231,11 @@ object NetworkModule {
     @Singleton
     fun providePosmService(retrofit: Retrofit): PosmService =
         retrofit.create(PosmService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideMarketInfoService(retrofit: Retrofit): MarketInfoService =
+        retrofit.create(MarketInfoService::class.java)
 
     @Provides
     @Singleton

@@ -5,6 +5,7 @@ import com.tinhcd.myesalessfa.data.repository.CatalogRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.CheckInRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.DashboardRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.DisplayAuditRepositoryImpl
+import com.tinhcd.myesalessfa.data.repository.MarketInfoRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.PosmRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.FeedbackRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.ConfigRepositoryImpl
@@ -29,6 +30,7 @@ import com.tinhcd.myesalessfa.domain.repository.CatalogRepository
 import com.tinhcd.myesalessfa.domain.repository.CheckInRepository
 import com.tinhcd.myesalessfa.domain.repository.DashboardRepository
 import com.tinhcd.myesalessfa.domain.repository.DisplayAuditRepository
+import com.tinhcd.myesalessfa.domain.repository.MarketInfoRepository
 import com.tinhcd.myesalessfa.domain.repository.PosmRepository
 import com.tinhcd.myesalessfa.domain.repository.FeedbackRepository
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
@@ -157,6 +159,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindPosmRepository(impl: PosmRepositoryImpl): PosmRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMarketInfoRepository(
+        impl: MarketInfoRepositoryImpl,
+    ): MarketInfoRepository
 
     @Binds
     @Singleton
