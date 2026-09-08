@@ -4,8 +4,13 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.core.audio.VoiceRecorder
+import com.tinhcd.myesalessfa.core.location.LocationProvider
+import com.tinhcd.myesalessfa.core.photo.PhotoStore
+import com.tinhcd.myesalessfa.core.photo.PhotoTarget
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.DraftFeedback
+import com.tinhcd.myesalessfa.domain.model.FeedbackPhoto
+import com.tinhcd.myesalessfa.domain.model.FeedbackRecording
 import com.tinhcd.myesalessfa.domain.model.ReasonCode
 import com.tinhcd.myesalessfa.domain.model.ReasonKind
 import com.tinhcd.myesalessfa.domain.model.StepConfig
@@ -13,8 +18,8 @@ import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
 import com.tinhcd.myesalessfa.domain.repository.FeedbackRepository
 import com.tinhcd.myesalessfa.domain.repository.WorkflowRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,25 +35,28 @@ data class FeedbackUiState(
     val recording: Boolean = false,
     /** Seconds captured so far while recording, for a live counter. */
     val recordingSeconds: Int = 0,
-    val playing: Boolean = false,
+    /** Which clip is playing, by local path. Null when nothing is. */
+    val playingPath: String? = null,
+    val capturing: Boolean = false,
     val submitting: Boolean = false,
     val error: String? = null,
     val finished: Boolean = false,
 ) {
-    val canSubmit: Boolean get() = !loading && !submitting && !recording && draft.canSubmit
+    val canSubmit: Boolean
+        get() = !loading && !submitting && !recording && !capturing && draft.canSubmit
 }
 
 /**
  * Backs the `feedback` step.
  *
  * Split out of [NoteStepViewModel], which it used to share. That screen records free
- * text and nothing else, and feedback has outgrown it: a coded topic so head office
- * can route what the customer said, and a voice note, which `sales_step` has been
- * advertising through `allow_audio` since the workflow was first seeded without
- * anything honouring it.
+ * text and nothing else, and feedback has outgrown it three times over: a coded topic
+ * so head office can route what the customer said, photographs of whatever is being
+ * complained about, and voice, because a rep in a loud shop cannot type Vietnamese
+ * quickly.
  *
- * Everything variable is still read from the step's own row — the heading, the minimum
- * note length, whether audio is offered at all.
+ * Everything variable is read from the step's own row — the heading, the minimum note
+ * length, how many photos, whether audio is offered and how long it may run.
  */
 @HiltViewModel
 class FeedbackViewModel @Inject constructor(
@@ -57,6 +65,8 @@ class FeedbackViewModel @Inject constructor(
     private val configRepository: ConfigRepository,
     private val feedbackRepository: FeedbackRepository,
     private val recorder: VoiceRecorder,
+    private val photoStore: PhotoStore,
+    private val locationProvider: LocationProvider,
 ) : ViewModel() {
 
     private val visitId: String = checkNotNull(savedStateHandle["visitId"])
@@ -66,6 +76,12 @@ class FeedbackViewModel @Inject constructor(
     val state: StateFlow<FeedbackUiState> = _state.asStateFlow()
 
     private var ticker: Job? = null
+
+    /** The file the camera is currently writing into, if any. */
+    private var pendingPhoto: PhotoTarget? = null
+
+    /** The file the recorder is currently writing into, if any. */
+    private var pendingClip: String? = null
 
     init {
         viewModelScope.launch {
@@ -85,6 +101,14 @@ class FeedbackViewModel @Inject constructor(
                         // note step applies.
                         noteMinLength = (definition?.configInt(StepConfig.NOTE_MIN_LENGTH) ?: 0)
                             .let { if (definition?.isRequired == true) maxOf(1, it) else it },
+                        // No floor by default: plenty of feedback is about a price or a
+                        // delivery, with nothing to point a camera at.
+                        photoMin = definition?.configInt(StepConfig.PHOTO_MIN, default = 0) ?: 0,
+                        photoMax = definition?.configInt(StepConfig.PHOTO_MAX, default = 5) ?: 5,
+                        audioMaxSeconds = definition
+                            ?.configInt(StepConfig.AUDIO_MAX_SECONDS, default = 300) ?: 300,
+                        audioTotalSeconds = definition
+                            ?.configInt(StepConfig.AUDIO_TOTAL_SECONDS, default = 900) ?: 900,
                         allowAudio = definition?.configBoolean(StepConfig.ALLOW_AUDIO) ?: false,
                     ),
                 )
@@ -102,38 +126,99 @@ class FeedbackViewModel @Inject constructor(
         it.copy(draft = it.draft.copy(topicId = next), error = null)
     }
 
+    // -------------------------------------------------------------------------
+    // Photos
+    // -------------------------------------------------------------------------
+
+    /**
+     * Hands the camera somewhere to write. Called immediately before launching it, so
+     * the file exists by the time the camera app resolves the uri.
+     */
+    fun newPhotoTarget(): PhotoTarget = photoStore.newTarget().also {
+        pendingPhoto = it
+        _state.update { state -> state.copy(capturing = true, error = null) }
+    }
+
+    /**
+     * Records the photo the camera just wrote. Compressed here rather than at upload
+     * time so the rep waits for it once, standing in the shop, instead of the upload
+     * stalling on it later.
+     */
+    fun onPhotoTaken(saved: Boolean) {
+        val target = pendingPhoto
+        pendingPhoto = null
+
+        if (!saved || target == null) {
+            // Cancelled. The camera may still have created an empty file.
+            target?.let { photoStore.delete(it.path) }
+            _state.update { it.copy(capturing = false) }
+            return
+        }
+
+        viewModelScope.launch {
+            val size = photoStore.compress(target.path)
+            if (size <= 0L) {
+                photoStore.delete(target.path)
+                _state.update {
+                    it.copy(capturing = false, error = "Không lưu được ảnh, thử lại")
+                }
+                return@launch
+            }
+
+            val point = runCatching { locationProvider.currentLocation() }.getOrNull()
+
+            _state.update {
+                it.copy(
+                    capturing = false,
+                    draft = it.draft.withPhoto(
+                        FeedbackPhoto(
+                            localPath = target.path,
+                            takenAtEpochMs = System.currentTimeMillis(),
+                            lat = point?.lat,
+                            lng = point?.lng,
+                            sizeBytes = size,
+                        ),
+                    ),
+                )
+            }
+        }
+    }
+
+    /** Removes a rejected shot and the file behind it — nothing is uploaded yet. */
+    fun onRemovePhoto(localPath: String) {
+        photoStore.delete(localPath)
+        _state.update { it.copy(draft = it.draft.withoutPhoto(localPath), error = null) }
+    }
+
+    // -------------------------------------------------------------------------
+    // Recordings
+    // -------------------------------------------------------------------------
+
     fun startRecording() {
         val current = _state.value
-        if (current.recording || !current.draft.allowAudio) return
+        if (current.recording || !current.draft.canRecord) return
 
-        // Re-recording replaces: two files for one visit and only one column to point
-        // at them would leave the older bytes stranded on the device for ever.
-        current.draft.audioPath?.let { recorder.delete(it) }
-        recorder.stopPlayback()
+        stopPlayback()
 
-        val started = runCatching { recorder.start() }
-        val path = started.getOrElse { error ->
+        // The clip stops at whichever comes first: the per-clip cap, or what is left
+        // of the step's total. A rep who keeps recording after the cap starts a new
+        // clip rather than losing the rest of the sentence.
+        val limit = current.draft.nextClipSeconds
+
+        val path = runCatching { recorder.start(limit) }.getOrElse { error ->
             _state.update {
                 it.copy(
                     error = "Không bật được micro" + (error.message?.let { m -> ": $m" } ?: ""),
-                    draft = it.draft.copy(audioPath = null, audioSeconds = 0),
                 )
             }
             return
         }
 
-        _state.update {
-            it.copy(
-                recording = true,
-                recordingSeconds = 0,
-                playing = false,
-                error = null,
-                draft = it.draft.copy(audioPath = path, audioSeconds = 0),
-            )
-        }
+        pendingClip = path
+        _state.update { it.copy(recording = true, recordingSeconds = 0, error = null) }
 
-        // The recorder enforces its own two-minute ceiling, so this only has to keep
-        // the counter honest and notice when the ceiling was reached.
+        // The recorder enforces the ceiling itself, so this only has to keep the
+        // counter honest and notice when the ceiling was reached.
         ticker = viewModelScope.launch {
             while (recorder.isRecording) {
                 _state.update { it.copy(recordingSeconds = recorder.elapsedSeconds()) }
@@ -148,48 +233,52 @@ class FeedbackViewModel @Inject constructor(
         ticker?.cancel()
         ticker = null
 
+        val path = pendingClip
+        pendingClip = null
         val seconds = recorder.stop()
+
         _state.update {
             it.copy(
                 recording = false,
                 recordingSeconds = 0,
                 // Under a second is nothing to listen to and the recorder has already
-                // thrown the file away, so the draft must not keep pointing at it.
-                draft = if (seconds < 1) {
-                    it.draft.copy(audioPath = null, audioSeconds = 0)
+                // thrown the file away, so nothing must be added pointing at it.
+                draft = if (seconds < 1 || path == null) {
+                    it.draft
                 } else {
-                    it.draft.copy(audioSeconds = seconds)
+                    it.draft.withRecording(
+                        FeedbackRecording(
+                            localPath = path,
+                            seconds = seconds,
+                            recordedAtEpochMs = System.currentTimeMillis(),
+                            sizeBytes = recorder.sizeOf(path),
+                        ),
+                    )
                 },
                 error = if (seconds < 1) "Bản ghi quá ngắn" else it.error,
             )
         }
     }
 
-    fun playRecording() {
-        val path = _state.value.draft.audioPath ?: return
-        _state.update { it.copy(playing = true) }
-        recorder.play(path) {
-            _state.update { it.copy(playing = false) }
+    fun playRecording(localPath: String) {
+        _state.update { it.copy(playingPath = localPath) }
+        recorder.play(localPath) {
+            _state.update { it.copy(playingPath = null) }
         }
     }
 
     fun stopPlayback() {
         recorder.stopPlayback()
-        _state.update { it.copy(playing = false) }
+        _state.update { it.copy(playingPath = null) }
     }
 
-    fun deleteRecording() {
-        val current = _state.value
-        recorder.stopPlayback()
-        current.draft.audioPath?.let { recorder.delete(it) }
-        _state.update {
-            it.copy(
-                playing = false,
-                draft = it.draft.copy(audioPath = null, audioSeconds = 0),
-                error = null,
-            )
-        }
+    fun onRemoveRecording(localPath: String) {
+        if (_state.value.playingPath == localPath) stopPlayback()
+        recorder.delete(localPath)
+        _state.update { it.copy(draft = it.draft.withoutRecording(localPath), error = null) }
     }
+
+    // -------------------------------------------------------------------------
 
     fun submit() {
         val current = _state.value
@@ -202,7 +291,7 @@ class FeedbackViewModel @Inject constructor(
                 // QUEUED is not surfaced: the feedback is recorded either way, and the
                 // route screen already shows how much is waiting to reach the server.
                 is DataResult.Success -> _state.update {
-                    it.copy(submitting = false, playing = false, finished = true)
+                    it.copy(submitting = false, playingPath = null, finished = true)
                 }
 
                 is DataResult.Failure -> _state.update {
@@ -218,5 +307,12 @@ class FeedbackViewModel @Inject constructor(
         ticker?.cancel()
         if (recorder.isRecording) recorder.stop()
         recorder.stopPlayback()
+
+        // Nothing has been uploaded yet, so the files go with the draft.
+        val draft = _state.value.draft
+        if (!_state.value.finished) {
+            draft.photos.forEach { photoStore.delete(it.localPath) }
+            draft.recordings.forEach { recorder.delete(it.localPath) }
+        }
     }
 }

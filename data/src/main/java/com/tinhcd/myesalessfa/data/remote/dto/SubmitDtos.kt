@@ -116,9 +116,23 @@ data class FeedbackPayload(
     @SerialName("feedback_date") val feedbackDate: String,
     @SerialName("topic_id") val topicId: String? = null,
     val note: String,
-    @SerialName("audio_path") val audioPath: String? = null,
-    @SerialName("audio_seconds") val audioSeconds: Int? = null,
+    /** What the rep photographed. Sized by the step's photo_min and photo_max. */
+    val photos: List<AuditPhotoPayload> = emptyList(),
+    /**
+     * The recordings, in the order they were made. Several because a customer still
+     * talking at the per-clip cap carries on into the next one.
+     */
+    val audios: List<FeedbackAudioPayload> = emptyList(),
     @SerialName("client_created_at") val clientCreatedAt: String,
+)
+
+@Serializable
+data class FeedbackAudioPayload(
+    /** The object name storage returned, never a path on this device. */
+    @SerialName("storage_path") val storagePath: String,
+    val seconds: Int,
+    @SerialName("recorded_at") val recordedAt: String,
+    @SerialName("file_size") val fileSize: Long = 0,
 )
 
 /**
