@@ -107,6 +107,19 @@ data class DisplayProgram(
     val countedFaces: Int? = null,
     val achieved: Boolean? = null,
     val photoCount: Int = 0,
+    /**
+     * What the shelf is supposed to look like — the six DisplayImage columns
+     * OM_TDisplayLevel carries, without the six.
+     *
+     * The rep is being asked to judge a display against a standard; showing them
+     * the standard is the difference between a judgement and a guess.
+     */
+    val sampleImages: List<DisplaySampleImage> = emptyList(),
+    /**
+     * OM_TDisplayLevelInvt: which products the level wants on that shelf and how
+     * many of each. "Twelve facings" says nothing about twelve facings of what.
+     */
+    val requiredItems: List<DisplayLevelItem> = emptyList(),
 ) {
     /** Scored on this visit. The legacy's IsDone, per programme. */
     val isScored: Boolean get() = achieved != null
@@ -123,3 +136,25 @@ data class DisplayProgram(
      */
     fun shortfall(counted: Int): Int = (requiredFaces - counted).coerceAtLeast(0)
 }
+
+/** One of head office's reference photographs for a level. */
+data class DisplaySampleImage(
+    val imageUrl: String,
+    val caption: String?,
+)
+
+/**
+ * One line of what a level wants on the shelf.
+ *
+ * Optional lines exist because a level often names more products than it needs
+ * facings for: any of them may make the count up, and a required line has to be
+ * there whatever else is.
+ */
+data class DisplayLevelItem(
+    val productId: String,
+    val productCode: String,
+    val productName: String,
+    val qty: Int,
+    val unitName: String,
+    val isRequired: Boolean,
+)

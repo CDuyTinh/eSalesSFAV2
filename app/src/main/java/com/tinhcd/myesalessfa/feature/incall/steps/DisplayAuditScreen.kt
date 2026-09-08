@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -51,8 +52,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -363,6 +366,12 @@ private fun AuditForm(
                     onCountedFacesChange = onCountedFacesChange,
                     onAchievedChange = onAchievedChange,
                 )
+
+                // Above the camera on purpose. The rep reads the standard, looks at
+                // the shelf, then photographs it — asking for the verdict before
+                // showing what the verdict is against is how the old screen made
+                // "đạt" a guess.
+                StandardCard(program)
             }
 
             Text(
@@ -688,3 +697,110 @@ private fun PhotoThumbnail(photo: AuditPhoto, onRemove: () -> Unit) {
 /** Pass and fail, the colours the legacy display list marks its rows in. */
 private val Pass = Color(0xFF04A489)
 private val Fail = Color(0xFFD32F2F)
+
+/**
+ * What this level asks for: head office's photographs of the shelf, and the
+ * products that have to be on it.
+ *
+ * API_GetListDisplay returns both — the six DisplayImage columns as a second
+ * result set, and OM_TDisplayLevelInvt as the line items — and the rep over there
+ * reads them before scoring. Without them "đạt hay không đạt" is asked against a
+ * standard nobody has shown them.
+ *
+ * Absent entirely when the level configures neither, rather than an empty card:
+ * plenty of programmes are a paragraph of specification and a facing count.
+ */
+@Composable
+private fun StandardCard(program: DisplayProgram) {
+    if (program.sampleImages.isEmpty() && program.requiredItems.isEmpty()) return
+
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Text(
+                "Chuẩn của mức này",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+
+            if (program.sampleImages.isNotEmpty()) {
+                Spacer(Modifier.height(10.dp))
+                // Sideways rather than stacked: they are variations of one shelf —
+                // front on, from the side, close on the labels — and the rep swipes
+                // through them the way they would through a photo roll.
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    items(program.sampleImages, key = { it.imageUrl }) { sample ->
+                        Column(Modifier.width(150.dp)) {
+                            AsyncImage(
+                                model = sample.imageUrl,
+                                contentDescription = sample.caption,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(112.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                            )
+                            sample.caption?.let { caption ->
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    caption,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (program.requiredItems.isNotEmpty()) {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "Hàng cần trưng bày",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(4.dp))
+
+                program.requiredItems.forEach { item ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(vertical = 3.dp),
+                    ) {
+                        Text(
+                            item.productName,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
+                        )
+                        // Said on the line rather than left to a legend: an optional
+                        // line is one the rep may leave off the shelf, which changes
+                        // what they are counting.
+                        if (!item.isRequired) {
+                            Text(
+                                "tùy chọn  ",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Text(
+                            "${item.qty} ${item.unitName.lowercase()}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}

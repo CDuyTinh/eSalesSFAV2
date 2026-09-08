@@ -7,7 +7,9 @@ import com.tinhcd.myesalessfa.data.remote.service.DisplayAuditService
 import com.tinhcd.myesalessfa.data.remote.storage.PhotoUploader
 import com.tinhcd.myesalessfa.data.session.SessionStore
 import com.tinhcd.myesalessfa.domain.DataResult
+import com.tinhcd.myesalessfa.domain.model.DisplayLevelItem
 import com.tinhcd.myesalessfa.domain.model.DisplayProgram
+import com.tinhcd.myesalessfa.domain.model.DisplaySampleImage
 import com.tinhcd.myesalessfa.domain.model.DraftDisplayAudit
 import com.tinhcd.myesalessfa.domain.repository.DisplayAuditRepository
 import java.time.Instant
@@ -54,6 +56,22 @@ class DisplayAuditRepositoryImpl @Inject constructor(
                     countedFaces = it.countedFaces,
                     achieved = it.achieved,
                     photoCount = it.photoCount,
+                    sampleImages = it.sampleImages.map { image ->
+                        DisplaySampleImage(
+                            imageUrl = image.imageUrl,
+                            caption = image.caption,
+                        )
+                    },
+                    requiredItems = it.requiredItems.map { item ->
+                        DisplayLevelItem(
+                            productId = item.productId,
+                            productCode = item.productCode,
+                            productName = item.productName,
+                            qty = item.qty,
+                            unitName = item.unitName,
+                            isRequired = item.isRequired,
+                        )
+                    },
                 )
             },
         )
