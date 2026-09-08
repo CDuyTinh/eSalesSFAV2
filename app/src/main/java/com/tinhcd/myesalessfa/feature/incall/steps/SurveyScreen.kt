@@ -23,7 +23,6 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -65,23 +64,22 @@ fun SurveyScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(survey?.definition?.name ?: "Khảo sát")
-                        if (survey != null && survey.definition.isScored) {
-                            Text(
-                                "Điểm ${survey.totalScore}/${survey.definition.maxScore}" +
-                                    if (survey.definition.passScore > 0) {
-                                        if (survey.isPassing) " - Đạt" else " - Chưa đạt"
-                                    } else {
-                                        ""
-                                    },
-                                style = MaterialTheme.typography.labelSmall,
-                            )
+            // The same band every step wears. This screen used a plain app bar with
+            // no way back in it, which was survivable while it was the step itself
+            // and is not now that market_info reaches it from a list.
+            StepHeader(
+                title = survey?.definition?.name ?: "Khảo sát",
+                subtitle = if (survey != null && survey.definition.isScored) {
+                    "Điểm ${survey.totalScore}/${survey.definition.maxScore}" +
+                        if (survey.definition.passScore > 0) {
+                            if (survey.isPassing) " - Đạt" else " - Chưa đạt"
+                        } else {
+                            ""
                         }
-                    }
+                } else {
+                    null
                 },
+                onBack = onDone,
             )
         },
     ) { padding ->
