@@ -669,6 +669,26 @@ data class DisplayProgramDto(
     @SerialName("counted_faces") val countedFaces: Int? = null,
     val achieved: Boolean? = null,
     @SerialName("photo_count") val photoCount: Int = 0,
+    /** OM_TDisplayLevel's six DisplayImage columns: what the shelf should look like. */
+    @SerialName("sample_images") val sampleImages: List<DisplaySampleImageDto> = emptyList(),
+    /** OM_TDisplayLevelInvt: which products the level wants, and how many of each. */
+    @SerialName("required_items") val requiredItems: List<DisplayLevelItemDto> = emptyList(),
+)
+
+@Serializable
+data class DisplaySampleImageDto(
+    @SerialName("image_url") val imageUrl: String,
+    val caption: String? = null,
+)
+
+@Serializable
+data class DisplayLevelItemDto(
+    @SerialName("product_id") val productId: String,
+    @SerialName("product_code") val productCode: String,
+    @SerialName("product_name") val productName: String,
+    val qty: Int = 0,
+    @SerialName("unit_name") val unitName: String = "Mặt",
+    @SerialName("is_required") val isRequired: Boolean = true,
 )
 
 /**
