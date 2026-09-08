@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -35,12 +36,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
 import com.tinhcd.myesalessfa.core.ui.LoadingBox
@@ -70,6 +75,20 @@ fun MarketInfoScreen(
     viewModel: MarketInfoViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    // A questionnaire is a separate destination, so answering one leaves this view
+    // model alive holding a list from before the rep answered. Without this the
+    // survey they just finished comes back unticked and the step looks stuck.
+    //
+    // Skipped on the first resume, which is the load the view model already did,
+    // and while a grid is open, because the camera pauses the activity and a
+    // reload behind an open grid buys nothing.
+    var resumedBefore by rememberSaveable { mutableStateOf(false) }
+    LifecycleResumeEffect(Unit) {
+        if (resumedBefore && state.page == MarketInfoPage.LIST) viewModel.reload()
+        resumedBefore = true
+        onPauseOrDispose {}
+    }
 
     when (state.page) {
         MarketInfoPage.LIST -> SurveyListPage(
@@ -244,7 +263,14 @@ private fun CompetitorSurveyPage(
         },
         bottomBar = {
             Surface(shadowElevation = 8.dp) {
-                Column(Modifier.padding(16.dp)) {
+                // The count of what is left sits under the button, so without this
+                // the gesture bar draws straight over the one line telling the rep
+                // why the button is grey.
+                Column(
+                    Modifier
+                        .navigationBarsPadding()
+                        .padding(16.dp),
+                ) {
                     if (state.error != null) {
                         Text(
                             state.error,
@@ -303,7 +329,14 @@ private fun PairingCard(
     capturing: Boolean,
     viewModel: MarketInfoViewModel,
 ) {
-    Card(Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        // The same white as the survey list one screen back. The default tint read
+        // as a disabled card next to the fields inside it.
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        ),
+    ) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
