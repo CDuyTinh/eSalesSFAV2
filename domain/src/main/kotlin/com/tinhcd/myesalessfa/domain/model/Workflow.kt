@@ -58,6 +58,15 @@ object StepConfig {
      * honours is a promise the data is making on the app's behalf.
      */
     const val ALLOW_AUDIO = "allow_audio"
+
+    /**
+     * How long one recording may run, and how long every recording on a step may run
+     * together. The legacy's SALES_RECORD_TIME_FILE and SALES_RECORD_MAX_REALTIME,
+     * which it holds in minutes; these are seconds, because a shop conversation is
+     * measured in seconds and a minute is a clumsy unit to cap one at.
+     */
+    const val AUDIO_MAX_SECONDS = "audio_max_seconds"
+    const val AUDIO_TOTAL_SECONDS = "audio_total_seconds"
 }
 
 /**

@@ -1,5 +1,7 @@
 package com.tinhcd.myesalessfa.data.repository
 
+import com.tinhcd.myesalessfa.data.remote.dto.AuditPhotoPayload
+import com.tinhcd.myesalessfa.data.remote.dto.FeedbackAudioPayload
 import com.tinhcd.myesalessfa.data.remote.dto.FeedbackPayload
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import com.tinhcd.myesalessfa.data.remote.service.FeedbackService
@@ -9,6 +11,7 @@ import com.tinhcd.myesalessfa.data.session.SessionStore
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.DraftFeedback
 import com.tinhcd.myesalessfa.domain.repository.FeedbackRepository
+import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -17,9 +20,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Audio first, then the row — the same ordering as the display audit, for the same
- * reason. `submit_feedback` checks that the storage path it is handed actually
+ * Media first, then the row — the same ordering as the display audit, for the same
+ * reason. `submit_feedback` checks that every storage path it is handed actually
  * exists, so a row pointing at a missing object can never be written.
+ *
+ * Photos go to the visit-photos bucket and recordings to visit-audio, which is the
+ * split the storage policies and the two media tables already assume.
  */
 @Singleton
 class FeedbackRepositoryImpl @Inject constructor(
@@ -29,19 +35,41 @@ class FeedbackRepositoryImpl @Inject constructor(
 ) : FeedbackRepository {
 
     override suspend fun submit(feedback: DraftFeedback): DataResult<Unit> = try {
-        val localAudio = feedback.audioPath
+        // The rep owns the storage folder the policies authorise on, so without a
+        // session there is nowhere legitimate to put the files. Read once, and only
+        // when there is something to upload.
+        val salespersonId by lazy {
+            session.current.value?.id
+                ?: error("no signed-in salesperson to attribute the media to")
+        }
 
-        val audioPath = localAudio?.let {
-            // The rep owns the storage folder the policies authorise on, so without
-            // a session there is nowhere legitimate to put the file.
-            val salespersonId = session.current.value?.id
-                ?: error("no signed-in salesperson to attribute the recording to")
+        val photos = feedback.photos.map { photo ->
+            AuditPhotoPayload(
+                storagePath = uploader.upload(
+                    salespersonId = salespersonId,
+                    visitId = feedback.visitId,
+                    localPath = photo.localPath,
+                ),
+                takenAt = Instant.ofEpochMilli(photo.takenAtEpochMs)
+                    .atOffset(ZoneOffset.UTC).toString(),
+                lat = photo.lat,
+                lng = photo.lng,
+                fileSize = photo.sizeBytes,
+            )
+        }
 
-            uploader.upload(
-                salespersonId = salespersonId,
-                visitId = feedback.visitId,
-                localPath = it,
-                bucket = VisitBucket.AUDIO,
+        val audios = feedback.recordings.map { clip ->
+            FeedbackAudioPayload(
+                storagePath = uploader.upload(
+                    salespersonId = salespersonId,
+                    visitId = feedback.visitId,
+                    localPath = clip.localPath,
+                    bucket = VisitBucket.AUDIO,
+                ),
+                seconds = clip.seconds,
+                recordedAt = Instant.ofEpochMilli(clip.recordedAtEpochMs)
+                    .atOffset(ZoneOffset.UTC).toString(),
+                fileSize = clip.sizeBytes,
             )
         }
 
@@ -55,14 +83,17 @@ class FeedbackRepositoryImpl @Inject constructor(
                 feedbackDate = LocalDate.now().toString(),
                 topicId = feedback.topicId,
                 note = feedback.trimmedNote,
-                audioPath = audioPath,
-                audioSeconds = feedback.audioSeconds.takeIf { it > 0 },
+                photos = photos,
+                audios = audios,
                 clientCreatedAt = OffsetDateTime.now(ZoneOffset.UTC).toString(),
             ),
         ).orThrow()
 
-        // Only now, so a failed submit still has the bytes to retry with.
-        localAudio?.let { uploader.deleteLocal(it) }
+        // Only now, and from the draft rather than the payload: the payload carries
+        // storage object names, not paths on this device. Deleting earlier would
+        // leave a failed submit with nothing to re-upload.
+        feedback.photos.forEach { uploader.deleteLocal(it.localPath) }
+        feedback.recordings.forEach { uploader.deleteLocal(it.localPath) }
 
         DataResult.Success(Unit)
     } catch (e: Exception) {

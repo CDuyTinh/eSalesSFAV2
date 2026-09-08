@@ -44,7 +44,7 @@ class VoiceRecorder @Inject constructor(
      * permission that was refused. The caller reports that rather than leaving a
      * button that silently does nothing.
      */
-    fun start(): String {
+    fun start(maxSeconds: Int = MAX_MILLIS / 1000): String {
         stop()
 
         val file = File(dir, "${UUID.randomUUID()}.m4a")
@@ -64,7 +64,10 @@ class VoiceRecorder @Inject constructor(
             // A hard ceiling rather than trusting the rep to press stop. A recorder
             // left running while the phone goes in a pocket would otherwise fill the
             // disk and produce a file nobody will ever listen to.
-            setMaxDuration(MAX_MILLIS)
+            //
+            // The caller passes the step's own cap, so the encoder stops where the
+            // server would refuse rather than writing bytes that will be rejected.
+            setMaxDuration(maxSeconds.coerceAtLeast(1) * 1000)
             setOutputFile(file.absolutePath)
             prepare()
             start()
