@@ -699,6 +699,7 @@ data class DisplayLevelItemDto(
 data class PosmDto(
     val placed: List<PosmPlacedDto> = emptyList(),
     val registrations: List<PosmRegistrationDto> = emptyList(),
+    val catalogue: List<PosmCatalogueDto> = emptyList(),
 )
 
 @Serializable
@@ -912,4 +913,24 @@ data class CompetitorAnswerDto(
     val content: String = "",
     /** Storage object names of what an earlier submission of this visit left. */
     val photos: List<String> = emptyList(),
+)
+
+/** One POSM asset this outlet may still be signed up for. API_GetListPOSM. */
+@Serializable
+data class PosmCatalogueDto(
+    @SerialName("program_id") val programId: String,
+    @SerialName("program_code") val programCode: String,
+    @SerialName("program_name") val programName: String,
+    @SerialName("posm_item_id") val itemId: String,
+    @SerialName("item_code") val itemCode: String,
+    @SerialName("item_name") val itemName: String,
+    @SerialName("unit_name") val unitName: String = "Cái",
+    @SerialName("image_url") val imageUrl: String? = null,
+    @SerialName("max_per_customer") val maxPerCustomer: Int = 0,
+    @SerialName("registered_qty") val registeredQty: Int = 0,
+    @SerialName("approved_qty") val approvedQty: Int = 0,
+    @SerialName("delivered_qty") val deliveredQty: Int = 0,
+    @SerialName("placed_qty") val placedQty: Int = 0,
+    /** Null when the outlet has never asked for this one. */
+    @SerialName("registration_status") val registrationStatus: String? = null,
 )
