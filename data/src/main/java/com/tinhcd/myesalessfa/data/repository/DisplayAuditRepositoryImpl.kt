@@ -2,13 +2,16 @@ package com.tinhcd.myesalessfa.data.repository
 
 import com.tinhcd.myesalessfa.data.remote.dto.AuditPhotoPayload
 import com.tinhcd.myesalessfa.data.remote.dto.DisplayAuditPayload
+import com.tinhcd.myesalessfa.data.remote.dto.DisplayRegistrationPayload
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import com.tinhcd.myesalessfa.data.remote.service.DisplayAuditService
 import com.tinhcd.myesalessfa.data.remote.storage.PhotoUploader
 import com.tinhcd.myesalessfa.data.session.SessionStore
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.DisplayLevelItem
+import com.tinhcd.myesalessfa.domain.model.DisplayLevelOffer
 import com.tinhcd.myesalessfa.domain.model.DisplayProgram
+import com.tinhcd.myesalessfa.domain.model.DisplayProgramOffer
 import com.tinhcd.myesalessfa.domain.model.DisplaySampleImage
 import com.tinhcd.myesalessfa.domain.model.DraftDisplayAudit
 import com.tinhcd.myesalessfa.domain.repository.DisplayAuditRepository
@@ -126,6 +129,53 @@ class DisplayAuditRepositoryImpl @Inject constructor(
         // leave a failed submit with nothing to re-upload.
         audit.photos.forEach { uploader.deleteLocal(it.localPath) }
 
+        DataResult.Success(Unit)
+    } catch (e: Exception) {
+        DataResult.Failure(e.toAppError())
+    }
+
+    override suspend fun openPrograms(
+        customerId: String,
+    ): DataResult<List<DisplayProgramOffer>> = try {
+        val body = service.openPrograms(customerId).orThrow()
+        DataResult.Success(
+            body.programs.map { p ->
+                DisplayProgramOffer(
+                    programId = p.programId,
+                    programCode = p.programCode,
+                    programName = p.programName,
+                    specification = p.specification,
+                    regisFromDate = p.regisFromDate,
+                    regisToDate = p.regisToDate,
+                    levels = p.levels.map { lv ->
+                        DisplayLevelOffer(
+                            levelId = lv.levelId,
+                            levelCode = lv.levelCode,
+                            levelName = lv.levelName,
+                            requiredFaces = lv.requiredFaces,
+                            bonusAmount = lv.bonusAmount,
+                            slotsLeft = lv.slotsLeft,
+                        )
+                    },
+                )
+            },
+        )
+    } catch (e: Exception) {
+        DataResult.Failure(e.toAppError())
+    }
+
+    override suspend fun register(
+        visitId: String,
+        programId: String,
+        levelId: String,
+    ): DataResult<Unit> = try {
+        service.register(
+            DisplayRegistrationPayload(
+                visitId = visitId,
+                programId = programId,
+                levelId = levelId,
+            ),
+        ).orThrow()
         DataResult.Success(Unit)
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())

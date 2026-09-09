@@ -158,3 +158,47 @@ data class DisplayLevelItem(
     val unitName: String,
     val isRequired: Boolean,
 )
+
+// -----------------------------------------------------------------------------
+// Đăng ký chương trình
+// -----------------------------------------------------------------------------
+
+/**
+ * One level an outlet may be signed up at, with what the rep has left to give.
+ *
+ * [slotsLeft] is null when head office allocated this rep no ceiling for the
+ * level, which the legacy reads as unlimited rather than as none — a programme
+ * with no budget row is one nobody is rationing.
+ */
+data class DisplayLevelOffer(
+    val levelId: String,
+    val levelCode: String,
+    val levelName: String,
+    val requiredFaces: Int,
+    val bonusAmount: Long,
+    val slotsLeft: Int?,
+) {
+    /** False only where a ceiling exists and is spent. */
+    val available: Boolean get() = slotsLeft == null || slotsLeft > 0
+}
+
+/**
+ * A programme this outlet is not in yet and could join today.
+ *
+ * The registration window is the programme's own, which is not the window the
+ * display is audited in: head office closes signups weeks before a programme
+ * ends, so an outlet can be inside a running programme's dates and still be too
+ * late to join it.
+ */
+data class DisplayProgramOffer(
+    val programId: String,
+    val programCode: String,
+    val programName: String,
+    val specification: String?,
+    val regisFromDate: String?,
+    val regisToDate: String?,
+    val levels: List<DisplayLevelOffer>,
+) {
+    /** Nothing left to give at any level: the programme is shown, not offered. */
+    val anyAvailable: Boolean get() = levels.any { it.available }
+}
