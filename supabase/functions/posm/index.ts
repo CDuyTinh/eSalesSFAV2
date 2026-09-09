@@ -52,6 +52,24 @@ interface RegistrationRow {
   registered_at: string;
 }
 
+
+interface CatalogueRow {
+  program_id: string;
+  program_code: string;
+  program_name: string;
+  posm_item_id: string;
+  item_code: string;
+  item_name: string;
+  unit_name: string;
+  image_url: string | null;
+  max_per_customer: number;
+  registered_qty: number;
+  approved_qty: number;
+  delivered_qty: number;
+  placed_qty: number;
+  registration_status: string | null;
+}
+
 Deno.serve(handler(async (req, db) => {
   if (req.method !== "GET") throw new HttpError(405, "GET only");
 
@@ -62,12 +80,16 @@ Deno.serve(handler(async (req, db) => {
   if (!customerId) throw new HttpError(400, "customerId is required");
   if (!visitId) throw new HttpError(400, "visitId is required");
 
-  const [placed, registrations] = await Promise.all([
+  const [placed, registrations, catalogue] = await Promise.all([
     db.rpc("posm_at_customer", {
       p_customer_id: customerId,
       p_visit_id: visitId,
     }),
     db.rpc("posm_registrations_for", { p_customer_id: customerId }),
+    // Travels with the rest because the rep decides to register while looking at
+    // what is already there — the two questions are asked in one breath, and a
+    // second round trip to answer the second one is one made in a shop.
+    db.rpc("posm_catalogue_for", { p_customer_id: customerId }),
   ]);
 
   return json({
@@ -77,5 +99,6 @@ Deno.serve(handler(async (req, db) => {
     // company's furniture, and the step has to say so rather than spin.
     placed: unwrap(placed) as PlacedRow[],
     registrations: unwrap(registrations) as RegistrationRow[],
+    catalogue: unwrap(catalogue) as CatalogueRow[],
   });
 }));

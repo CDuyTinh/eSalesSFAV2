@@ -140,3 +140,153 @@ data class DraftPosmCheck(
     fun withoutPhoto(localPath: String): DraftPosmCheck =
         copy(photos = photos.filterNot { it.localPath == localPath })
 }
+
+// -----------------------------------------------------------------------------
+// Đăng ký, giao và thu hồi
+// -----------------------------------------------------------------------------
+
+/** One asset the outlet may be signed up for, with where it already stands. */
+data class PosmCatalogueEntry(
+    val programId: String,
+    val programCode: String,
+    val programName: String,
+    val itemId: String,
+    val itemCode: String,
+    val itemName: String,
+    val unitName: String,
+    val imageUrl: String?,
+    /** How many one outlet may hold. Zero means no ceiling. */
+    val maxPerCustomer: Int,
+    val registeredQty: Int,
+    val approvedQty: Int,
+    val deliveredQty: Int,
+    /** What the outlet holds now, which a ceiling has to count against. */
+    val placedQty: Int,
+    /** Null when the outlet has never asked for this one. */
+    val registrationStatus: String?,
+) {
+    val isPending: Boolean get() = registrationStatus == "pending"
+    val isApproved: Boolean get() = registrationStatus == "approved"
+    val isRejected: Boolean get() = registrationStatus == "rejected"
+
+    /**
+     * Whether the rep may put in for it at all.
+     *
+     * A pending request may be restated — the server updates it rather than
+     * filing a second — but one head office has already ruled on may not: an
+     * approval would be quietly rewritten and a refusal quietly revived.
+     */
+    val canRegister: Boolean get() = registrationStatus == null || isPending
+
+    /** The most that may be asked for, given the ceiling. Zero means unlimited. */
+    val ceiling: Int get() = maxPerCustomer
+}
+
+/** One line of a delivery or a recall. */
+data class PosmMovementLine(
+    val programId: String,
+    val itemId: String,
+    val itemName: String,
+    val unitName: String,
+    /** The most this line may move: what is left to deliver, or what is held. */
+    val available: Int,
+    val qty: Int = 0,
+)
+
+/** Which way the assets are going. The legacy's order types IN and IR. */
+enum class PosmMovementKind(val wireValue: String, val label: String) {
+    DELIVERY("delivery", "Giao POSM"),
+    RECALL("recall", "Thu hồi POSM"),
+}
+
+/**
+ * A handover being filled in.
+ *
+ * At least one photograph, always: a rep saying they handed over a fridge is an
+ * assertion, and the legacy refuses the same submission for the same reason
+ * (`posm_image_mess_required`).
+ */
+data class DraftPosmMovement(
+    val visitId: String,
+    val kind: PosmMovementKind,
+    val lines: List<PosmMovementLine> = emptyList(),
+    val note: String = "",
+    val photos: List<PosmPhoto> = emptyList(),
+    val photoMin: Int = 1,
+    val photoMax: Int = 4,
+) {
+    val photoCount: Int get() = photos.size
+
+    val photosStillNeeded: Int get() = (photoMin - photoCount).coerceAtLeast(0)
+
+    val canAddPhoto: Boolean get() = photoCount < photoMax
+
+    /** Lines the rep actually put a number against. */
+    val movingLines: List<PosmMovementLine> get() = lines.filter { it.qty > 0 }
+
+    val totalQty: Int get() = movingLines.sumOf { it.qty }
+
+    val canSubmit: Boolean get() = movingLines.isNotEmpty() && photosStillNeeded == 0
+
+    /** Clamped to what is available, so no line can ask for more than exists. */
+    fun withQty(itemId: String, programId: String, qty: Int): DraftPosmMovement =
+        copy(
+            lines = lines.map { line ->
+                if (line.itemId == itemId && line.programId == programId) {
+                    line.copy(qty = qty.coerceIn(0, line.available))
+                } else {
+                    line
+                }
+            },
+        )
+
+    /** Ignored once the ceiling is reached, so no path can slip past it. */
+    fun withPhoto(photo: PosmPhoto): DraftPosmMovement =
+        if (canAddPhoto) copy(photos = photos + photo) else this
+
+    fun withoutPhoto(localPath: String): DraftPosmMovement =
+        copy(photos = photos.filterNot { it.localPath == localPath })
+}
+
+/** One line of a registration being put in. */
+data class PosmRegistrationLine(
+    val entry: PosmCatalogueEntry,
+    val qty: Int = 0,
+)
+
+/**
+ * A request being put in for an outlet.
+ *
+ * Nothing here carries an approved quantity or a status: those are head office's,
+ * and the server writes them itself whatever the payload says.
+ */
+data class DraftPosmRegistration(
+    val visitId: String,
+    val lines: List<PosmRegistrationLine> = emptyList(),
+    val reason: String = "",
+) {
+    val askedLines: List<PosmRegistrationLine> get() = lines.filter { it.qty > 0 }
+
+    val canSubmit: Boolean get() = askedLines.isNotEmpty()
+
+    /**
+     * Clamped to the programme's ceiling, counting what the outlet already holds:
+     * a shop allowed two racks that already has one may ask for one more.
+     */
+    fun withQty(itemId: String, programId: String, qty: Int): DraftPosmRegistration =
+        copy(
+            lines = lines.map { line ->
+                if (line.entry.itemId == itemId && line.entry.programId == programId) {
+                    val ceiling = line.entry.ceiling
+                    val room = if (ceiling == 0) {
+                        Int.MAX_VALUE
+                    } else {
+                        (ceiling - line.entry.placedQty).coerceAtLeast(0)
+                    }
+                    line.copy(qty = qty.coerceIn(0, room))
+                } else {
+                    line
+                }
+            },
+        )
+}

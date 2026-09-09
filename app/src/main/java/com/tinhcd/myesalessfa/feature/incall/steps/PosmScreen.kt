@@ -26,6 +26,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
@@ -62,10 +63,14 @@ import coil3.compose.AsyncImage
 import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.domain.model.DraftPosmCheck
+import com.tinhcd.myesalessfa.domain.model.DraftPosmMovement
+import com.tinhcd.myesalessfa.domain.model.DraftPosmRegistration
 import com.tinhcd.myesalessfa.domain.model.PosmAtCustomer
 import com.tinhcd.myesalessfa.domain.model.PosmCondition
+import com.tinhcd.myesalessfa.domain.model.PosmMovementKind
 import com.tinhcd.myesalessfa.domain.model.PosmPhoto
 import com.tinhcd.myesalessfa.domain.model.PosmRegistration
+import com.tinhcd.myesalessfa.domain.model.PosmRegistrationLine
 import java.io.File
 
 /**
@@ -77,8 +82,9 @@ import java.io.File
  * nicely, which is what this step used to be.
  *
  * Two tabs, as the legacy has: what is in the shop, and what the shop has asked
- * for. The second is read-only here; registering, delivering and recalling are
- * still back-office acts in this build.
+ * for. From those two lists come the other three things the rep does with POSM —
+ * putting in for it, handing it over, taking it back — which used to be missing
+ * here and are what InsertPosmRegis and InsertDeliverPosm do over there.
  */
 @Composable
 fun PosmScreen(
@@ -109,29 +115,38 @@ fun PosmScreen(
     // Photos live on the device until the check is submitted, so leaving throws
     // them away — and a photograph of a damaged fridge cannot be typed again from
     // memory once the rep has left the shop.
-    val unsaved = state.check?.photos?.isNotEmpty() == true && !state.finished
+    val unsaved = (
+        state.check?.photos?.isNotEmpty() == true ||
+            state.movement?.photos?.isNotEmpty() == true
+        ) && !state.finished
     val onChecking = state.page == PosmPage.CHECK
+    val onForm = state.page == PosmPage.REGISTER || state.page == PosmPage.MOVE
 
     val back = {
         when {
             unsaved -> confirmLeave = true
             onChecking -> viewModel.onLeaveItem()
+            onForm -> viewModel.onLeaveForm()
             else -> onDone()
         }
     }
 
-    BackHandler(enabled = unsaved || onChecking) { back() }
+    BackHandler(enabled = unsaved || onChecking || onForm) { back() }
 
     Scaffold(
         topBar = {
             StepHeader(
                 title = when {
                     onChecking -> state.check?.item?.itemName.orEmpty()
+                    state.page == PosmPage.REGISTER -> "Đăng ký POSM"
+                    state.page == PosmPage.MOVE -> state.movement?.kind?.label.orEmpty()
                     else -> state.title.ifBlank { "POSM" }
                 },
                 onBack = back,
                 subtitle = when {
                     onChecking -> state.check?.item?.programName
+                    state.page == PosmPage.REGISTER -> "Chọn số lượng cần xin cho cửa hàng"
+                    state.page == PosmPage.MOVE -> "Cần ít nhất một ảnh làm bằng chứng"
                     state.placed.isEmpty() -> null
                     else -> "Đã kiểm ${state.checkedCount}/${state.placed.size} vật phẩm"
                 },
@@ -157,10 +172,38 @@ fun PosmScreen(
                 modifier = Modifier.padding(padding),
             )
 
+            state.page == PosmPage.REGISTER && state.registration != null -> RegisterForm(
+                draft = state.registration!!,
+                submitting = state.submitting,
+                error = state.error,
+                onQty = viewModel::onRegisterQty,
+                onReason = viewModel::onRegisterReason,
+                onSubmit = viewModel::submitRegistration,
+                onBack = back,
+                modifier = Modifier.padding(padding),
+            )
+
+            state.page == PosmPage.MOVE && state.movement != null -> MovementForm(
+                draft = state.movement!!,
+                capturing = state.capturing,
+                submitting = state.submitting,
+                error = state.error,
+                onQty = viewModel::onMovementQty,
+                onNote = viewModel::onMovementNote,
+                onCapture = { takePicture.launch(viewModel.newPhotoTarget().uri) },
+                onRemovePhoto = viewModel::onRemovePhoto,
+                onSubmit = viewModel::submitMovement,
+                onBack = back,
+                modifier = Modifier.padding(padding),
+            )
+
             else -> PosmList(
                 state = state,
                 onTabChange = viewModel::onTabChange,
                 onOpen = viewModel::onOpenItem,
+                onRecall = viewModel::onOpenRecall,
+                onDeliver = viewModel::onOpenDelivery,
+                onRegister = viewModel::onOpenRegister,
                 onCompleteEmpty = viewModel::completeEmpty,
                 onBack = onDone,
                 modifier = Modifier.padding(padding),
@@ -202,6 +245,9 @@ private fun PosmList(
     state: PosmUiState,
     onTabChange: (PosmTab) -> Unit,
     onOpen: (PosmAtCustomer) -> Unit,
+    onRecall: (PosmAtCustomer) -> Unit,
+    onDeliver: (PosmRegistration) -> Unit,
+    onRegister: () -> Unit,
     onCompleteEmpty: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -234,7 +280,11 @@ private fun PosmList(
                                 )
                             }
                             items(items, key = { it.programId + it.itemId }) { item ->
-                                PosmItemCard(item = item, onClick = { onOpen(item) })
+                                PosmItemCard(
+                                    item = item,
+                                    onClick = { onOpen(item) },
+                                    onRecall = { onRecall(item) },
+                                )
                             }
                         }
                 }
@@ -250,7 +300,12 @@ private fun PosmList(
                     items(
                         state.registrations,
                         key = { it.programId + it.itemId },
-                    ) { RegistrationCard(it) }
+                    ) { registration ->
+                        RegistrationCard(
+                            registration = registration,
+                            onDeliver = { onDeliver(registration) },
+                        )
+                    }
                 }
             }
         }
@@ -276,6 +331,23 @@ private fun PosmList(
                         loading = state.submitting,
                         height = 44.dp,
                     )
+                    Spacer(Modifier.height(8.dp))
+                }
+
+                // On the registration tab, because that is where the rep is
+                // already looking at what the shop has asked for. Hidden when
+                // the branch is running no POSM programme at all — there would
+                // be nothing on the form.
+                if (state.tab == PosmTab.REGISTERED && state.catalogue.any { it.canRegister }) {
+                    OutlinedButton(
+                        onClick = onRegister,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp),
+                    ) {
+                        Icon(Icons.Default.AddCircleOutline, contentDescription = null)
+                        Text("  Đăng ký POSM cho cửa hàng")
+                    }
                     Spacer(Modifier.height(8.dp))
                 }
 
@@ -353,7 +425,7 @@ private fun EmptyNote(text: String) {
 }
 
 @Composable
-private fun PosmItemCard(item: PosmAtCustomer, onClick: () -> Unit) {
+private fun PosmItemCard(item: PosmAtCustomer, onClick: () -> Unit, onRecall: () -> Unit) {
     Card(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
@@ -429,12 +501,18 @@ private fun PosmItemCard(item: PosmAtCustomer, onClick: () -> Unit) {
                     },
                 )
             }
+
+            Spacer(Modifier.height(8.dp))
+            // A text button rather than one more filled control: taking a fridge
+            // back is the rarer act on this card, and the common one is opening
+            // the check by tapping anywhere on it.
+            TextButton(onClick = onRecall) { Text("Thu hồi") }
         }
     }
 }
 
 @Composable
-private fun RegistrationCard(registration: PosmRegistration) {
+private fun RegistrationCard(registration: PosmRegistration, onDeliver: () -> Unit) {
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -484,6 +562,15 @@ private fun RegistrationCard(registration: PosmRegistration) {
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.tertiary,
                 )
+                Spacer(Modifier.height(8.dp))
+                // Only where something is actually owed. A button that opens a
+                // form with nothing to move is a button that wastes a trip.
+                OutlinedButton(
+                    onClick = onDeliver,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp),
+                ) { Text("Giao cho cửa hàng") }
             }
         }
     }
@@ -865,3 +952,334 @@ private fun conditionColour(condition: PosmCondition): Color = when (condition) 
 private val Good = Color(0xFF04A489)
 private val Warn = Color(0xFFE08A00)
 private val Bad = Color(0xFFD32F2F)
+
+// -----------------------------------------------------------------------------
+// Đăng ký POSM
+// -----------------------------------------------------------------------------
+
+/**
+ * Asking head office for POSM this outlet does not have.
+ *
+ * A ceiling per asset where the programme sets one, counting what the shop
+ * already holds: a shop allowed two racks that has one may ask for one more. The
+ * server applies the same arithmetic, so nothing here can be sent that will come
+ * back refused.
+ */
+@Composable
+private fun RegisterForm(
+    draft: DraftPosmRegistration,
+    submitting: Boolean,
+    error: String?,
+    onQty: (programId: String, itemId: String, qty: Int) -> Unit,
+    onReason: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier
+            .fillMaxSize()
+            .imePadding(),
+    ) {
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            draft.lines
+                .groupBy { it.entry.programName }
+                .forEach { (program, lines) ->
+                    item(key = "rh-$program") {
+                        Text(
+                            program,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
+                    items(lines, key = { it.entry.programId + it.entry.itemId }) { line ->
+                        RegisterLineCard(line = line, onQty = onQty)
+                    }
+                }
+
+            item(key = "reason") {
+                OutlinedTextField(
+                    value = draft.reason,
+                    onValueChange = onReason,
+                    label = { Text("Lý do cửa hàng cần (tùy chọn)") },
+                    minLines = 2,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                )
+            }
+        }
+
+        Surface(shadowElevation = 8.dp) {
+            Column(Modifier.padding(16.dp)) {
+                if (error != null) {
+                    Text(
+                        error,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                }
+
+                PrimaryButton(
+                    text = "Gửi đăng ký",
+                    onClick = onSubmit,
+                    enabled = draft.canSubmit && !submitting,
+                    loading = submitting,
+                    height = 46.dp,
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = onBack,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp),
+                ) { Text("Quay lại") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RegisterLineCard(
+    line: PosmRegistrationLine,
+    onQty: (programId: String, itemId: String, qty: Int) -> Unit,
+) {
+    val entry = line.entry
+    val ceiling = entry.ceiling
+    val room = if (ceiling == 0) Int.MAX_VALUE else (ceiling - entry.placedQty).coerceAtLeast(0)
+
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                PosmThumbnail(entry.imageUrl)
+                Spacer(Modifier.width(12.dp))
+
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        entry.itemName,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Text(
+                        buildString {
+                            append(entry.itemCode)
+                            if (ceiling > 0) append(" | tối đa $ceiling ${entry.unitName}")
+                            if (entry.placedQty > 0) append(" | đang có ${entry.placedQty}")
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                if (entry.isPending) {
+                    StatusChip("Chờ duyệt", MaterialTheme.colorScheme.tertiary)
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    if (room == 0) "Đã đủ số lượng cho phép" else "Số lượng xin",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (room == 0) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+
+                if (room > 0) {
+                    QtyStepper(
+                        qty = line.qty,
+                        onQtyChange = { onQty(entry.programId, entry.itemId, it) },
+                        placeholder = "0",
+                    )
+                }
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Giao và thu hồi
+// -----------------------------------------------------------------------------
+
+/**
+ * Handing assets over, or taking them back.
+ *
+ * One form for both, as the legacy uses one screen for its two order types: the
+ * quantities and the evidence are the same, only the direction differs. The
+ * photograph is not optional — `submit_posm_movement` refuses a handover without
+ * one, the way `posm_image_mess_required` does over there.
+ */
+@Composable
+private fun MovementForm(
+    draft: DraftPosmMovement,
+    capturing: Boolean,
+    submitting: Boolean,
+    error: String?,
+    onQty: (programId: String, itemId: String, qty: Int) -> Unit,
+    onNote: (String) -> Unit,
+    onCapture: () -> Unit,
+    onRemovePhoto: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val delivering = draft.kind == PosmMovementKind.DELIVERY
+
+    Column(
+        modifier
+            .fillMaxSize()
+            .imePadding(),
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            draft.lines.forEach { line ->
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(Modifier.padding(14.dp)) {
+                        Text(
+                            line.itemName,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
+                        )
+                        Text(
+                            if (delivering) {
+                                "Được giao tối đa ${line.available} ${line.unitName}"
+                            } else {
+                                "Cửa hàng đang giữ ${line.available} ${line.unitName}"
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+
+                        Spacer(Modifier.height(10.dp))
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                if (delivering) "Số lượng giao" else "Số lượng thu hồi",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f),
+                            )
+                            QtyStepper(
+                                qty = line.qty,
+                                onQtyChange = { onQty(line.programId, line.itemId, it) },
+                                placeholder = "0",
+                            )
+                        }
+                    }
+                }
+            }
+
+            Text(
+                "Ảnh bàn giao - tối thiểu ${draft.photoMin}, tối đa ${draft.photoMax}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            draft.photos.chunked(2).forEach { pair ->
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    pair.forEach { photo ->
+                        Box(Modifier.weight(1f)) {
+                            PosmPhotoThumbnail(
+                                photo = photo,
+                                onRemove = { onRemovePhoto(photo.localPath) },
+                            )
+                        }
+                    }
+                    if (pair.size == 1) Spacer(Modifier.weight(1f))
+                }
+            }
+
+            if (draft.canAddPhoto) {
+                OutlinedButton(
+                    onClick = onCapture,
+                    enabled = !capturing && !submitting,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp),
+                ) {
+                    Icon(Icons.Default.PhotoCamera, contentDescription = null)
+                    Text(if (draft.photos.isEmpty()) "  Chụp ảnh" else "  Chụp thêm ảnh")
+                }
+            }
+
+            OutlinedTextField(
+                value = draft.note,
+                onValueChange = onNote,
+                label = { Text("Ghi chú (tùy chọn)") },
+                minLines = 2,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        Surface(shadowElevation = 8.dp) {
+            Column(Modifier.padding(16.dp)) {
+                if (error != null) {
+                    Text(
+                        error,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                }
+
+                if (draft.photosStillNeeded > 0) {
+                    Text(
+                        "Còn thiếu ${draft.photosStillNeeded} ảnh",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                } else if (draft.movingLines.isEmpty()) {
+                    Text(
+                        "Chưa chọn số lượng",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                }
+
+                PrimaryButton(
+                    text = if (delivering) "Xác nhận đã giao" else "Xác nhận đã thu hồi",
+                    onClick = onSubmit,
+                    enabled = draft.canSubmit && !submitting && !capturing,
+                    loading = submitting,
+                    height = 46.dp,
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = onBack,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp),
+                ) { Text("Quay lại") }
+            }
+        }
+    }
+}

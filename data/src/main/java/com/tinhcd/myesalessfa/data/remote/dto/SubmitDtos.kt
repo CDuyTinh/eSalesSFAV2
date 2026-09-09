@@ -223,3 +223,43 @@ data class CompetitorAnswerPayload(
     val content: String,
     val photos: List<AuditPhotoPayload> = emptyList(),
 )
+
+/**
+ * A request for POSM this outlet does not have. InsertPosmRegis.
+ *
+ * No approved quantity and no status: those belong to head office, and the
+ * server writes them itself whatever this says.
+ */
+@Serializable
+data class PosmRegistrationPayload(
+    @SerialName("visit_id") val visitId: String,
+    val lines: List<PosmRegistrationLinePayload> = emptyList(),
+)
+
+@Serializable
+data class PosmRegistrationLinePayload(
+    @SerialName("program_id") val programId: String,
+    @SerialName("posm_item_id") val itemId: String,
+    val qty: Int,
+    val reason: String? = null,
+)
+
+/** Assets going out to an outlet, or coming back. InsertDeliverPosm. */
+@Serializable
+data class PosmMovementPayload(
+    val id: String,
+    @SerialName("visit_id") val visitId: String,
+    /** delivery | recall — the legacy's order types IN and IR. */
+    val kind: String,
+    val note: String? = null,
+    @SerialName("client_created_at") val clientCreatedAt: String,
+    val lines: List<PosmMovementLinePayload> = emptyList(),
+    val photos: List<AuditPhotoPayload> = emptyList(),
+)
+
+@Serializable
+data class PosmMovementLinePayload(
+    @SerialName("program_id") val programId: String,
+    @SerialName("posm_item_id") val itemId: String,
+    val qty: Int,
+)
