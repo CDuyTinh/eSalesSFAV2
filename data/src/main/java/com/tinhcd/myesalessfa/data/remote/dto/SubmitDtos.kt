@@ -263,3 +263,18 @@ data class PosmMovementLinePayload(
     @SerialName("posm_item_id") val itemId: String,
     val qty: Int,
 )
+
+/**
+ * Signing an outlet up for a display programme. InsertTradeRegis, TradeType 'D'.
+ *
+ * No status: the server writes 'pending' itself, because a client that could
+ * name its own status could approve its own request.
+ */
+@Serializable
+data class DisplayRegistrationPayload(
+    @SerialName("visit_id") val visitId: String,
+    @SerialName("program_id") val programId: String,
+    @SerialName("level_id") val levelId: String,
+    /** Portion: how many of the rep's slots this signup consumes. */
+    val portion: Int = 1,
+)

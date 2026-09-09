@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.data.remote.service
 
 import com.tinhcd.myesalessfa.data.remote.dto.DisplayAuditPayload
+import com.tinhcd.myesalessfa.data.remote.dto.DisplayOpenDto
+import com.tinhcd.myesalessfa.data.remote.dto.DisplayRegistrationPayload
 import com.tinhcd.myesalessfa.data.remote.dto.DisplayProgramsDto
 import com.tinhcd.myesalessfa.data.remote.dto.WriteAckDto
 import retrofit2.Response
@@ -29,4 +31,18 @@ interface DisplayAuditService {
      */
     @POST("submit-display-audit")
     suspend fun submitDisplayAudit(@Body audit: DisplayAuditPayload): Response<WriteAckDto>
+
+    /**
+     * Programmes this outlet is not in yet and may still join today, each level
+     * carrying the slots this rep has left at it.
+     */
+    @GET("display-open")
+    suspend fun openPrograms(@Query("customerId") customerId: String): Response<DisplayOpenDto>
+
+    /**
+     * Signs the outlet up, pending head office. The server writes the status and
+     * spends the slot; nothing in the payload can.
+     */
+    @POST("submit-display-registration")
+    suspend fun register(@Body payload: DisplayRegistrationPayload): Response<WriteAckDto>
 }

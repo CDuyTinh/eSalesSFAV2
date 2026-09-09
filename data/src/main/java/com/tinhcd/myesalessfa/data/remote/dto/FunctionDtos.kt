@@ -934,3 +934,31 @@ data class PosmCatalogueDto(
     /** Null when the outlet has never asked for this one. */
     @SerialName("registration_status") val registrationStatus: String? = null,
 )
+
+/** Display programmes an outlet may still be signed up for. TradeType 'D'. */
+@Serializable
+data class DisplayOpenDto(
+    val programs: List<DisplayProgramOfferDto> = emptyList(),
+)
+
+@Serializable
+data class DisplayProgramOfferDto(
+    @SerialName("program_id") val programId: String,
+    @SerialName("program_code") val programCode: String,
+    @SerialName("program_name") val programName: String,
+    val specification: String? = null,
+    @SerialName("regis_from_date") val regisFromDate: String? = null,
+    @SerialName("regis_to_date") val regisToDate: String? = null,
+    val levels: List<DisplayLevelOfferDto> = emptyList(),
+)
+
+@Serializable
+data class DisplayLevelOfferDto(
+    @SerialName("level_id") val levelId: String,
+    @SerialName("level_code") val levelCode: String,
+    @SerialName("level_name") val levelName: String,
+    @SerialName("required_faces") val requiredFaces: Int = 0,
+    @SerialName("bonus_amount") val bonusAmount: Long = 0,
+    /** Null where head office allocated this rep no ceiling for the level. */
+    @SerialName("slots_left") val slotsLeft: Int? = null,
+)
