@@ -6,7 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.DisplayProgram
 import com.tinhcd.myesalessfa.domain.model.DisplayProgramOffer
+import com.tinhcd.myesalessfa.domain.model.LoyaltyProgram
+import com.tinhcd.myesalessfa.domain.model.LoyaltyProgramOffer
 import com.tinhcd.myesalessfa.domain.repository.DisplayAuditRepository
+import com.tinhcd.myesalessfa.domain.repository.LoyaltyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,13 +24,18 @@ data class CustomerProgramsUiState(
     val joined: List<DisplayProgram> = emptyList(),
     /** What it could still join today, with this rep's slots at each level. */
     val open: List<DisplayProgramOffer> = emptyList(),
+    /** Tích lũy: what the outlet is accumulating towards, and what is still open. */
+    val loyaltyJoined: List<LoyaltyProgram> = emptyList(),
+    val loyaltyOpen: List<LoyaltyProgramOffer> = emptyList(),
     /** Which programme's levels are expanded, by id. */
     val expanded: String? = null,
     val registering: Boolean = false,
     val error: String? = null,
     val justRegistered: String? = null,
 ) {
-    val isEmpty: Boolean get() = !loading && joined.isEmpty() && open.isEmpty()
+    val isEmpty: Boolean
+        get() = !loading && joined.isEmpty() && open.isEmpty() &&
+            loyaltyJoined.isEmpty() && loyaltyOpen.isEmpty()
 }
 
 /**
@@ -38,14 +46,16 @@ data class CustomerProgramsUiState(
  * outlet up is the rep's job: TradeRegis over there, whose whole screen is this
  * list plus a level to pick.
  *
- * Loyalty and POSM are the legacy tab's other two families. POSM has a step of
- * its own here; loyalty has no schema yet, and the tab says so rather than
- * implying this is the whole picture.
+ * Loyalty is the second family, and it is here too: the outlet accumulates
+ * towards a band and the rep can sign it into another. POSM is the third and has
+ * a step of its own inside the call, which the tab says rather than leaving a
+ * rep to wonder why they can see two families of three.
  */
 @HiltViewModel
 class CustomerProgramsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val displayRepository: DisplayAuditRepository,
+    private val loyaltyRepository: LoyaltyRepository,
 ) : ViewModel() {
 
     private val customerId: String = checkNotNull(savedStateHandle["customerId"])
@@ -77,15 +87,27 @@ class CustomerProgramsViewModel @Inject constructor(
                 (displayRepository.programs(customerId, it) as? DataResult.Success)?.data
             }.orEmpty()
 
+            // Loyalty needs no visit: accumulation is the outlet's own history, and
+            // the tab is worth reading before a rep has checked in.
+            val loyalty = (loyaltyRepository.load(customerId) as? DataResult.Success)?.data
+
             when (val open = displayRepository.openPrograms(customerId)) {
                 is DataResult.Success -> _state.update {
-                    it.copy(loading = false, joined = joined, open = open.data)
+                    it.copy(
+                        loading = false,
+                        joined = joined,
+                        open = open.data,
+                        loyaltyJoined = loyalty?.joined.orEmpty(),
+                        loyaltyOpen = loyalty?.open.orEmpty(),
+                    )
                 }
 
                 is DataResult.Failure -> _state.update {
                     it.copy(
                         loading = false,
                         joined = joined,
+                        loyaltyJoined = loyalty?.joined.orEmpty(),
+                        loyaltyOpen = loyalty?.open.orEmpty(),
                         error = "Không tải được danh sách chương trình",
                     )
                 }
@@ -130,4 +152,36 @@ class CustomerProgramsViewModel @Inject constructor(
     }
 
     fun onDismissJustRegistered() = _state.update { it.copy(justRegistered = null) }
+
+    /**
+     * Signs the outlet into a loyalty band.
+     *
+     * A separate call from the display one because they are separate tables and
+     * separate allocations; sharing a method would only save a parameter and cost
+     * the reader the distinction.
+     */
+    fun onRegisterLoyalty(programId: String, levelId: String) {
+        val visit = visitId ?: return
+        if (_state.value.registering) return
+
+        _state.update { it.copy(registering = true, error = null) }
+
+        viewModelScope.launch {
+            when (loyaltyRepository.register(visit, programId, levelId)) {
+                is DataResult.Success -> {
+                    _state.update {
+                        it.copy(registering = false, expanded = null, justRegistered = programId)
+                    }
+                    load()
+                }
+
+                is DataResult.Failure -> _state.update {
+                    it.copy(
+                        registering = false,
+                        error = "Không đăng ký được. Kiểm tra hạn đăng ký và số suất còn lại.",
+                    )
+                }
+            }
+        }
+    }
 }

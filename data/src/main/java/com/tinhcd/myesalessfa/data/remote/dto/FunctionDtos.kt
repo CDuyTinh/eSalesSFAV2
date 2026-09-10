@@ -962,3 +962,55 @@ data class DisplayLevelOfferDto(
     /** Null where head office allocated this rep no ceiling for the level. */
     @SerialName("slots_left") val slotsLeft: Int? = null,
 )
+
+/** Both halves of the loyalty tab. TradeType 'A'. */
+@Serializable
+data class LoyaltyDto(
+    val joined: List<LoyaltyJoinedDto> = emptyList(),
+    val open: List<LoyaltyOpenDto> = emptyList(),
+)
+
+@Serializable
+data class LoyaltyJoinedDto(
+    @SerialName("program_id") val programId: String,
+    @SerialName("program_code") val programCode: String,
+    @SerialName("program_name") val programName: String,
+    val specification: String? = null,
+    @SerialName("counts_by") val countsBy: String = "amount",
+    @SerialName("from_date") val fromDate: String,
+    @SerialName("to_date") val toDate: String,
+    @SerialName("level_id") val levelId: String,
+    @SerialName("level_code") val levelCode: String,
+    @SerialName("level_name") val levelName: String,
+    @SerialName("target_from") val targetFrom: Long = 0,
+    @SerialName("target_to") val targetTo: Long? = null,
+    @SerialName("reward_basis_points") val rewardBasisPoints: Int = 0,
+    val status: String = "pending",
+    @SerialName("registered_at") val registeredAt: String? = null,
+    /** Derived from the orders, not stored: the legacy returns 0 here. */
+    val achieved: Long = 0,
+    val remaining: Long = 0,
+)
+
+@Serializable
+data class LoyaltyOpenDto(
+    @SerialName("program_id") val programId: String,
+    @SerialName("program_code") val programCode: String,
+    @SerialName("program_name") val programName: String,
+    val specification: String? = null,
+    @SerialName("counts_by") val countsBy: String = "amount",
+    @SerialName("regis_from_date") val regisFromDate: String? = null,
+    @SerialName("regis_to_date") val regisToDate: String? = null,
+    val levels: List<LoyaltyLevelDto> = emptyList(),
+)
+
+@Serializable
+data class LoyaltyLevelDto(
+    @SerialName("level_id") val levelId: String,
+    @SerialName("level_code") val levelCode: String,
+    @SerialName("level_name") val levelName: String,
+    @SerialName("target_from") val targetFrom: Long = 0,
+    @SerialName("target_to") val targetTo: Long? = null,
+    @SerialName("reward_basis_points") val rewardBasisPoints: Int = 0,
+    @SerialName("slots_left") val slotsLeft: Int? = null,
+)

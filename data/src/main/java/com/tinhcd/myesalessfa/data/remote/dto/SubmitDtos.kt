@@ -278,3 +278,13 @@ data class DisplayRegistrationPayload(
     /** Portion: how many of the rep's slots this signup consumes. */
     val portion: Int = 1,
 )
+
+/** Signing an outlet up for a loyalty programme. InsertTradeRegis, TradeType 'A'. */
+@Serializable
+data class LoyaltyRegistrationPayload(
+    @SerialName("visit_id") val visitId: String,
+    @SerialName("program_id") val programId: String,
+    @SerialName("level_id") val levelId: String,
+    val portion: Int = 1,
+    val reason: String? = null,
+)
