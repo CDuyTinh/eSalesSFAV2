@@ -34,6 +34,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -67,6 +68,10 @@ import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.CustomerInfo
 import com.tinhcd.myesalessfa.domain.model.DisplayProgram
 import com.tinhcd.myesalessfa.domain.model.DisplayProgramOffer
+import com.tinhcd.myesalessfa.domain.model.LoyaltyCountsBy
+import com.tinhcd.myesalessfa.domain.model.LoyaltyLevel
+import com.tinhcd.myesalessfa.domain.model.LoyaltyProgram
+import com.tinhcd.myesalessfa.domain.model.LoyaltyProgramOffer
 import com.tinhcd.myesalessfa.feature.incall.InCallTab
 
 /**
@@ -168,6 +173,7 @@ fun CustomerHubScreen(
                 onRetry = programsViewModel::load,
                 onToggle = programsViewModel::onToggle,
                 onRegister = programsViewModel::onRegister,
+                onRegisterLoyalty = programsViewModel::onRegisterLoyalty,
             )
         }
     }
@@ -433,6 +439,7 @@ private fun ProgramsTab(
     onRetry: () -> Unit,
     onToggle: (String) -> Unit,
     onRegister: (programId: String, levelId: String) -> Unit,
+    onRegisterLoyalty: (programId: String, levelId: String) -> Unit,
 ) {
     when {
         state.loading -> LoadingBox()
@@ -469,6 +476,27 @@ private fun ProgramsTab(
                 }
             }
 
+            if (state.loyaltyJoined.isNotEmpty()) {
+                item(key = "h-ljoined") { SectionLabel("Tích lũy đang chạy") }
+                items(state.loyaltyJoined, key = { "lj-" + it.programId }) { program ->
+                    LoyaltyJoinedCard(program)
+                }
+            }
+
+            if (state.loyaltyOpen.isNotEmpty()) {
+                item(key = "h-lopen") { SectionLabel("Tích lũy có thể đăng ký") }
+                items(state.loyaltyOpen, key = { "lo-" + it.programId }) { offer ->
+                    LoyaltyOpenCard(
+                        offer = offer,
+                        expanded = state.expanded == offer.programId,
+                        canRegister = canRegister,
+                        registering = state.registering,
+                        onToggle = { onToggle(offer.programId) },
+                        onRegister = { levelId -> onRegisterLoyalty(offer.programId, levelId) },
+                    )
+                }
+            }
+
             if (state.isEmpty) {
                 item(key = "empty") {
                     Text(
@@ -495,8 +523,7 @@ private fun ProgramsTab(
                 Text(
                     // Said plainly. A rep who sees only display programmes here
                     // should know why, rather than conclude the shop is in nothing.
-                    "Chương trình POSM xem ở bước POSM trong cuộc viếng thăm. " +
-                        "Chương trình tích lũy chưa có trong bản này.",
+                    "Chương trình POSM xem ở bước POSM trong cuộc viếng thăm.",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
@@ -714,4 +741,218 @@ private fun CustomerHubPreview() {
             )
         }
     }
+}
+
+/**
+ * A loyalty programme the outlet is in, and how far along the band it is.
+ *
+ * The bar measures against the band's floor, not its ceiling, because the floor
+ * is what the reward turns on: an outlet at 4.9 of 5 million has earned nothing,
+ * and a bar that reads nearly full is the honest picture of that.
+ */
+@Composable
+private fun LoyaltyJoinedCard(program: LoyaltyProgram) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        program.programName,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Text(
+                        program.programCode + " | " + program.level.levelName,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                if (program.isPending) {
+                    ProgramChip("Chờ duyệt", MaterialTheme.colorScheme.tertiary)
+                } else if (program.isMet) {
+                    ProgramChip("Đã đạt", Color(0xFF2E7D32))
+                } else {
+                    ProgramChip("Đang tích", MaterialTheme.colorScheme.primary)
+                }
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            LinearProgressIndicator(
+                progress = { program.progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(3.dp)),
+                color = if (program.isMet) Color(0xFF2E7D32) else MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            )
+
+            Spacer(Modifier.height(6.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    loyaltyValue(program.achieved, program.countsBy) + " / " +
+                        loyaltyValue(program.level.targetFrom, program.countsBy),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    "Thưởng " + formatPercent(program.rewardPercent),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            Text(
+                if (program.isMet) {
+                    "Đã đạt mức, thưởng tính cuối kỳ"
+                } else {
+                    "Còn thiếu " + loyaltyValue(program.remaining, program.countsBy)
+                },
+                style = MaterialTheme.typography.labelSmall,
+                color = if (program.isMet) {
+                    Color(0xFF2E7D32)
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+            )
+
+            Text(
+                "Kỳ " + program.fromDate + " đến " + program.toDate,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun LoyaltyOpenCard(
+    offer: LoyaltyProgramOffer,
+    expanded: Boolean,
+    canRegister: Boolean,
+    registering: Boolean,
+    onToggle: () -> Unit,
+    onRegister: (String) -> Unit,
+) {
+    Card(
+        onClick = onToggle,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        offer.programName,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Text(
+                        offer.programCode +
+                            (offer.regisToDate?.let { " | hạn đăng ký " + it } ?: ""),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                if (!offer.anyAvailable) {
+                    ProgramChip("Hết suất", MaterialTheme.colorScheme.outline)
+                }
+            }
+
+            offer.specification?.takeIf { it.isNotBlank() }?.let { spec ->
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    spec,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = if (expanded) 6 else 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+
+            if (!expanded) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Chạm để chọn bậc",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                return@Column
+            }
+
+            Spacer(Modifier.height(10.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            offer.levels.forEach { level ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 8.dp),
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(level.levelName, style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            // The band, then what it pays, then what is left of the
+                            // rep's allocation — only where a ceiling exists.
+                            loyaltyBand(level, offer.countsBy) +
+                                " · thưởng " +
+                                formatPercent(level.rewardBasisPoints / 100.0) +
+                                (level.slotsLeft?.let { " · còn " + it + " suất" } ?: ""),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = { onRegister(level.levelId) },
+                        enabled = level.available && canRegister && !registering,
+                    ) { Text(if (level.available) "Đăng ký" else "Hết suất") }
+                }
+            }
+
+            if (!canRegister) {
+                Text(
+                    "Cần đang trong cuộc viếng thăm mới đăng ký được.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * A band read out in the unit it is counted in.
+ *
+ * The top band has no ceiling — LevelTo null — and says "trở lên" rather than
+ * showing an empty upper bound.
+ */
+private fun loyaltyBand(level: LoyaltyLevel, countsBy: LoyaltyCountsBy): String {
+    val from = loyaltyValue(level.targetFrom, countsBy)
+    val to = level.targetTo
+    return if (to == null) "$from trở lên" else "$from - ${loyaltyValue(to, countsBy)}"
+}
+
+/** Money reads as money; a quantity programme counts units, not dong. */
+private fun loyaltyValue(value: Long, countsBy: LoyaltyCountsBy): String =
+    when (countsBy) {
+        LoyaltyCountsBy.AMOUNT -> formatDong(value)
+        LoyaltyCountsBy.QUANTITY -> "$value đơn vị"
+    }
+
+/** 2.5 rather than 2.50, and 3 rather than 3.0 — a percentage a rep reads aloud. */
+private fun formatPercent(percent: Double): String {
+    val whole = percent.toLong()
+    return if (percent == whole.toDouble()) "$whole%" else "%.1f%%".format(percent)
 }
