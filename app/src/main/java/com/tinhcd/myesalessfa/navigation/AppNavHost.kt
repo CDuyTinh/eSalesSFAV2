@@ -23,6 +23,7 @@ import com.tinhcd.myesalessfa.feature.incall.steps.DisplayAuditScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.FeedbackScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.NoteStepScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.MarketInfoScreen
+import com.tinhcd.myesalessfa.feature.incall.steps.NearExpiryScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.PosmScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.StockCountScreen
 import com.tinhcd.myesalessfa.feature.incall.steps.SurveyScreen
@@ -274,6 +275,9 @@ fun AppNavHost(
 
                 SupportedSteps.STOCK_OUTLET ->
                     StockCountScreen(onDone = { navController.popBackStack() })
+
+                SupportedSteps.STOCK_OUT_DATE ->
+                    NearExpiryScreen(onDone = { navController.popBackStack() })
 
                 SupportedSteps.DISPLAY_REMARK ->
                     DisplayAuditScreen(onDone = { navController.popBackStack() })

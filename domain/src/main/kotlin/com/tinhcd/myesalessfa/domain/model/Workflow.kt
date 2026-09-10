@@ -65,6 +65,13 @@ object StepConfig {
      * which it holds in minutes; these are seconds, because a shop conversation is
      * measured in seconds and a minute is a clumsy unit to cap one at.
      */
+    /**
+     * How many characters a lot number has. The legacy hard-codes eight
+     * (`input_lot_num_then_eght`); a market whose lots are ten is a settings
+     * change rather than a build.
+     */
+    const val LOT_NO_LENGTH = "lot_no_length"
+
     const val AUDIO_MAX_SECONDS = "audio_max_seconds"
     const val AUDIO_TOTAL_SECONDS = "audio_total_seconds"
 }
@@ -80,6 +87,7 @@ object StepConfig {
 object SupportedSteps {
     const val OUTSIDE_CHECKING = "outside_checking"
     const val STOCK_OUTLET = "stock_outlet"
+    const val STOCK_OUT_DATE = "stock_out_date"
     const val TAKE_ORDER = "take_order"
     const val DISPLAY_REMARK = "display_remark"
     const val POSM_STATUS = "posm_status"
@@ -98,6 +106,7 @@ object SupportedSteps {
     val formIds: Set<String> = setOf(
         OUTSIDE_CHECKING,
         STOCK_OUTLET,
+        STOCK_OUT_DATE,
         TAKE_ORDER,
         DISPLAY_REMARK,
         POSM_STATUS,

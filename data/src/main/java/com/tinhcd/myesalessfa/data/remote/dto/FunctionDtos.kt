@@ -1014,3 +1014,33 @@ data class LoyaltyLevelDto(
     @SerialName("reward_basis_points") val rewardBasisPoints: Int = 0,
     @SerialName("slots_left") val slotsLeft: Int? = null,
 )
+
+/** What one visit already wrote down about stock going off. */
+@Serializable
+data class NearExpiryDto(
+    /** Null when the visit has filed nothing yet. */
+    val check: NearExpiryCheckDto? = null,
+)
+
+@Serializable
+data class NearExpiryCheckDto(
+    @SerialName("check_id") val checkId: String,
+    val note: String? = null,
+    @SerialName("no_photo_reason_id") val noPhotoReasonId: String? = null,
+    @SerialName("lot_count") val lotCount: Int = 0,
+    @SerialName("total_qty") val totalQty: Int = 0,
+    @SerialName("photo_count") val photoCount: Int = 0,
+    val lots: List<NearExpiryLotDto> = emptyList(),
+)
+
+@Serializable
+data class NearExpiryLotDto(
+    @SerialName("product_id") val productId: String,
+    @SerialName("product_code") val productCode: String,
+    @SerialName("product_name") val productName: String,
+    @SerialName("lot_no") val lotNo: String,
+    @SerialName("expiry_date") val expiryDate: String,
+    @SerialName("uom_code") val uomCode: String,
+    val qty: Int = 0,
+    @SerialName("base_qty") val baseQty: Int = 0,
+)

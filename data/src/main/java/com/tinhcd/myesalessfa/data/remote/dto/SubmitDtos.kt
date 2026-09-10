@@ -288,3 +288,34 @@ data class LoyaltyRegistrationPayload(
     val portion: Int = 1,
     val reason: String? = null,
 )
+
+/**
+ * Stock going off, lot by lot. InsertTransDate.
+ *
+ * `no_photo_reason_id` is only honoured when no photo travels with it: the
+ * server clears it otherwise rather than storing a reason that contradicts the
+ * picture beside it.
+ */
+@Serializable
+data class NearExpiryPayload(
+    val id: String,
+    @SerialName("visit_id") val visitId: String,
+    @SerialName("check_date") val checkDate: String,
+    val note: String? = null,
+    @SerialName("no_photo_reason_id") val noPhotoReasonId: String? = null,
+    val lat: Double? = null,
+    val lng: Double? = null,
+    @SerialName("client_created_at") val clientCreatedAt: String,
+    val lots: List<NearExpiryLotPayload> = emptyList(),
+    val photos: List<AuditPhotoPayload> = emptyList(),
+)
+
+@Serializable
+data class NearExpiryLotPayload(
+    @SerialName("product_id") val productId: String,
+    @SerialName("lot_no") val lotNo: String,
+    @SerialName("expiry_date") val expiryDate: String,
+    @SerialName("uom_code") val uomCode: String,
+    val qty: Int,
+    @SerialName("base_qty") val baseQty: Int,
+)
