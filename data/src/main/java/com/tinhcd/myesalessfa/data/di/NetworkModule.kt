@@ -26,6 +26,7 @@ import com.tinhcd.myesalessfa.data.remote.service.SurveyService
 import com.tinhcd.myesalessfa.data.remote.service.TimekeepingService
 import com.tinhcd.myesalessfa.data.remote.service.VisitService
 import com.tinhcd.myesalessfa.data.remote.service.WorkNoteService
+import com.tinhcd.myesalessfa.data.remote.service.WorkPlanService
 import com.tinhcd.myesalessfa.data.remote.service.WorkflowService
 import com.tinhcd.myesalessfa.data.remote.http.ClockSkewRetryInterceptor
 import com.tinhcd.myesalessfa.data.remote.http.SessionTokens
@@ -214,6 +215,11 @@ object NetworkModule {
     @Singleton
     fun provideWorkflowService(retrofit: Retrofit): WorkflowService =
         retrofit.create(WorkflowService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideWorkPlanService(retrofit: Retrofit): WorkPlanService =
+        retrofit.create(WorkPlanService::class.java)
 
     @Provides
     @Singleton
