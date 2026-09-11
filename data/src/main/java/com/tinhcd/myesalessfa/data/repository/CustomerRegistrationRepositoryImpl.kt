@@ -1,5 +1,9 @@
 package com.tinhcd.myesalessfa.data.repository
 
+import com.tinhcd.myesalessfa.data.remote.dto.CustomerPhotoTypeDto
+import com.tinhcd.myesalessfa.data.remote.dto.CustomerRegistrationCommandPayload
+import com.tinhcd.myesalessfa.data.remote.dto.CustomerRegistrationDetailDto
+import com.tinhcd.myesalessfa.data.remote.dto.CustomerRegistrationRowDto
 import com.tinhcd.myesalessfa.data.remote.dto.NamedRefDto
 import com.tinhcd.myesalessfa.data.remote.dto.NewCustomerDto
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
@@ -7,9 +11,20 @@ import com.tinhcd.myesalessfa.data.remote.service.CustomerRegistrationService
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.CustomerDraft
 import com.tinhcd.myesalessfa.domain.model.CustomerOptions
+import com.tinhcd.myesalessfa.domain.model.CustomerPhotoType
+import com.tinhcd.myesalessfa.domain.model.CustomerRegistrationBoard
+import com.tinhcd.myesalessfa.domain.model.CustomerRegistrationDetail
+import com.tinhcd.myesalessfa.domain.model.CustomerRegistrationPhoto
+import com.tinhcd.myesalessfa.domain.model.CustomerRegistrationRow
+import com.tinhcd.myesalessfa.domain.model.GeoPoint
+import com.tinhcd.myesalessfa.domain.model.RegistrationStatus
 import com.tinhcd.myesalessfa.domain.model.NamedRef
 import com.tinhcd.myesalessfa.domain.model.RegisteredCustomer
 import com.tinhcd.myesalessfa.domain.repository.CustomerRegistrationRepository
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -77,6 +92,160 @@ class CustomerRegistrationRepositoryImpl @Inject constructor(
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())
     }
+
+    override suspend fun board(
+        statuses: List<RegistrationStatus>,
+        query: String,
+    ): DataResult<CustomerRegistrationBoard> = try {
+        val body = service.registrations(
+            statuses = statuses.takeIf { it.isNotEmpty() }?.joinToString(",") { it.wire },
+            query = query.trim().ifBlank { null },
+        ).orThrow()
+
+        DataResult.Success(
+            CustomerRegistrationBoard(
+                items = body.items.map { it.toDomain() },
+                // An unknown status name is dropped rather than mapped onto a
+                // real one: a wrong count is worse than a missing chip.
+                counts = body.counts.mapNotNull { (wire, n) ->
+                    RegistrationStatus.entries.firstOrNull { it.wire == wire }?.let { it to n }
+                }.toMap(),
+                photoTypes = body.photoTypes.map { it.toDomain() },
+                total = body.total,
+            ),
+        )
+    } catch (e: Exception) {
+        DataResult.Failure(e.toAppError())
+    }
+
+    override suspend fun detail(customerId: String): DataResult<CustomerRegistrationDetail> = try {
+        DataResult.Success(service.registration(customerId).orThrow().registration.toDomain())
+    } catch (e: Exception) {
+        DataResult.Failure(e.toAppError())
+    }
+
+    override suspend fun update(
+        customerId: String,
+        draft: CustomerDraft,
+    ): DataResult<CustomerRegistrationDetail> = try {
+        val payload = buildMap<String, JsonElement> {
+            put("id", JsonPrimitive(customerId))
+            put("name", JsonPrimitive(draft.name.trim()))
+            put("address", JsonPrimitive(draft.address.trim()))
+            put("phone", draft.phone.trim().ifBlank { null }?.let(::JsonPrimitive) ?: JsonNull)
+            put("note", draft.note.trim().ifBlank { null }?.let(::JsonPrimitive) ?: JsonNull)
+            draft.wardId?.let { put("ward_id", JsonPrimitive(it)) }
+            draft.classId?.let { put("class_id", JsonPrimitive(it)) }
+            draft.channelId?.let { put("channel_id", JsonPrimitive(it)) }
+            draft.shopTypeId?.let { put("shop_type_id", JsonPrimitive(it)) }
+        }
+
+        val ack = service.command(
+            CustomerRegistrationCommandPayload(
+                action = "update",
+                registration = JsonObject(payload),
+            ),
+        ).orThrow()
+
+        DataResult.Success(
+            requireNotNull(ack.registration) { "the server saved nothing" }.toDomain(),
+        )
+    } catch (e: Exception) {
+        DataResult.Failure(e.toAppError())
+    }
+
+    override suspend fun setPhoto(
+        customerId: String,
+        typeId: String,
+        storagePath: String,
+        point: GeoPoint?,
+        fileSize: Int?,
+    ): DataResult<CustomerRegistrationDetail> = try {
+        val ack = service.command(
+            CustomerRegistrationCommandPayload(
+                action = "photo",
+                customerId = customerId,
+                typeId = typeId,
+                storagePath = storagePath,
+                lat = point?.lat,
+                lng = point?.lng,
+                fileSize = fileSize,
+            ),
+        ).orThrow()
+
+        DataResult.Success(
+            requireNotNull(ack.registration) { "the server returned no registration" }.toDomain(),
+        )
+    } catch (e: Exception) {
+        DataResult.Failure(e.toAppError())
+    }
+
+    override suspend fun delete(customerId: String): DataResult<Unit> = try {
+        service.command(
+            CustomerRegistrationCommandPayload(action = "delete", customerId = customerId),
+        ).orThrow()
+        DataResult.Success(Unit)
+    } catch (e: Exception) {
+        DataResult.Failure(e.toAppError())
+    }
 }
+
+private fun CustomerPhotoTypeDto.toDomain() = CustomerPhotoType(
+    id = id,
+    code = code,
+    name = name,
+    sampleUrl = sampleUrl,
+    isRequired = isRequired,
+    isAvatar = isAvatar,
+)
+
+private fun CustomerRegistrationRowDto.toDomain() = CustomerRegistrationRow(
+    id = id,
+    code = code,
+    name = name,
+    phone = phone,
+    address = address,
+    status = RegistrationStatus.fromWire(status),
+    note = note,
+    createdAt = createdAt,
+    avatarUrl = avatarUrl,
+    photoCount = photoCount,
+)
+
+private fun CustomerRegistrationDetailDto.toDomain() = CustomerRegistrationDetail(
+    row = CustomerRegistrationRow(
+        id = id,
+        code = code,
+        name = name,
+        phone = phone,
+        address = address,
+        status = RegistrationStatus.fromWire(status),
+        note = note,
+        createdAt = createdAt,
+        avatarUrl = avatarUrl,
+        photoCount = photos.size,
+    ),
+    contactName = contactName,
+    provinceId = provinceId,
+    districtId = districtId,
+    wardId = wardId,
+    classId = classId,
+    channelId = channelId,
+    shopTypeId = shopTypeId,
+    // Both or neither: half a coordinate is not a position. The accuracy is
+    // not stored on the customer row -- only where the rep was standing -- so
+    // it comes back unknown rather than invented.
+    point = if (lat != null && lng != null) GeoPoint(lat, lng, accuracyM = null) else null,
+    photos = photos.map {
+        CustomerRegistrationPhoto(
+            id = it.id,
+            typeId = it.typeId,
+            typeCode = it.typeCode,
+            typeName = it.typeName,
+            storagePath = it.storagePath,
+            takenAt = it.takenAt,
+        )
+    },
+)
 
 private fun NamedRefDto.toDomain() = NamedRef(id = id, code = code, name = name)

@@ -35,6 +35,7 @@ import com.tinhcd.myesalessfa.feature.reports.ReportsScreen
 import com.tinhcd.myesalessfa.feature.shell.MainShell
 import com.tinhcd.myesalessfa.feature.sitestock.SiteStockScreen
 import com.tinhcd.myesalessfa.feature.workday.WorkDayScreen
+import com.tinhcd.myesalessfa.feature.newcustomer.CustomerDossierScreen
 import com.tinhcd.myesalessfa.feature.notification.NotificationScreen
 import com.tinhcd.myesalessfa.feature.worknote.WorkNoteScreen
 import com.tinhcd.myesalessfa.feature.workplan.WorkPlanScreen
@@ -51,6 +52,9 @@ object Routes {
     /** Opening and closing the selling day. No argument: it is always today's. */
     const val WORK_DAY = "workday"
     const val NEW_CUSTOMER = "newcustomer"
+
+    /** What the rep already filed, and what became of it. */
+    const val CUSTOMER_DOSSIER = "customerdossier"
     const val REPORTS = "reports"
     const val RECEIVABLES = "receivables"
     const val ROUTE_MAP = "routemap"
@@ -132,7 +136,11 @@ fun AppNavHost(
                     // so an unknown code here would be a registry that disagrees
                     // with itself rather than a rep pressing something odd.
                     when (code) {
-                        SupportedMenu.NEW_CUSTOMER -> navController.navigate(Routes.NEW_CUSTOMER)
+                        // The menu opens the dossier, not the blank form: a rep
+                        // reaching for "khách hàng mới" is as often checking on
+                        // one they filed as starting another.
+                        SupportedMenu.NEW_CUSTOMER ->
+                            navController.navigate(Routes.CUSTOMER_DOSSIER)
                         SupportedMenu.REPORT -> navController.navigate(Routes.REPORTS)
                         SupportedMenu.RECEIVABLE -> navController.navigate(Routes.RECEIVABLES)
                         SupportedMenu.DAILY_SALES_TARGET ->
@@ -172,6 +180,13 @@ fun AppNavHost(
 
         composable(Routes.WORK_NOTES) {
             WorkNoteScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Routes.CUSTOMER_DOSSIER) {
+            CustomerDossierScreen(
+                onBack = { navController.popBackStack() },
+                onRegisterNew = { navController.navigate(Routes.NEW_CUSTOMER) },
+            )
         }
 
         composable(Routes.NOTIFICATIONS) {
