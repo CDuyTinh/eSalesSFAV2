@@ -1,6 +1,10 @@
 package com.tinhcd.myesalessfa.data.remote.service
 
 import com.tinhcd.myesalessfa.data.remote.dto.CustomerOptionsDto
+import com.tinhcd.myesalessfa.data.remote.dto.CustomerRegistrationAckDto
+import com.tinhcd.myesalessfa.data.remote.dto.CustomerRegistrationBoardDto
+import com.tinhcd.myesalessfa.data.remote.dto.CustomerRegistrationCommandPayload
+import com.tinhcd.myesalessfa.data.remote.dto.CustomerRegistrationDetailWrapper
 import com.tinhcd.myesalessfa.data.remote.dto.NewCustomerDto
 import com.tinhcd.myesalessfa.data.remote.dto.RegisteredCustomerAckDto
 import retrofit2.Response
@@ -30,4 +34,23 @@ interface CustomerRegistrationService {
 
     @POST("submit-customer")
     suspend fun submit(@Body customer: NewCustomerDto): Response<RegisteredCustomerAckDto>
+
+    // And what became of the ones already filed. Registering creates a row;
+    // these only ever revisit one, which is why they are a separate route.
+
+    @GET("customer-registrations")
+    suspend fun registrations(
+        @Query("statuses") statuses: String? = null,
+        @Query("query") query: String? = null,
+    ): Response<CustomerRegistrationBoardDto>
+
+    @GET("customer-registrations")
+    suspend fun registration(
+        @Query("customerId") customerId: String,
+    ): Response<CustomerRegistrationDetailWrapper>
+
+    @POST("customer-registrations")
+    suspend fun command(
+        @Body payload: CustomerRegistrationCommandPayload,
+    ): Response<CustomerRegistrationAckDto>
 }
