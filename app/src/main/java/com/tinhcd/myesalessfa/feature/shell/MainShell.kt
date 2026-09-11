@@ -97,6 +97,8 @@ fun MainShell(
     onOpenMap: () -> Unit,
     onOpenAccount: () -> Unit,
     onOpenWorkDay: () -> Unit,
+    /** The bell, which hangs off the Overview tab as it did over there. */
+    onOpenNotifications: () -> Unit,
     /** A sheet entry this build has a screen for. The code, not the label. */
     onOpenMenuEntry: (String) -> Unit,
     onSignedOut: () -> Unit,
@@ -138,6 +140,7 @@ fun MainShell(
                 when (state.selectedTab) {
                     SupportedMenu.DASH_BOARD -> DashboardScreen(
                         onOpenDrawer = { scope.launch { drawerState.open() } },
+                        onOpenNotifications = onOpenNotifications,
                     )
 
                     // The route is behind the depot, as it was in the app this

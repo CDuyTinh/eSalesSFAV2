@@ -319,3 +319,18 @@ data class NearExpiryLotPayload(
     val qty: Int,
     @SerialName("base_qty") val baseQty: Int,
 )
+
+/**
+ * Marks one item read, or everything in the window.
+ *
+ * One payload for both because they are the same request with a different
+ * scope, and the server tells them apart by [all].
+ */
+@Serializable
+data class NotificationReadPayload(
+    val kind: String? = null,
+    @SerialName("sourceId") val sourceId: String? = null,
+    val all: Boolean = false,
+    @SerialName("fromDate") val fromDate: String? = null,
+    @SerialName("toDate") val toDate: String? = null,
+)

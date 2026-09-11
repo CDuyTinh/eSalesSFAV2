@@ -1044,3 +1044,30 @@ data class NearExpiryLotDto(
     val qty: Int = 0,
     @SerialName("base_qty") val baseQty: Int = 0,
 )
+
+/** The bell: everything published for this rep, and the badge. */
+@Serializable
+data class NotificationFeedDto(
+    val items: List<NotificationDto> = emptyList(),
+    val unread: Int = 0,
+)
+
+@Serializable
+data class NotificationDto(
+    val kind: String,
+    @SerialName("source_id") val sourceId: String,
+    val title: String,
+    val body: String = "",
+    val code: String? = null,
+    @SerialName("from_date") val fromDate: String? = null,
+    @SerialName("to_date") val toDate: String? = null,
+    @SerialName("is_read") val isRead: Boolean = false,
+    @SerialName("read_at") val readAt: String? = null,
+)
+
+/** What is left on the badge after marking something read. */
+@Serializable
+data class NotificationReadAckDto(
+    val marked: Int = 0,
+    val unread: Int = 0,
+)

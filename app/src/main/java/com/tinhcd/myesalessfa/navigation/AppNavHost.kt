@@ -35,6 +35,7 @@ import com.tinhcd.myesalessfa.feature.reports.ReportsScreen
 import com.tinhcd.myesalessfa.feature.shell.MainShell
 import com.tinhcd.myesalessfa.feature.sitestock.SiteStockScreen
 import com.tinhcd.myesalessfa.feature.workday.WorkDayScreen
+import com.tinhcd.myesalessfa.feature.notification.NotificationScreen
 import com.tinhcd.myesalessfa.feature.worknote.WorkNoteScreen
 
 object Routes {
@@ -57,6 +58,7 @@ object Routes {
     const val FOCUS_PRODUCTS = "focusproducts"
     const val SITE_STOCK = "sitestock"
     const val WORK_NOTES = "worknotes"
+    const val NOTIFICATIONS = "notifications"
     const val LEAVE = "leave"
     const val CHECK_IN = "checkin/{customerId}"
 
@@ -115,6 +117,7 @@ fun AppNavHost(
                 onOpenMap = { navController.navigate(Routes.ROUTE_MAP) },
                 onOpenAccount = { navController.navigate(Routes.ACCOUNT) },
                 onOpenWorkDay = { navController.navigate(Routes.WORK_DAY) },
+                onOpenNotifications = { navController.navigate(Routes.NOTIFICATIONS) },
                 onOpenMenuEntry = { code ->
                     // The shell has already refused anything not in SupportedMenu,
                     // so an unknown code here would be a registry that disagrees
@@ -154,6 +157,10 @@ fun AppNavHost(
 
         composable(Routes.WORK_NOTES) {
             WorkNoteScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Routes.NOTIFICATIONS) {
+            NotificationScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Routes.SITE_STOCK) {
