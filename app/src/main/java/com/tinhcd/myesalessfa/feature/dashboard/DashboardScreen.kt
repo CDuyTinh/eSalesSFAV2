@@ -46,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.core.ui.theme.brand
@@ -74,6 +75,16 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    // Coming back from the bell does not recompose this tab, so the badge would
+    // sit on the number it had before the rep read anything. Re-counting on
+    // resume is one cheap call; reloading the whole overview would flash the
+    // figures for no reason.
+    LifecycleResumeEffect(Unit) {
+        viewModel.refreshUnread()
+        onPauseOrDispose { }
+    }
+
     DashboardContent(
         state = state,
         onOpenDrawer = onOpenDrawer,

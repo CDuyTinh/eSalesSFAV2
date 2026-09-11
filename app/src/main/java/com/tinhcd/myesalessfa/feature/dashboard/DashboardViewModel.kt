@@ -49,7 +49,7 @@ class DashboardViewModel @Inject constructor(
 
     /** The figures, and the badge alongside them. */
     fun load() {
-        loadUnread()
+        refreshUnread()
         _state.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             when (val result = getOverview()) {
@@ -71,7 +71,7 @@ class DashboardViewModel @Inject constructor(
      * Its own call and its own failure: the overview is the screen, and a bell
      * that could not be counted must not blank the numbers beside it.
      */
-    private fun loadUnread() {
+    fun refreshUnread() {
         viewModelScope.launch {
             val result = notifications.unreadCount()
             if (result is DataResult.Success) {

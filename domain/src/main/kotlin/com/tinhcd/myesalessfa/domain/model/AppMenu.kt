@@ -87,6 +87,14 @@ object SupportedMenu {
     const val SALES_FOCUS = "SALES_FOCUS"
     const val SITE = "SITE"
     const val WORKING_NOTE = "WORKING_NOTE"
+    /**
+     * Two codes, one screen. The legacy keeps "việc của tôi" and "kế hoạch làm
+     * việc" apart because they read two tables; here they are the same rows
+     * with a different author, so both open the plan board and only the scope
+     * it starts on differs.
+     */
+    const val MY_TASK = "MY_TASK"
+    const val WORKING_PLAN = "WORKING_PLAN"
     const val LEAVE_APPLICATION = "LEAVE_APPLICATION"
 
     /** Tabs that swap the content area. Everything else opens a sheet. */
@@ -111,6 +119,8 @@ object SupportedMenu {
         SALES_FOCUS,
         SITE,
         WORKING_NOTE,
+        MY_TASK,
+        WORKING_PLAN,
         LEAVE_APPLICATION,
     )
 }

@@ -37,6 +37,7 @@ import com.tinhcd.myesalessfa.feature.sitestock.SiteStockScreen
 import com.tinhcd.myesalessfa.feature.workday.WorkDayScreen
 import com.tinhcd.myesalessfa.feature.notification.NotificationScreen
 import com.tinhcd.myesalessfa.feature.worknote.WorkNoteScreen
+import com.tinhcd.myesalessfa.feature.workplan.WorkPlanScreen
 
 object Routes {
     const val LOGIN = "login"
@@ -59,6 +60,14 @@ object Routes {
     const val SITE_STOCK = "sitestock"
     const val WORK_NOTES = "worknotes"
     const val NOTIFICATIONS = "notifications"
+
+    /**
+     * The plan board. `scope` is which half of the legacy's two menu entries the
+     * rep came in through — it picks the opening filter, nothing more.
+     */
+    const val WORK_PLANS = "workplans?scope={scope}"
+
+    fun workPlans(scope: String) = "workplans?scope=$scope"
     const val LEAVE = "leave"
     const val CHECK_IN = "checkin/{customerId}"
 
@@ -132,6 +141,12 @@ fun AppNavHost(
                         SupportedMenu.SALES_FOCUS -> navController.navigate(Routes.FOCUS_PRODUCTS)
                         SupportedMenu.SITE -> navController.navigate(Routes.SITE_STOCK)
                         SupportedMenu.WORKING_NOTE -> navController.navigate(Routes.WORK_NOTES)
+                        SupportedMenu.MY_TASK ->
+                            navController.navigate(Routes.workPlans("ASSIGNED"))
+
+                        SupportedMenu.WORKING_PLAN ->
+                            navController.navigate(Routes.workPlans("MINE"))
+
                         SupportedMenu.LEAVE_APPLICATION -> navController.navigate(Routes.LEAVE)
                     }
                 },
@@ -161,6 +176,18 @@ fun AppNavHost(
 
         composable(Routes.NOTIFICATIONS) {
             NotificationScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(
+            route = Routes.WORK_PLANS,
+            arguments = listOf(
+                navArgument("scope") {
+                    type = NavType.StringType
+                    defaultValue = "ALL"
+                },
+            ),
+        ) {
+            WorkPlanScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Routes.SITE_STOCK) {
