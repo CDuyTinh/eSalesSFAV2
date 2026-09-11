@@ -2,6 +2,7 @@ package com.tinhcd.myesalessfa.feature.reports
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -27,14 +29,16 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -56,6 +60,14 @@ import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.ActivityReport
 import com.tinhcd.myesalessfa.domain.model.ActivityRow
+import com.tinhcd.myesalessfa.domain.model.OrderReportRow
+import com.tinhcd.myesalessfa.domain.model.OrderReportStatus
+import com.tinhcd.myesalessfa.domain.model.ReportWindow
+import com.tinhcd.myesalessfa.domain.model.SkuReportRow
+import com.tinhcd.myesalessfa.domain.model.TradeReportKind
+import com.tinhcd.myesalessfa.domain.model.TradeReportRow
+import com.tinhcd.myesalessfa.domain.model.WorkPlanStatus
+import com.tinhcd.myesalessfa.domain.model.WorkResultRow
 import com.tinhcd.myesalessfa.domain.model.ActivitySummary
 import com.tinhcd.myesalessfa.domain.model.CustomerSales
 import com.tinhcd.myesalessfa.domain.model.ProductSales
@@ -90,6 +102,10 @@ fun ReportsScreen(
         onCutSelected = viewModel::onCutSelected,
         onDateChanged = viewModel::onDateChanged,
         onMonthChanged = viewModel::onMonthChanged,
+        onWindowChanged = viewModel::onWindowChanged,
+        onOrderStatus = viewModel::onOrderStatus,
+        onSkuQuery = viewModel::onSkuQuery,
+        onTradeKind = viewModel::onTradeKind,
         onRefresh = viewModel::refresh,
     )
 }
@@ -103,6 +119,10 @@ private fun ReportsContent(
     onCutSelected: (SalesCut) -> Unit,
     onDateChanged: (LocalDate) -> Unit,
     onMonthChanged: (LocalDate) -> Unit,
+    onWindowChanged: (ReportWindow) -> Unit,
+    onOrderStatus: (OrderReportStatus?) -> Unit,
+    onSkuQuery: (String) -> Unit,
+    onTradeKind: (TradeReportKind?) -> Unit,
     onRefresh: () -> Unit,
 ) {
     Scaffold(
@@ -130,7 +150,12 @@ private fun ReportsContent(
                         actionIconContentColor = MaterialTheme.brand.onHeader,
                     ),
                 )
-                TabRow(selectedTabIndex = state.tab.ordinal) {
+                // Scrollable now that there are six: a fixed TabRow would give
+                // each label a sixth of the width and truncate every one.
+                ScrollableTabRow(
+                    selectedTabIndex = state.tab.ordinal,
+                    edgePadding = 8.dp,
+                ) {
                     ReportTab.entries.forEach { tab ->
                         Tab(
                             selected = tab == state.tab,
@@ -153,6 +178,29 @@ private fun ReportsContent(
                     state = state,
                     onMonthChanged = onMonthChanged,
                     onCutSelected = onCutSelected,
+                )
+
+                ReportTab.ORDERS -> OrdersTab(
+                    state = state,
+                    onWindowChanged = onWindowChanged,
+                    onOrderStatus = onOrderStatus,
+                )
+
+                ReportTab.SKU -> SkuTab(
+                    state = state,
+                    onWindowChanged = onWindowChanged,
+                    onSkuQuery = onSkuQuery,
+                )
+
+                ReportTab.TRADE -> TradeTab(
+                    state = state,
+                    onWindowChanged = onWindowChanged,
+                    onTradeKind = onTradeKind,
+                )
+
+                ReportTab.WORK_RESULT -> WorkResultTab(
+                    state = state,
+                    onWindowChanged = onWindowChanged,
                 )
             }
 
@@ -629,6 +677,566 @@ private val MoneyFormat = DecimalFormat(
 
 private fun formatMoney(value: Long): String = MoneyFormat.format(value)
 
+// -----------------------------------------------------------------------------
+// The four window-based reports
+//
+// All four open with the same header: the range they cover, and a way to move
+// it. They share one window because a rep asking "what did I do this month"
+// wants the same month answered four ways.
+// -----------------------------------------------------------------------------
+
+/** Moves the shared range a whole month at a time, which is how a rep thinks. */
+@Composable
+private fun WindowStepper(window: ReportWindow, onWindowChanged: (ReportWindow) -> Unit) {
+    val start = window.fromDate
+    val label = "${start.format(DateFormat)} - ${window.toDate.format(DateFormat)}"
+
+    PeriodStepper(
+        label = label,
+        onPrevious = {
+            val previous = start.minusMonths(1)
+            onWindowChanged(
+                ReportWindow(
+                    previous.withDayOfMonth(1),
+                    previous.withDayOfMonth(previous.lengthOfMonth()),
+                ),
+            )
+        },
+        onNext = {
+            val next = start.plusMonths(1)
+            onWindowChanged(
+                ReportWindow(
+                    next.withDayOfMonth(1),
+                    // Never past today: a range running into the future would
+                    // show an empty tail the rep cannot do anything about.
+                    minOf(next.withDayOfMonth(next.lengthOfMonth()), LocalDate.now()),
+                ),
+            )
+        },
+        // Stepping forward past this month would ask for a range that has not
+        // happened.
+        nextEnabled = start.withDayOfMonth(1) < LocalDate.now().withDayOfMonth(1),
+    )
+}
+
+@Composable
+private fun ReportEmpty(text: String) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Báo cáo đơn hàng
+// -----------------------------------------------------------------------------
+
+@Composable
+private fun OrdersTab(
+    state: ReportsUiState,
+    onWindowChanged: (ReportWindow) -> Unit,
+    onOrderStatus: (OrderReportStatus?) -> Unit,
+) {
+    val report = state.orders
+
+    Column(Modifier.fillMaxSize()) {
+        WindowStepper(state.window, onWindowChanged)
+
+        if (report == null) {
+            ReportEmpty(state.error ?: "Đang tải báo cáo đơn hàng")
+            return@Column
+        }
+
+        val rows = report.items.filter {
+            state.orderStatus == null || it.status == state.orderStatus
+        }
+
+        LazyColumn(
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                ) {
+                    Row(Modifier.fillMaxWidth().padding(16.dp)) {
+                        Metric(
+                            label = "Số đơn",
+                            value = report.total.toString(),
+                            percent = null,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Metric(
+                            // Cancelled orders are in the count but not the
+                            // money, which is the honest pair to show together.
+                            label = "Thành tiền (VND)",
+                            value = formatMoney(report.totalAmount),
+                            percent = null,
+                            modifier = Modifier.weight(1.4f),
+                        )
+                    }
+                }
+            }
+
+            if (report.presentStatuses.isNotEmpty()) {
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        FilterChip(
+                            selected = state.orderStatus == null,
+                            onClick = { onOrderStatus(null) },
+                            label = { Text("Tất cả ${report.total}") },
+                        )
+                        report.presentStatuses.forEach { status ->
+                            FilterChip(
+                                selected = state.orderStatus == status,
+                                onClick = { onOrderStatus(status) },
+                                label = { Text("${status.label} ${report.count(status)}") },
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (rows.isEmpty()) {
+                item { ReportEmpty("Kỳ này chưa có đơn hàng") }
+            } else {
+                items(rows, key = { it.id }) { row -> OrderReportCard(row) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OrderReportCard(row: OrderReportRow) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = row.customerName,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = formatMoney(row.totalAmount),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+
+            Text(
+                text = "${row.orderNo} · ${row.customerCode}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = row.status.label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = when (row.status) {
+                        OrderReportStatus.CONFIRMED -> MaterialTheme.colorScheme.primary
+                        OrderReportStatus.CANCELLED -> MaterialTheme.colorScheme.error
+                        OrderReportStatus.NEW -> MaterialTheme.colorScheme.tertiary
+                    },
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = listOf(
+                        row.orderDate,
+                        "${row.lineCount} mặt hàng",
+                        // Off-route is the interesting case, so only it is said.
+                        if (row.inRoute) "" else "Ngoài tuyến",
+                    ).filter { it.isNotBlank() }.joinToString(" · "),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline,
+                )
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Báo cáo SKU
+// -----------------------------------------------------------------------------
+
+@Composable
+private fun SkuTab(
+    state: ReportsUiState,
+    onWindowChanged: (ReportWindow) -> Unit,
+    onSkuQuery: (String) -> Unit,
+) {
+    val report = state.sku
+
+    Column(Modifier.fillMaxSize()) {
+        WindowStepper(state.window, onWindowChanged)
+
+        OutlinedTextField(
+            value = state.skuQuery,
+            onValueChange = onSkuQuery,
+            label = { Text("Tìm theo tên hoặc mã sản phẩm") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+
+        if (report == null) {
+            ReportEmpty(state.error ?: "Đang tải báo cáo SKU")
+            return@Column
+        }
+
+        LazyColumn(
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                ) {
+                    Row(Modifier.fillMaxWidth().padding(16.dp)) {
+                        Metric(
+                            label = "Số SKU",
+                            value = report.skuCount.toString(),
+                            percent = null,
+                            modifier = Modifier.weight(0.8f),
+                        )
+                        Metric(
+                            label = "Đã xác nhận",
+                            value = report.qtyConfirmed.toString(),
+                            percent = null,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Metric(
+                            label = "Chờ xử lý",
+                            value = report.qtyPending.toString(),
+                            percent = null,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+            }
+
+            if (report.items.isEmpty()) {
+                item {
+                    ReportEmpty(
+                        if (state.skuQuery.isNotBlank()) "Không tìm thấy sản phẩm nào"
+                        else "Kỳ này chưa bán mặt hàng nào",
+                    )
+                }
+            } else {
+                items(report.items, key = { it.productId }) { row -> SkuReportCard(row) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SkuReportCard(row: SkuReportRow) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = row.productName,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = "${row.productCode} · ${row.stockUom}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
+                Metric(
+                    label = "Tổng",
+                    value = row.qtyTotal.toString(),
+                    percent = null,
+                    modifier = Modifier.weight(1f),
+                )
+                Metric(
+                    label = "Xác nhận",
+                    value = row.qtyConfirmed.toString(),
+                    percent = row.confirmedShare,
+                    modifier = Modifier.weight(1f),
+                )
+                Metric(
+                    label = "Thành tiền",
+                    value = formatMoney(row.amountTotal),
+                    percent = null,
+                    modifier = Modifier.weight(1.4f),
+                )
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Báo cáo thương mại
+// -----------------------------------------------------------------------------
+
+@Composable
+private fun TradeTab(
+    state: ReportsUiState,
+    onWindowChanged: (ReportWindow) -> Unit,
+    onTradeKind: (TradeReportKind?) -> Unit,
+) {
+    val report = state.trade
+
+    Column(Modifier.fillMaxSize()) {
+        WindowStepper(state.window, onWindowChanged)
+
+        if (report == null) {
+            ReportEmpty(state.error ?: "Đang tải báo cáo thương mại")
+            return@Column
+        }
+
+        val rows = report.of(state.tradeKind)
+
+        LazyColumn(
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                ) {
+                    Row(Modifier.fillMaxWidth().padding(16.dp)) {
+                        Metric(
+                            label = "Trưng bày",
+                            value = report.displayCount.toString(),
+                            percent = null,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Metric(
+                            label = "Tích lũy",
+                            value = report.loyaltyCount.toString(),
+                            percent = null,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Metric(
+                            // Outlets, not sign-ups: one shop in three
+                            // programmes is one shop reached.
+                            label = "Khách hàng",
+                            value = report.customerCount.toString(),
+                            percent = null,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+            }
+
+            if (report.total > 0) {
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        FilterChip(
+                            selected = state.tradeKind == null,
+                            onClick = { onTradeKind(null) },
+                            label = { Text("Tất cả ${report.total}") },
+                        )
+                        TradeReportKind.entries.forEach { kind ->
+                            FilterChip(
+                                selected = state.tradeKind == kind,
+                                onClick = { onTradeKind(kind) },
+                                label = { Text(kind.label) },
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (rows.isEmpty()) {
+                item { ReportEmpty("Kỳ này chưa đăng ký chương trình nào") }
+            } else {
+                items(rows, key = { it.kind.wire + it.customerCode + it.programCode }) { row ->
+                    TradeReportCard(row)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TradeReportCard(row: TradeReportRow) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = row.customerName,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = row.programName,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text(
+                text = listOfNotNull(
+                    row.kind.label,
+                    row.levelName,
+                    row.programCode,
+                    row.registeredAt,
+                ).joinToString(" · "),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outline,
+            )
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Báo cáo kết quả công việc
+// -----------------------------------------------------------------------------
+
+@Composable
+private fun WorkResultTab(
+    state: ReportsUiState,
+    onWindowChanged: (ReportWindow) -> Unit,
+) {
+    val report = state.workResult
+
+    Column(Modifier.fillMaxSize()) {
+        WindowStepper(state.window, onWindowChanged)
+
+        if (report == null) {
+            ReportEmpty(state.error ?: "Đang tải báo cáo kết quả công việc")
+            return@Column
+        }
+
+        LazyColumn(
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                ) {
+                    Row(Modifier.fillMaxWidth().padding(16.dp)) {
+                        Metric(
+                            label = "Hoàn thành",
+                            value = report.completed.toString(),
+                            percent = report.completionRate,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Metric(
+                            label = "Đã hủy",
+                            value = report.cancelled.toString(),
+                            percent = null,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Metric(
+                            label = "Tổng",
+                            value = report.total.toString(),
+                            percent = null,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+            }
+
+            if (report.items.isEmpty()) {
+                item { ReportEmpty("Kỳ này chưa có kế hoạch nào kết thúc") }
+            } else {
+                items(report.items, key = { it.id }) { row -> WorkResultCard(row) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WorkResultCard(row: WorkResultRow) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = row.content,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = row.status.label,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = if (row.status == WorkPlanStatus.COMPLETED) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    },
+                )
+            }
+
+            Text(
+                text = listOf(
+                    row.categoryName,
+                    row.fromAt.take(10),
+                    if (row.objectCount > 0) "${row.objectCount} đối tượng" else "",
+                ).filter { it.isNotBlank() }.joinToString(" · "),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outline,
+            )
+
+            row.outcome?.takeIf { it.isNotBlank() }?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
+}
+
 private fun clockOf(epochMs: Long): String = ClockFormat
     .format(Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()))
 
@@ -723,6 +1331,10 @@ private fun ActivitiesPreview() {
             onCutSelected = {},
             onDateChanged = {},
             onMonthChanged = {},
+            onWindowChanged = {},
+            onOrderStatus = {},
+            onSkuQuery = {},
+            onTradeKind = {},
             onRefresh = {},
         )
     }
@@ -743,6 +1355,10 @@ private fun SalesPreview() {
             onCutSelected = {},
             onDateChanged = {},
             onMonthChanged = {},
+            onWindowChanged = {},
+            onOrderStatus = {},
+            onSkuQuery = {},
+            onTradeKind = {},
             onRefresh = {},
         )
     }
