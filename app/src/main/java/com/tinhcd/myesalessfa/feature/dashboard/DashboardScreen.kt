@@ -18,7 +18,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -67,12 +70,14 @@ import java.util.Locale
 @Composable
 fun DashboardScreen(
     onOpenDrawer: () -> Unit,
+    onOpenNotifications: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     DashboardContent(
         state = state,
         onOpenDrawer = onOpenDrawer,
+        onOpenNotifications = onOpenNotifications,
         onRefresh = viewModel::load,
         onRangeSelected = viewModel::onRangeSelected,
     )
@@ -83,6 +88,7 @@ fun DashboardScreen(
 private fun DashboardContent(
     state: DashboardUiState,
     onOpenDrawer: () -> Unit,
+    onOpenNotifications: () -> Unit,
     onRefresh: () -> Unit,
     onRangeSelected: (ChartRange) -> Unit,
 ) {
@@ -96,6 +102,28 @@ private fun DashboardContent(
                     }
                 },
                 actions = {
+                    BadgedBox(
+                        badge = {
+                            if (state.unreadNotifications > 0) {
+                                // Past ninety-nine the exact figure stops meaning
+                                // anything, and a four-digit badge covers the bell.
+                                Badge {
+                                    Text(
+                                        if (state.unreadNotifications > 99) "99+"
+                                        else state.unreadNotifications.toString(),
+                                    )
+                                }
+                            }
+                        },
+                    ) {
+                        IconButton(onClick = onOpenNotifications) {
+                            Icon(
+                                Icons.Default.NotificationsNone,
+                                contentDescription = "Thông báo",
+                            )
+                        }
+                    }
+
                     IconButton(onClick = onRefresh, enabled = !state.loading) {
                         Icon(Icons.Default.Refresh, contentDescription = "Tải lại")
                     }
@@ -599,6 +627,7 @@ private fun DashboardPreview() {
         DashboardContent(
             state = DashboardUiState(loading = false, overview = SampleOverview),
             onOpenDrawer = {},
+            onOpenNotifications = {},
             onRefresh = {},
             onRangeSelected = {},
         )
@@ -623,6 +652,7 @@ private fun DashboardBeatenPreview() {
                 ),
             ),
             onOpenDrawer = {},
+            onOpenNotifications = {},
             onRefresh = {},
             onRangeSelected = {},
         )
@@ -655,6 +685,7 @@ private fun DashboardEmptyPreview() {
                 ),
             ),
             onOpenDrawer = {},
+            onOpenNotifications = {},
             onRefresh = {},
             onRangeSelected = {},
         )
