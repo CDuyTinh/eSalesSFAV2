@@ -7,7 +7,9 @@ import com.tinhcd.myesalessfa.data.remote.dto.CustomerRegistrationRowDto
 import com.tinhcd.myesalessfa.data.remote.dto.NamedRefDto
 import com.tinhcd.myesalessfa.data.remote.dto.NewCustomerDto
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
+import com.tinhcd.myesalessfa.data.remote.storage.PhotoUploader
 import com.tinhcd.myesalessfa.data.remote.service.CustomerRegistrationService
+import com.tinhcd.myesalessfa.data.session.SessionStore
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.CustomerDraft
 import com.tinhcd.myesalessfa.domain.model.CustomerOptions
@@ -31,6 +33,8 @@ import javax.inject.Singleton
 @Singleton
 class CustomerRegistrationRepositoryImpl @Inject constructor(
     private val service: CustomerRegistrationService,
+    private val uploader: PhotoUploader,
+    private val session: SessionStore,
 ) : CustomerRegistrationRepository {
 
     override suspend fun options(): DataResult<CustomerOptions> = try {
@@ -154,6 +158,13 @@ class CustomerRegistrationRepositoryImpl @Inject constructor(
         DataResult.Failure(e.toAppError())
     }
 
+    /**
+     * The bytes go to Storage first, and only the object name is recorded.
+     *
+     * A registration has no visit, so the path convention's middle segment is the
+     * customer instead -- what the bucket policy authorises on is the first
+     * segment, the rep, and that is unchanged.
+     */
     override suspend fun setPhoto(
         customerId: String,
         typeId: String,
@@ -161,17 +172,29 @@ class CustomerRegistrationRepositoryImpl @Inject constructor(
         point: GeoPoint?,
         fileSize: Int?,
     ): DataResult<CustomerRegistrationDetail> = try {
+        val salespersonId = session.current.value?.id
+            ?: error("no signed-in salesperson to attribute the photo to")
+
+        val objectName = uploader.upload(
+            salespersonId = salespersonId,
+            visitId = customerId,
+            localPath = storagePath,
+        )
+
         val ack = service.command(
             CustomerRegistrationCommandPayload(
                 action = "photo",
                 customerId = customerId,
                 typeId = typeId,
-                storagePath = storagePath,
+                storagePath = objectName,
                 lat = point?.lat,
                 lng = point?.lng,
                 fileSize = fileSize,
             ),
         ).orThrow()
+
+        // The audit has landed; the local copy is just taking up space now.
+        uploader.deleteLocal(storagePath)
 
         DataResult.Success(
             requireNotNull(ack.registration) { "the server returned no registration" }.toDomain(),
@@ -243,6 +266,7 @@ private fun CustomerRegistrationDetailDto.toDomain() = CustomerRegistrationDetai
             typeCode = it.typeCode,
             typeName = it.typeName,
             storagePath = it.storagePath,
+            url = it.url,
             takenAt = it.takenAt,
         )
     },

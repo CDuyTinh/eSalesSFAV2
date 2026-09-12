@@ -17,6 +17,39 @@
 // =============================================================================
 
 import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
+import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
+
+/**
+ * Signs every photo in a registration so the screen can actually show them.
+ *
+ * The bucket is private -- the path stored on the row is an object name, not a
+ * URL, and Coil cannot fetch one. Signing happens here rather than in SQL
+ * because Postgres cannot sign, and here rather than on the client because the
+ * client would need the storage API and a second round trip per photo.
+ *
+ * An hour is long enough to read a dossier and short enough that a leaked link
+ * is worth little. A photo that fails to sign is handed back without a url
+ * rather than failing the whole request: the rest of the registration is still
+ * worth showing.
+ */
+async function withPhotoUrls(
+  db: SupabaseClient,
+  registration: Record<string, unknown> | null,
+): Promise<Record<string, unknown> | null> {
+  if (!registration) return registration;
+
+  const photos = registration.photos as Array<Record<string, unknown>> | undefined;
+  if (!photos?.length) return registration;
+
+  const signed = await Promise.all(photos.map(async (photo) => {
+    const path = photo.storage_path as string;
+    const { data } = await db.storage.from("visit-photos")
+      .createSignedUrl(path, 60 * 60);
+    return { ...photo, url: data?.signedUrl ?? null };
+  }));
+
+  return { ...registration, photos: signed };
+}
 
 const STATUSES = ["pending", "approved", "rejected"] as const;
 
@@ -50,7 +83,7 @@ Deno.serve(handler(async (req, db) => {
       // Null means it is not this rep's registration. Not found and not yours
       // are the same answer on purpose.
       if (!detail) throw new HttpError(404, "registration not found");
-      return json({ registration: detail });
+      return json({ registration: await withPhotoUrls(db, detail) });
     }
 
     const statuses = list(params.get("statuses"));
@@ -91,8 +124,9 @@ Deno.serve(handler(async (req, db) => {
     case "update": {
       if (!body.registration) throw new HttpError(400, "registration is required");
       return json({
-        registration: unwrap(
-          await db.rpc("update_customer_registration", { payload: body.registration }),
+        registration: await withPhotoUrls(
+          db,
+          unwrap(await db.rpc("update_customer_registration", { payload: body.registration })),
         ),
       });
     }
@@ -103,8 +137,9 @@ Deno.serve(handler(async (req, db) => {
       if (!body.storagePath) throw new HttpError(400, "storagePath is required");
 
       return json({
-        registration: unwrap(
-          await db.rpc("set_customer_registration_photo", {
+        registration: await withPhotoUrls(
+          db,
+          unwrap(await db.rpc("set_customer_registration_photo", {
             p_customer_id: body.customerId,
             p_type_id: body.typeId,
             p_storage_path: body.storagePath,
@@ -112,7 +147,7 @@ Deno.serve(handler(async (req, db) => {
             p_lat: body.lat ?? null,
             p_lng: body.lng ?? null,
             p_file_size: body.fileSize ?? null,
-          }),
+          })),
         ),
       });
     }

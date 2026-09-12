@@ -62,6 +62,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
@@ -100,6 +101,15 @@ fun CustomerDossierScreen(
     ) { }
 
     LaunchedEffect(Unit) { cameraPermission.launch(Manifest.permission.CAMERA) }
+
+    // Registering a new outlet happens on a route of its own, so coming back
+    // from it does not recompose this one -- the list would still be showing
+    // what it held before the registration existed. Only on the list: reloading
+    // under an open detail would swap what the rep is reading.
+    LifecycleResumeEffect(state.page) {
+        if (state.page == DossierPage.LIST) viewModel.load()
+        onPauseOrDispose { }
+    }
 
     when (state.page) {
         DossierPage.LIST -> ListPage(
@@ -491,7 +501,9 @@ private fun PhotoSlot(
 
             when {
                 photo != null -> AsyncImage(
-                    model = photo.storagePath,
+                    // The signed link, not the object name -- the bucket is
+                    // private and the raw path fetches nothing.
+                    model = photo.url,
                     contentDescription = type.name,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
