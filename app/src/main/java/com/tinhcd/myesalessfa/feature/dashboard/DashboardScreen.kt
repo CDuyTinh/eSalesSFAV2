@@ -48,6 +48,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tinhcd.myesalessfa.core.ui.Kpi
+import com.tinhcd.myesalessfa.core.ui.KpiBar
+import com.tinhcd.myesalessfa.core.ui.PercentPill
+import com.tinhcd.myesalessfa.core.ui.StatTile
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.ChartRange
@@ -256,16 +260,12 @@ private fun TodayCard(today: TodayFigures) {
     }
 }
 
-/**
- * Fixed rather than theme-derived, and light text on all three.
- *
- * These read as one row of three, so they have to stay distinguishable from each
- * other rather than from the background — which is what would happen if they
- * tracked the colour scheme and dark mode pulled them all toward the same value.
- */
-private val VisitTile = listOf(Color(0xFF2D2DFE), Color(0xFF5757FE))
-private val OrderTile = listOf(Color(0xFF04A489), Color(0xFF36B6A0))
-private val SkuTile = listOf(Color(0xFFFF5A30), Color(0xFFFF7B59))
+// The tiles, the bar and the pills now live in core.ui so the report tabs wear
+// the same clothes. Only the naming stays local: which metric takes which ramp
+// is this tab's decision, not a shared one.
+private val VisitTile = Kpi.Blue
+private val OrderTile = Kpi.Green
+private val SkuTile = Kpi.Orange
 
 /**
  * The month bars, on the same footing as the tiles above them.
@@ -275,36 +275,8 @@ private val SkuTile = listOf(Color(0xFFFF5A30), Color(0xFFFF7B59))
  * tiles' blue or orange: it is not the visit count and it is not SKUs per order,
  * and a rep scanning the tab should not have to check the label to know which.
  */
-private val RevenueRamp = listOf(Color(0xFF5C00D4), Color(0xFF8B3FE8))
+private val RevenueRamp = Kpi.Violet
 private val OrderRamp = OrderTile
-
-@Composable
-private fun StatTile(
-    label: String,
-    value: String,
-    colors: List<Color>,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .background(Brush.verticalGradient(colors), RoundedCornerShape(12.dp))
-            .padding(vertical = 12.dp, horizontal = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = Color.White.copy(alpha = 0.9f),
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-        )
-    }
-}
 
 @Composable
 private fun MonthCard(month: MonthFigures) {
@@ -409,41 +381,6 @@ private fun KpiBlock(
  * The bar. Rounded at both ends and on the fill, so a month barely started reads
  * as a bead on the track rather than as a rendering fault.
  */
-@Composable
-private fun KpiBar(progress: Float, ramp: List<Color>) {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(10.dp)
-            .clip(CircleShape)
-            .background(ramp.first().copy(alpha = 0.15f)),
-    ) {
-        Box(
-            Modifier
-                .fillMaxHeight()
-                .fillMaxWidth(progress.coerceIn(0f, 1f))
-                .clip(CircleShape)
-                .background(Brush.horizontalGradient(ramp)),
-        )
-    }
-}
-
-@Composable
-private fun PercentPill(percent: Int, color: Color) {
-    Surface(
-        color = color.copy(alpha = 0.14f),
-        contentColor = color,
-        shape = CircleShape,
-    ) {
-        Text(
-            text = "$percent%",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-        )
-    }
-}
-
 /**
  * The gap to the target, in the direction it actually runs.
  *
