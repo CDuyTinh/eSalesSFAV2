@@ -67,6 +67,8 @@ data class CustomerRegistrationPhotoDto(
     @SerialName("type_code") val typeCode: String = "",
     @SerialName("type_name") val typeName: String = "",
     @SerialName("storage_path") val storagePath: String,
+    /** A signed link, good for an hour. Null when signing failed. */
+    val url: String? = null,
     @SerialName("taken_at") val takenAt: String? = null,
 )
 

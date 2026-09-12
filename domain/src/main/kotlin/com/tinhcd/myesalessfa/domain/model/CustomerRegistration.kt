@@ -111,6 +111,11 @@ data class CustomerRegistrationPhoto(
     val typeCode: String,
     val typeName: String,
     val storagePath: String,
+    /**
+     * What the screen actually loads. The bucket is private, so the stored path
+     * is an object name; the server signs it on the way out.
+     */
+    val url: String? = null,
     val takenAt: String? = null,
 )
 
