@@ -31,6 +31,7 @@ import com.tinhcd.myesalessfa.feature.incall.steps.TakeOrderScreen
 import com.tinhcd.myesalessfa.feature.newcustomer.NewCustomerScreen
 import com.tinhcd.myesalessfa.feature.receivables.ReceivablesScreen
 import com.tinhcd.myesalessfa.feature.routemap.RouteMapScreen
+import com.tinhcd.myesalessfa.feature.reports.ReportsMenuScreen
 import com.tinhcd.myesalessfa.feature.reports.ReportsScreen
 import com.tinhcd.myesalessfa.feature.shell.MainShell
 import com.tinhcd.myesalessfa.feature.sitestock.SiteStockScreen
@@ -55,7 +56,13 @@ object Routes {
 
     /** What the rep already filed, and what became of it. */
     const val CUSTOMER_DOSSIER = "customerdossier"
+    /** The menu of report types. */
     const val REPORTS = "reports"
+
+    /** One report, named by its kind. */
+    const val REPORT = "report/{kind}"
+
+    fun report(kind: String) = "report/$kind"
     const val RECEIVABLES = "receivables"
     const val ROUTE_MAP = "routemap"
     const val ACCOUNT = "account"
@@ -239,6 +246,16 @@ fun AppNavHost(
         }
 
         composable(Routes.REPORTS) {
+            ReportsMenuScreen(
+                onBack = { navController.popBackStack() },
+                onOpenReport = { kind -> navController.navigate(Routes.report(kind.wire)) },
+            )
+        }
+
+        composable(
+            route = Routes.REPORT,
+            arguments = listOf(navArgument("kind") { type = NavType.StringType }),
+        ) {
             ReportsScreen(onBack = { navController.popBackStack() })
         }
 
