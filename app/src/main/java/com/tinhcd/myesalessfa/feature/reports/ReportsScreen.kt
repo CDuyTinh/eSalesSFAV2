@@ -51,8 +51,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
-import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -103,11 +101,12 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
- * The two reports a rep is asked about, on one screen.
+ * One report, named by the route that opened it.
  *
- * Together rather than behind a menu of two items, because the question that
- * brings a rep here is usually a comparison — the month is short, so what did I
- * do today — and a menu would put a tap between the two halves of it.
+ * These six used to share a screen behind a scrolling tab row -- six labels do
+ * not fit across a phone, so half were always off the edge and a rep had to
+ * swipe the bar to learn what existed. The menu names them instead, which is
+ * also what the legacy does.
  */
 @Composable
 fun ReportsScreen(
@@ -119,7 +118,6 @@ fun ReportsScreen(
     ReportsContent(
         state = state,
         onBack = onBack,
-        onTabSelected = viewModel::onTabSelected,
         onCutSelected = viewModel::onCutSelected,
         onDateChanged = viewModel::onDateChanged,
         onMonthChanged = viewModel::onMonthChanged,
@@ -136,7 +134,6 @@ fun ReportsScreen(
 private fun ReportsContent(
     state: ReportsUiState,
     onBack: () -> Unit,
-    onTabSelected: (ReportTab) -> Unit,
     onCutSelected: (SalesCut) -> Unit,
     onDateChanged: (LocalDate) -> Unit,
     onMonthChanged: (LocalDate) -> Unit,
@@ -148,78 +145,62 @@ private fun ReportsContent(
 ) {
     Scaffold(
         topBar = {
-            Column {
-                TopAppBar(
-                    title = { Text("Báo cáo") },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Quay lại",
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = onRefresh, enabled = !state.loading) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Tải lại")
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.brand.header,
-                        titleContentColor = MaterialTheme.brand.onHeader,
-                        navigationIconContentColor = MaterialTheme.brand.onHeader,
-                        actionIconContentColor = MaterialTheme.brand.onHeader,
-                    ),
-                )
-                // Scrollable now that there are six: a fixed TabRow would give
-                // each label a sixth of the width and truncate every one.
-                ScrollableTabRow(
-                    selectedTabIndex = state.tab.ordinal,
-                    edgePadding = 8.dp,
-                ) {
-                    ReportTab.entries.forEach { tab ->
-                        Tab(
-                            selected = tab == state.tab,
-                            onClick = { onTabSelected(tab) },
-                            text = { Text(tab.label) },
+            TopAppBar(
+                title = { Text(state.kind.label) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Quay lại",
                         )
                     }
-                }
-            }
+                },
+                actions = {
+                    IconButton(onClick = onRefresh, enabled = !state.loading) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Tải lại")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.brand.header,
+                    titleContentColor = MaterialTheme.brand.onHeader,
+                    navigationIconContentColor = MaterialTheme.brand.onHeader,
+                    actionIconContentColor = MaterialTheme.brand.onHeader,
+                ),
+            )
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
-            when (state.tab) {
-                ReportTab.ACTIVITIES -> ActivitiesTab(
+            when (state.kind) {
+                ReportKind.ACTIVITIES -> ActivitiesTab(
                     state = state,
                     onDateChanged = onDateChanged,
                 )
 
-                ReportTab.SALES -> SalesTab(
+                ReportKind.SALES -> SalesTab(
                     state = state,
                     onMonthChanged = onMonthChanged,
                     onCutSelected = onCutSelected,
                 )
 
-                ReportTab.ORDERS -> OrdersTab(
+                ReportKind.ORDERS -> OrdersTab(
                     state = state,
                     onWindowChanged = onWindowChanged,
                     onOrderStatus = onOrderStatus,
                 )
 
-                ReportTab.SKU -> SkuTab(
+                ReportKind.SKU -> SkuTab(
                     state = state,
                     onWindowChanged = onWindowChanged,
                     onSkuQuery = onSkuQuery,
                 )
 
-                ReportTab.TRADE -> TradeTab(
+                ReportKind.TRADE -> TradeTab(
                     state = state,
                     onWindowChanged = onWindowChanged,
                     onTradeKind = onTradeKind,
                 )
 
-                ReportTab.WORK_RESULT -> WorkResultTab(
+                ReportKind.WORK_RESULT -> WorkResultTab(
                     state = state,
                     onWindowChanged = onWindowChanged,
                 )
@@ -1534,12 +1515,11 @@ private fun ActivitiesPreview() {
     MyeSalesTheme {
         ReportsContent(
             state = ReportsUiState(
-                tab = ReportTab.ACTIVITIES,
+                kind = ReportKind.ACTIVITIES,
                 date = LocalDate.of(2026, 8, 17),
                 activities = SampleActivities,
             ),
             onBack = {},
-            onTabSelected = {},
             onCutSelected = {},
             onDateChanged = {},
             onMonthChanged = {},
@@ -1558,12 +1538,11 @@ private fun SalesPreview() {
     MyeSalesTheme {
         ReportsContent(
             state = ReportsUiState(
-                tab = ReportTab.SALES,
+                kind = ReportKind.SALES,
                 month = LocalDate.of(2026, 8, 1),
                 sales = SampleSales,
             ),
             onBack = {},
-            onTabSelected = {},
             onCutSelected = {},
             onDateChanged = {},
             onMonthChanged = {},

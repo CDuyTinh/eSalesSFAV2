@@ -1,5 +1,6 @@
 package com.tinhcd.myesalessfa.feature.reports
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.DataResult
@@ -22,14 +23,30 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
-/** The legacy report menu, all six entries. */
-enum class ReportTab(val label: String) {
-    ACTIVITIES("Hoạt động"),
-    SALES("Doanh số"),
-    ORDERS("Đơn hàng"),
-    SKU("SKU"),
-    TRADE("Thương mại"),
-    WORK_RESULT("Kết quả"),
+/**
+ * The legacy report menu, all six entries.
+ *
+ * The order is fixed here rather than read from the server. Over there the menu
+ * comes from `menuAppConfig.reportMenu`, but the rebuild's menu_item tree stops
+ * at REPORT -- it has no children -- so there is nothing to read and inventing a
+ * table to hold six constants would be a table nobody edits.
+ */
+enum class ReportKind(
+    val wire: String,
+    val label: String,
+    val description: String,
+) {
+    ACTIVITIES("activities", "Hoạt động ngày", "Ghé thăm, có đơn, đóng cửa trong ngày"),
+    SALES("sales", "Doanh số tháng", "Doanh thu tháng theo khách hàng và sản phẩm"),
+    ORDERS("orders", "Đơn hàng", "Đơn đã đặt trong kỳ và trạng thái xử lý"),
+    SKU("sku", "Sản lượng SKU", "Số lượng bán ra theo từng mặt hàng"),
+    TRADE("trade", "Chương trình thương mại", "Lượt đăng ký trưng bày và tích lũy"),
+    WORK_RESULT("work_result", "Kết quả công việc", "Kế hoạch đã hoàn thành hoặc đã hủy");
+
+    companion object {
+        fun fromWire(value: String?): ReportKind =
+            entries.firstOrNull { it.wire == value } ?: ACTIVITIES
+    }
 }
 
 /** Which cut of the month's money is on screen. */
@@ -39,7 +56,8 @@ enum class SalesCut(val label: String) {
 }
 
 data class ReportsUiState(
-    val tab: ReportTab = ReportTab.ACTIVITIES,
+    /** Fixed for the life of the screen: one route, one report. */
+    val kind: ReportKind = ReportKind.ACTIVITIES,
     val cut: SalesCut = SalesCut.CUSTOMER,
     val date: LocalDate = LocalDate.now(),
     val month: LocalDate = LocalDate.now().withDayOfMonth(1),
@@ -62,43 +80,37 @@ data class ReportsUiState(
 )
 
 /**
- * All six reports, loaded on demand.
+ * One report, named by the route.
  *
- * Each tab keeps whatever it last fetched, so switching back and forth does not
- * re-read: a rep comparing the day against the month is the whole reason the
- * six live on one screen, and making that comparison cost a round trip each way
- * would discourage the only thing this screen is for.
- *
- * The four window-based reports share one date range on purpose. A rep asking
- * "what did I do this month" wants the same month answered six ways, and a
- * per-tab range is how two tabs end up quietly describing two different months.
+ * The six used to share a screen behind a tab row. They are six different
+ * questions asked at six different moments, and stacking them meant every one
+ * paid for the other five: a scrolling tab row nobody could read at a glance,
+ * and a view model holding five reports the rep had not asked for. Now the menu
+ * names them and each gets a route of its own.
  */
 @HiltViewModel
 class ReportsViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val repository: ReportRepository,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(ReportsUiState())
+    private val kind: ReportKind = ReportKind.fromWire(savedStateHandle["kind"])
+
+    private val _state = MutableStateFlow(ReportsUiState(kind = kind))
     val state: StateFlow<ReportsUiState> = _state.asStateFlow()
 
     init {
-        loadActivities()
+        load(kind)
     }
 
-    fun onTabSelected(tab: ReportTab) {
-        _state.update { it.copy(tab = tab, error = null) }
-        loadIfEmpty(tab)
-    }
-
-    private fun loadIfEmpty(tab: ReportTab) {
-        val s = _state.value
-        when (tab) {
-            ReportTab.ACTIVITIES -> if (s.activities == null) loadActivities()
-            ReportTab.SALES -> if (s.sales == null) loadSales()
-            ReportTab.ORDERS -> if (s.orders == null) loadOrders()
-            ReportTab.SKU -> if (s.sku == null) loadSku()
-            ReportTab.TRADE -> if (s.trade == null) loadTrade()
-            ReportTab.WORK_RESULT -> if (s.workResult == null) loadWorkResult()
+    private fun load(kind: ReportKind) {
+        when (kind) {
+            ReportKind.ACTIVITIES -> loadActivities()
+            ReportKind.SALES -> loadSales()
+            ReportKind.ORDERS -> loadOrders()
+            ReportKind.SKU -> loadSku()
+            ReportKind.TRADE -> loadTrade()
+            ReportKind.WORK_RESULT -> loadWorkResult()
         }
     }
 
@@ -114,25 +126,10 @@ class ReportsViewModel @Inject constructor(
         loadSales()
     }
 
-    /**
-     * Moving the window drops all four cached reports, not just the one showing.
-     *
-     * Keeping the others would leave a tab holding last month's figures under
-     * this month's date range — which is exactly the disagreement the shared
-     * window exists to prevent.
-     */
     fun onWindowChanged(window: ReportWindow) {
         if (!window.isValid) return
-        _state.update {
-            it.copy(
-                window = window,
-                orders = null,
-                sku = null,
-                trade = null,
-                workResult = null,
-            )
-        }
-        loadIfEmpty(_state.value.tab)
+        _state.update { it.copy(window = window) }
+        load(kind)
     }
 
     fun onOrderStatus(status: OrderReportStatus?) = _state.update {
@@ -149,17 +146,7 @@ class ReportsViewModel @Inject constructor(
         it.copy(tradeKind = if (it.tradeKind == kind) null else kind)
     }
 
-    /** Re-reads whichever report is showing. */
-    fun refresh() {
-        when (_state.value.tab) {
-            ReportTab.ACTIVITIES -> loadActivities()
-            ReportTab.SALES -> loadSales()
-            ReportTab.ORDERS -> loadOrders()
-            ReportTab.SKU -> loadSku()
-            ReportTab.TRADE -> loadTrade()
-            ReportTab.WORK_RESULT -> loadWorkResult()
-        }
-    }
+    fun refresh() = load(kind)
 
     // -------------------------------------------------------------------------
 
