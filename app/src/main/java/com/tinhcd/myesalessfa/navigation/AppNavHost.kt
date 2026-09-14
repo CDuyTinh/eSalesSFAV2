@@ -32,6 +32,7 @@ import com.tinhcd.myesalessfa.feature.newcustomer.NewCustomerScreen
 import com.tinhcd.myesalessfa.feature.receivables.ReceivablesScreen
 import com.tinhcd.myesalessfa.feature.routemap.RouteMapScreen
 import com.tinhcd.myesalessfa.feature.reports.ReportsMenuScreen
+import com.tinhcd.myesalessfa.feature.traderegis.TradeRegisScreen
 import com.tinhcd.myesalessfa.feature.reports.ReportsScreen
 import com.tinhcd.myesalessfa.feature.shell.MainShell
 import com.tinhcd.myesalessfa.feature.sitestock.SiteStockScreen
@@ -56,6 +57,9 @@ object Routes {
 
     /** What the rep already filed, and what became of it. */
     const val CUSTOMER_DOSSIER = "customerdossier"
+
+    /** Đăng ký chương trình — signing outlets up outside a visit. */
+    const val TRADE_REGIS = "traderegis"
     /** The menu of report types. */
     const val REPORTS = "reports"
 
@@ -149,6 +153,8 @@ fun AppNavHost(
                         SupportedMenu.NEW_CUSTOMER ->
                             navController.navigate(Routes.CUSTOMER_DOSSIER)
                         SupportedMenu.REPORT -> navController.navigate(Routes.REPORTS)
+                        SupportedMenu.TRADE_REGIS ->
+                            navController.navigate(Routes.TRADE_REGIS)
                         SupportedMenu.RECEIVABLE -> navController.navigate(Routes.RECEIVABLES)
                         SupportedMenu.DAILY_SALES_TARGET ->
                             navController.navigate(Routes.DAILY_TARGET)
@@ -187,6 +193,10 @@ fun AppNavHost(
 
         composable(Routes.WORK_NOTES) {
             WorkNoteScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Routes.TRADE_REGIS) {
+            TradeRegisScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Routes.CUSTOMER_DOSSIER) {

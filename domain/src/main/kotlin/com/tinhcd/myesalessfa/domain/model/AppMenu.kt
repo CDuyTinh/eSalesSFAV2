@@ -95,6 +95,9 @@ object SupportedMenu {
      */
     const val MY_TASK = "MY_TASK"
     const val WORKING_PLAN = "WORKING_PLAN"
+
+    /** Signing outlets up for display and loyalty programmes, outside a visit. */
+    const val TRADE_REGIS = "TRADE_REGIS"
     const val LEAVE_APPLICATION = "LEAVE_APPLICATION"
 
     /** Tabs that swap the content area. Everything else opens a sheet. */
@@ -121,6 +124,7 @@ object SupportedMenu {
         WORKING_NOTE,
         MY_TASK,
         WORKING_PLAN,
+        TRADE_REGIS,
         LEAVE_APPLICATION,
     )
 }

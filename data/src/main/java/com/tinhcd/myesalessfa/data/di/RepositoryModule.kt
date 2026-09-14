@@ -8,6 +8,7 @@ import com.tinhcd.myesalessfa.data.repository.DisplayAuditRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.LoyaltyRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.NearExpiryRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.NotificationRepositoryImpl
+import com.tinhcd.myesalessfa.data.repository.TradeRegistrationRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.WorkPlanRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.MarketInfoRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.PosmRepositoryImpl
@@ -37,6 +38,7 @@ import com.tinhcd.myesalessfa.domain.repository.DisplayAuditRepository
 import com.tinhcd.myesalessfa.domain.repository.LoyaltyRepository
 import com.tinhcd.myesalessfa.domain.repository.NearExpiryRepository
 import com.tinhcd.myesalessfa.domain.repository.NotificationRepository
+import com.tinhcd.myesalessfa.domain.repository.TradeRegistrationRepository
 import com.tinhcd.myesalessfa.domain.repository.WorkPlanRepository
 import com.tinhcd.myesalessfa.domain.repository.MarketInfoRepository
 import com.tinhcd.myesalessfa.domain.repository.PosmRepository
@@ -195,6 +197,12 @@ abstract class RepositoryModule {
     abstract fun bindWorkPlanRepository(
         impl: WorkPlanRepositoryImpl,
     ): WorkPlanRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindTradeRegistrationRepository(
+        impl: TradeRegistrationRepositoryImpl,
+    ): TradeRegistrationRepository
 
     @Binds
     @Singleton
