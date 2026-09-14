@@ -31,6 +31,9 @@ data class OrderPayload(
     /** Discounts the rep applied by hand, named rather than valued. */
     @SerialName("manual_promotions")
     val manualPromotions: List<OrderManualPromotionPayload> = emptyList(),
+    /** Null means the outlet itself, which is what most orders mean. */
+    @SerialName("ship_address_id")
+    val shipAddressId: String? = null,
 )
 
 @Serializable

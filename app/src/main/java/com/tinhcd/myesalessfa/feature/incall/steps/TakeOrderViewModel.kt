@@ -14,6 +14,7 @@ import com.tinhcd.myesalessfa.domain.model.PromotionChoice
 import com.tinhcd.myesalessfa.domain.model.PromotionSummary
 import com.tinhcd.myesalessfa.domain.model.PricedUnit
 import com.tinhcd.myesalessfa.domain.model.ProductSort
+import com.tinhcd.myesalessfa.domain.model.ShipAddress
 import com.tinhcd.myesalessfa.domain.model.browse
 import com.tinhcd.myesalessfa.domain.model.categoryNames
 import com.tinhcd.myesalessfa.domain.model.toCartLines
@@ -87,6 +88,11 @@ data class TakeOrderUiState(
      */
     val draftQty: Map<String, Int> = emptyMap(),
     val order: DraftOrder = DraftOrder(visitId = "", customerId = "", id = ""),
+    /**
+     * Where this outlet may be delivered to. Empty is ordinary -- most receive
+     * their own goods -- and the confirm page offers the outlet itself.
+     */
+    val shipAddresses: List<ShipAddress> = emptyList(),
     /**
      * Replenishment for must-stock SKUs the count found below par. Offered, never
      * applied on arrival — see [TakeOrderViewModel.applySuggestions].
@@ -277,6 +283,26 @@ class TakeOrderViewModel @Inject constructor(
                                 order = it.order.copy(
                                     promotions = it.order.promotions
                                         .copy(manualCatalogue = m.data),
+                                ),
+                            )
+                        }
+
+                        is DataResult.Failure -> Unit
+                    }
+
+                    // Likewise fetched once: head office edits a delivery
+                    // address perhaps twice a year. A failure is silent and the
+                    // order goes to the outlet, which is where it would have
+                    // gone anyway for all but a handful of customers.
+                    when (val a = orderRepository.shipAddresses(customerId)) {
+                        is DataResult.Success -> _state.update {
+                            it.copy(
+                                shipAddresses = a.data,
+                                // Preselect the flagged default so the common
+                                // case needs no tap. Null stays null when there
+                                // is none: that means the outlet itself.
+                                order = it.order.copy(
+                                    shipAddressId = a.data.firstOrNull { x -> x.isDefault }?.id,
                                 ),
                             )
                         }
@@ -632,6 +658,11 @@ class TakeOrderViewModel @Inject constructor(
                 promotions = it.order.promotions.withoutManual(promotionId),
             ),
         )
+    }
+
+    /** Null is the outlet itself. */
+    fun onShipAddress(addressId: String?) = _state.update {
+        it.copy(order = it.order.copy(shipAddressId = addressId))
     }
 
     fun onPromotionChoice(choice: PromotionChoice) = _state.update {

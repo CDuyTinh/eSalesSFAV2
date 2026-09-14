@@ -5,8 +5,17 @@ import com.tinhcd.myesalessfa.domain.model.CartLine
 import com.tinhcd.myesalessfa.domain.model.DraftOrder
 import com.tinhcd.myesalessfa.domain.model.ManualPromotion
 import com.tinhcd.myesalessfa.domain.model.PromotionSummary
+import com.tinhcd.myesalessfa.domain.model.ShipAddress
 
 interface OrderRepository {
+    /**
+     * Where this outlet may be delivered to, the default first.
+     *
+     * Empty is the ordinary answer: most outlets receive their own goods, and
+     * the screen offers the outlet itself in that case.
+     */
+    suspend fun shipAddresses(customerId: String): DataResult<List<ShipAddress>>
+
     /**
      * Sends [order]. The server prices it and marks the `take_order` step done in
      * the same transaction, so a stored order can never leave the rep still owing
