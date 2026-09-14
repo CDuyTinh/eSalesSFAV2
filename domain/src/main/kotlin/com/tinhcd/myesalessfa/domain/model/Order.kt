@@ -174,6 +174,11 @@ data class DraftOrder(
      * `submit_order` recomputes it from the lines it books.
      */
     val promotions: PromotionSummary = PromotionSummary(),
+    /**
+     * Where it goes. Null is the outlet itself, which is the common case — a
+     * deliberate absence rather than a missing value.
+     */
+    val shipAddressId: String? = null,
 ) {
     val subTotal: Long get() = lines.sumOf { it.grossAmount }
 
@@ -257,3 +262,22 @@ data class CartLine(
 /** The basket as it should be stored. */
 fun DraftOrder.toCartLines(): List<CartLine> =
     lines.map { CartLine(it.productId, it.uomCode, it.qty) }
+
+/**
+ * Somewhere this outlet's goods may be sent.
+ *
+ * A shop with a warehouse behind it, a chain ordering through one office, a
+ * customer who wants this delivery at a second site. Most outlets have none of
+ * these and receive their own goods, which is why the order carries null rather
+ * than a row that would have to exist for every customer.
+ */
+data class ShipAddress(
+    val id: String,
+    val code: String,
+    val recipient: String,
+    val phone: String? = null,
+    val address: String,
+    /** Set when the outlet invoices through a different legal entity. */
+    val taxCode: String? = null,
+    val isDefault: Boolean = false,
+)

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -61,6 +62,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -752,6 +754,13 @@ private fun ConfirmPage(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item { OrderSummaryCard(state, viewModel) }
+
+            // Only when there is a choice to make. An outlet with no ship-to
+            // rows receives its own goods, and a card saying so would be a card
+            // that never changes anything.
+            if (state.shipAddresses.isNotEmpty()) {
+                item { ShipAddressCard(state, viewModel::onShipAddress) }
+            }
 
             if (!state.order.promotions.isEmpty) {
                 item {
@@ -1552,6 +1561,98 @@ private fun ManualPromotionCard(
                     color = MoneyGreen,
                 )
             }
+        }
+    }
+}
+
+/**
+ * Where the goods go.
+ *
+ * The outlet itself is an option in the list rather than an absence, because
+ * that is how the rep thinks about it — "gửi tới cửa hàng" is a choice they make,
+ * not a box they leave blank. It carries null to the server all the same.
+ */
+@Composable
+private fun ShipAddressCard(
+    state: TakeOrderUiState,
+    onShipAddress: (String?) -> Unit,
+) {
+    val chosen = state.order.shipAddressId
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Default.LocalShipping,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    "Địa chỉ giao hàng",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+
+            ShipAddressRow(
+                selected = chosen == null,
+                title = state.customerName.ifBlank { "Cửa hàng" },
+                subtitle = "Giao tại cửa hàng",
+                onClick = { onShipAddress(null) },
+            )
+
+            state.shipAddresses.forEach { address ->
+                ShipAddressRow(
+                    selected = chosen == address.id,
+                    title = address.recipient,
+                    subtitle = listOfNotNull(
+                        address.address,
+                        address.phone,
+                        address.taxCode?.let { "MST $it" },
+                    ).joinToString(" · "),
+                    onClick = { onShipAddress(address.id) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShipAddressRow(
+    selected: Boolean,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 6.dp, horizontal = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = selected, onClick = onClick)
+        Column(Modifier.weight(1f)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            )
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

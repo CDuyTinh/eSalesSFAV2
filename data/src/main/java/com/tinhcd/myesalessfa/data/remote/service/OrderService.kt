@@ -6,6 +6,7 @@ import com.tinhcd.myesalessfa.data.remote.dto.ManualPromotionsDto
 import com.tinhcd.myesalessfa.data.remote.dto.OrderPayload
 import com.tinhcd.myesalessfa.data.remote.dto.PromotionsDto
 import com.tinhcd.myesalessfa.data.remote.dto.PromotionsRequest
+import com.tinhcd.myesalessfa.data.remote.dto.ShipAddressesDto
 import com.tinhcd.myesalessfa.data.remote.dto.WriteAckDto
 import retrofit2.Response
 import retrofit2.http.Body
@@ -39,6 +40,16 @@ interface OrderService {
     suspend fun manualPromotions(
         @Query("customerId") customerId: String,
     ): Response<ManualPromotionsDto>
+
+    /**
+     * Where this outlet may be delivered to. Fetched once with the screen: head
+     * office edits an address perhaps twice a year, so there is nothing to
+     * refresh it against the way the promotion preview is refreshed.
+     */
+    @GET("ship-addresses")
+    suspend fun shipAddresses(
+        @Query("customerId") customerId: String,
+    ): Response<ShipAddressesDto>
 
     /** The basket this rep has building for one outlet. */
     @GET("cart")

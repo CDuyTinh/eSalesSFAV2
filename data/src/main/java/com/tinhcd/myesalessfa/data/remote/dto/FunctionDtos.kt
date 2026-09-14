@@ -1071,3 +1071,20 @@ data class NotificationReadAckDto(
     val marked: Int = 0,
     val unread: Int = 0,
 )
+
+/** Where an outlet's goods may be sent. */
+@Serializable
+data class ShipAddressesDto(
+    val addresses: List<ShipAddressDto> = emptyList(),
+)
+
+@Serializable
+data class ShipAddressDto(
+    val id: String,
+    val code: String = "",
+    val recipient: String = "",
+    val phone: String? = null,
+    val address: String = "",
+    @SerialName("tax_code") val taxCode: String? = null,
+    @SerialName("is_default") val isDefault: Boolean = false,
+)

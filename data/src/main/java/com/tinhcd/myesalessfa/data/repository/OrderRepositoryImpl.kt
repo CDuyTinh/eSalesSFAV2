@@ -23,6 +23,7 @@ import com.tinhcd.myesalessfa.domain.model.PromotionReward
 import com.tinhcd.myesalessfa.domain.model.PromotionScope
 import com.tinhcd.myesalessfa.domain.model.PromotionSuggestion
 import com.tinhcd.myesalessfa.domain.model.PromotionSummary
+import com.tinhcd.myesalessfa.domain.model.ShipAddress
 import com.tinhcd.myesalessfa.domain.model.SuggestionReward
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository
 import java.time.LocalDate
@@ -44,6 +45,24 @@ class OrderRepositoryImpl @Inject constructor(
     private val service: OrderService,
 ) : OrderRepository {
 
+    override suspend fun shipAddresses(customerId: String): DataResult<List<ShipAddress>> = try {
+        DataResult.Success(
+            service.shipAddresses(customerId).orThrow().addresses.map {
+                ShipAddress(
+                    id = it.id,
+                    code = it.code,
+                    recipient = it.recipient,
+                    phone = it.phone,
+                    address = it.address,
+                    taxCode = it.taxCode,
+                    isDefault = it.isDefault,
+                )
+            },
+        )
+    } catch (e: Exception) {
+        DataResult.Failure(e.toAppError())
+    }
+
     override suspend fun submit(order: DraftOrder): DataResult<Unit> = try {
         service.submitOrder(
             OrderPayload(
@@ -58,6 +77,7 @@ class OrderRepositoryImpl @Inject constructor(
                 note = order.note.trim().ifBlank { null },
                 clientTotalAmount = order.totalAmount,
                 clientCreatedAt = OffsetDateTime.now(ZoneOffset.UTC).toString(),
+                shipAddressId = order.shipAddressId,
                 lines = order.lines.mapIndexed { index, line ->
                     OrderLinePayload(
                         lineNo = index + 1,
