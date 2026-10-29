@@ -13,7 +13,7 @@
 // list-to-map step the client was doing on every refresh.
 // =============================================================================
 
-import { handler, json, unwrap } from "../_shared/client.ts";
+import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
 
 const SALESPERSON_COLUMNS =
   "id,code,full_name,branch_id,branch:branch_id(id,code,name)";
@@ -38,6 +38,12 @@ Deno.serve(handler(async (req, db) => {
   const requested = new URL(req.url).searchParams.get("lang") ?? "vi";
   const lang = requested === "en" ? "en" : "vi";
 
+  // Pinned to the caller's own row. RLS used to make that the only row visible,
+  // but since the manager hierarchy a supervisor can also read their team, and
+  // "the first row" would then be whichever rep sorted first.
+  const { data: auth, error: authError } = await db.auth.getUser();
+  if (authError || !auth?.user) throw new HttpError(401, "invalid session");
+
   const [
     salesperson,
     settings,
@@ -47,7 +53,8 @@ Deno.serve(handler(async (req, db) => {
     surveys,
     menu,
   ] = await Promise.all([
-    db.from("salesperson").select(SALESPERSON_COLUMNS).then(unwrap),
+    db.from("salesperson").select(SALESPERSON_COLUMNS)
+      .eq("user_id", auth.user.id).then(unwrap),
     db.from("app_setting").select("key,value").then(unwrap),
     db.from("reason_code").select("id,code,name,kind").eq("is_active", true)
       .order("name").then(unwrap),

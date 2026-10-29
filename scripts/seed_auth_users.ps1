@@ -44,7 +44,9 @@ $headers = @{
 # code -> password. Development only.
 $accounts = @(
     @{ code = 'nvbh01'; password = 'Esales@12345' },
-    @{ code = 'nvbh02'; password = 'Esales@12345' }
+    @{ code = 'nvbh02'; password = 'Esales@12345' },
+    # Giám sát, for the eSalesManager app (repo eSalesManagerV2).
+    @{ code = 'gsbh01'; password = 'Esales@12345' }
 )
 
 # One listing for all accounts; the dev project has a handful of users.
@@ -81,4 +83,4 @@ foreach ($acct in $accounts) {
 }
 
 Write-Host ''
-Write-Host 'Done. Sign in with username nvbh01 / password Esales@12345'
+Write-Host 'Done. SFA: nvbh01 / Esales@12345   Manager: gsbh01 / Esales@12345'
