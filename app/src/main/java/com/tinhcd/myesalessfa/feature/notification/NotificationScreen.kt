@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.StickyNote2
 import androidx.compose.material.icons.filled.AddBusiness
+import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.EventAvailable
@@ -309,6 +310,7 @@ private fun iconFor(kind: NotificationKind): ImageVector = when (kind) {
     NotificationKind.LEAVE_RESULT -> Icons.Default.EventAvailable
     NotificationKind.CUSTOMER_RESULT -> Icons.Default.AddBusiness
     NotificationKind.TRADE_RESULT -> Icons.AutoMirrored.Filled.FactCheck
+    NotificationKind.WORK_PLAN -> Icons.AutoMirrored.Filled.Assignment
 }
 
 @Composable
