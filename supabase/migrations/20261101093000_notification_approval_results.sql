@@ -1,0 +1,203 @@
+-- =============================================================================
+-- Thông báo kết quả duyệt — the rep hears back
+--
+-- Since the eSalesManager approval tab, a supervisor rules on the rep's leave,
+-- field-registered outlets and programme sign-ups. The rep could find the answer
+-- only by opening each list again. These three feeds put it in the bell, the way
+-- the legacy pushed LEAVEAPPROVALRESULT / CUSTOMERAPPROVALRESULT / *APPROVALRESULT.
+--
+-- Same principle as the digest itself: no notification table, a union over the
+-- rows that already say what happened. The decision columns (decided_at,
+-- decision_note) are the event; only rows somebody actually decided appear, so
+-- seed data loaded as 'approved' does not flood the bell.
+--
+-- The function is replaced whole; the six original feeds are unchanged.
+-- =============================================================================
+
+create or replace function notifications_for(
+    p_from_date date default (current_date - 30),
+    p_to_date   date default current_date,
+    p_unread_only boolean default false
+)
+returns table (
+    kind        notification_kind,
+    source_id   uuid,
+    title       text,
+    body        text,
+    code        text,
+    from_date   date,
+    to_date     date,
+    is_read     boolean,
+    read_at     timestamptz
+)
+language sql
+stable
+security invoker
+set search_path = public, pg_temp
+as $$
+    with me as (
+        select id, branch_id from salesperson where id = current_salesperson_id()
+    ),
+    feed as (
+        -- AUTOPROMO. One row per programme rather than per sequence: a rep wants
+        -- to know the campaign is running, not that it has four break levels.
+        select
+            'promotion'::notification_kind as kind,
+            p.id as source_id,
+            p.name as title,
+            'Chương trình khuyến mãi đang chạy' as body,
+            p.code,
+            min(s.from_date) as from_date,
+            max(case when s.open_ended then null else s.to_date end) as to_date
+        from discount_program p
+        join discount_sequence s on s.program_id = p.id and s.is_active
+        cross join me
+        where p.is_active
+          and (s.branch_id is null or s.branch_id = me.branch_id)
+        group by p.id, p.name, p.code
+
+        union all
+
+        -- HANDPROMO.
+        select
+            'manual_promotion', m.id, m.name,
+            'Khuyến mãi áp dụng bằng tay', m.code, m.from_date, m.to_date
+        from manual_promotion m
+        cross join me
+        where m.is_active
+          and (m.branch_id is null or m.branch_id = me.branch_id)
+
+        union all
+
+        select
+            'display', d.id, d.name,
+            case when d.requires_registration
+                 then 'Chương trình trưng bày - cần đăng ký'
+                 else 'Chương trình trưng bày' end,
+            d.code, d.from_date, d.to_date
+        from display_program d
+        cross join me
+        where d.is_active and (d.branch_id is null or d.branch_id = me.branch_id)
+
+        union all
+
+        select
+            'loyalty', l.id, l.name, 'Chương trình tích lũy',
+            l.code, l.from_date, l.to_date
+        from loyalty_program l
+        cross join me
+        where l.is_active and (l.branch_id is null or l.branch_id = me.branch_id)
+
+        union all
+
+        select
+            'posm', pr.id, pr.name, 'Chương trình POSM',
+            pr.code, pr.from_date, pr.to_date
+        from posm_program pr
+        cross join me
+        where pr.is_active and (pr.branch_id is null or pr.branch_id = me.branch_id)
+
+        union all
+
+        -- NOTE. The rep's own, so no branch test: a note belongs to whoever
+        -- wrote it and nobody else sees it anyway. Open ones only — a note the
+        -- rep has already ticked off is a record, not something still to tell.
+        select
+            'work_note', w.id, w.title,
+            coalesce(nullif(btrim(w.body), ''), 'Ghi chú công việc'),
+            null::text, w.due_on, w.due_on
+        from work_note w
+        where w.salesperson_id = (select id from me)
+          and w.status = 'open'
+
+        union all
+
+        -- LEAVEAPPROVALRESULT. Dated by the decision, so the result arrives in
+        -- the bell on the day it was made, not on the first day of the leave.
+        select
+            'leave_result', lr.id,
+            case lr.status when 'approved' then 'Đơn nghỉ phép đã được duyệt'
+                           else 'Đơn nghỉ phép bị từ chối' end,
+            lt.name || ' ' || to_char(lr.from_date, 'DD/MM')
+                || case when lr.to_date <> lr.from_date
+                        then '–' || to_char(lr.to_date, 'DD/MM') else '' end
+                || coalesce(' · ' || nullif(btrim(lr.decision_note), ''), ''),
+            null::text,
+            (lr.decided_at at time zone 'Asia/Ho_Chi_Minh')::date,
+            (lr.decided_at at time zone 'Asia/Ho_Chi_Minh')::date
+        from leave_request lr
+        join leave_type lt on lt.id = lr.leave_type_id
+        where lr.salesperson_id = (select id from me)
+          and lr.status in ('approved', 'rejected')
+          and lr.decided_at is not null
+
+        union all
+
+        -- CUSTOMERAPPROVALRESULT. Only outlets someone actually ruled on:
+        -- rows head office loaded are approved by default and were never news.
+        select
+            'customer_result', c.id,
+            case c.approval_status when 'approved' then 'Khách hàng mới đã được duyệt'
+                                   else 'Khách hàng mới bị từ chối' end,
+            c.name || coalesce(' · ' || nullif(btrim(c.decision_note), ''), ''),
+            c.code,
+            (c.decided_at at time zone 'Asia/Ho_Chi_Minh')::date,
+            (c.decided_at at time zone 'Asia/Ho_Chi_Minh')::date
+        from customer c
+        where c.created_by_salesperson_id = (select id from me)
+          and c.approval_status in ('approved', 'rejected')
+          and c.decided_at is not null
+
+        union all
+
+        -- VISIBILITY / LOYALTY / POSM APPROVALRESULT, one kind for the three.
+        select
+            'trade_result', t.id,
+            'Đăng ký ' || t.family || ' '
+                || case t.status when 'approved' then 'đã được duyệt' else 'bị từ chối' end,
+            cu.customer_name || ' · ' || t.program_name
+                || coalesce(' · ' || nullif(btrim(t.decision_note), ''), ''),
+            t.program_code,
+            (t.decided_at at time zone 'Asia/Ho_Chi_Minh')::date,
+            (t.decided_at at time zone 'Asia/Ho_Chi_Minh')::date
+        from (
+            select d.id, 'trưng bày' as family, d.status, d.decision_note, d.decided_at,
+                   d.salesperson_id, d.customer_id, p.code as program_code, p.name as program_name
+            from display_registration d join display_program p on p.id = d.program_id
+            union all
+            select l.id, 'tích lũy', l.status, l.decision_note, l.decided_at,
+                   l.salesperson_id, l.customer_id, p.code, p.name
+            from loyalty_registration l join loyalty_program p on p.id = l.program_id
+            union all
+            select r.id, 'POSM', r.status, r.decision_note, r.decided_at,
+                   r.salesperson_id, r.customer_id, p.code, p.name
+            from posm_registration r join posm_program p on p.id = r.program_id
+        ) t
+        cross join lateral (
+            select c.name as customer_name from customer c where c.id = t.customer_id
+        ) cu
+        where t.decided_at is not null
+          and t.status in ('approved', 'rejected')
+          and trade_registration_rep(t.salesperson_id, t.customer_id) = (select id from me)
+    )
+    select
+        f.kind, f.source_id, f.title, f.body, f.code, f.from_date, f.to_date,
+        r.id is not null as is_read,
+        r.read_at
+    from feed f
+    left join notification_read r
+        on r.kind = f.kind
+       and r.source_id = f.source_id
+       and r.salesperson_id = (select id from me)
+    where
+        -- Overlapping the window rather than starting in it: a campaign that
+        -- began last month and runs until next is news to a rep who has not
+        -- read it yet, and the legacy's own date test overlaps the same way.
+        coalesce(f.from_date, p_from_date) <= p_to_date
+        and coalesce(f.to_date, p_to_date) >= p_from_date
+        and (not p_unread_only or r.id is null)
+    order by f.from_date desc nulls last, f.title;
+$$;
+
+comment on function notifications_for(date, date, boolean) is
+    'Everything head office has published that is live for this rep, plus the results of their own leave, outlet and programme requests. API_GetPPC_Notify.';

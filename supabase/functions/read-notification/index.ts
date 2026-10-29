@@ -17,6 +17,10 @@ const KINDS = [
   "loyalty",
   "posm",
   "work_note",
+  // Results of the rep's own requests, decided in the eSalesManager app.
+  "leave_result",
+  "customer_result",
+  "trade_result",
 ] as const;
 
 interface Body {
