@@ -14,7 +14,10 @@ type Kind =
   | "display"
   | "loyalty"
   | "posm"
-  | "work_note";
+  | "work_note"
+  | "leave_result"
+  | "customer_result"
+  | "trade_result";
 
 interface Row {
   kind: Kind;

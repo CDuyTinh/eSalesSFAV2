@@ -4,7 +4,7 @@ package com.tinhcd.myesalessfa.domain.model
  * What a notification is about.
  *
  * Not a message type but a pointer: every item in the bell is a row in one of
- * six other tables, and this says which. The screen uses it to label the item
+ * the other tables, and this says which. The screen uses it to label the item
  * and to decide where tapping it leads.
  */
 enum class NotificationKind(val wire: String, val label: String) {
@@ -13,7 +13,14 @@ enum class NotificationKind(val wire: String, val label: String) {
     DISPLAY("display", "Trưng bày"),
     LOYALTY("loyalty", "Tích lũy"),
     POSM("posm", "POSM"),
-    WORK_NOTE("work_note", "Ghi chú");
+    WORK_NOTE("work_note", "Ghi chú"),
+
+    // The answer to something the rep asked for, ruled on by their supervisor in
+    // the eSalesManager app. The title says approved or refused; the body
+    // carries the supervisor's note.
+    LEAVE_RESULT("leave_result", "Nghỉ phép"),
+    CUSTOMER_RESULT("customer_result", "Khách hàng mới"),
+    TRADE_RESULT("trade_result", "Đăng ký CT");
 
     companion object {
         /**
