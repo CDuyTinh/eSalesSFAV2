@@ -17,7 +17,8 @@ type Kind =
   | "work_note"
   | "leave_result"
   | "customer_result"
-  | "trade_result";
+  | "trade_result"
+  | "work_plan";
 
 interface Row {
   kind: Kind;

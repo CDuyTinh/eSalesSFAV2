@@ -21,6 +21,7 @@ const KINDS = [
   "leave_result",
   "customer_result",
   "trade_result",
+  "work_plan",
 ] as const;
 
 interface Body {

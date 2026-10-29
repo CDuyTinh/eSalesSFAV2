@@ -20,7 +20,10 @@ enum class NotificationKind(val wire: String, val label: String) {
     // carries the supervisor's note.
     LEAVE_RESULT("leave_result", "Nghỉ phép"),
     CUSTOMER_RESULT("customer_result", "Khách hàng mới"),
-    TRADE_RESULT("trade_result", "Đăng ký CT");
+    TRADE_RESULT("trade_result", "Đăng ký CT"),
+
+    // A task the supervisor assigned, or the ruling on a plan the rep sent up.
+    WORK_PLAN("work_plan", "Công việc");
 
     companion object {
         /**
