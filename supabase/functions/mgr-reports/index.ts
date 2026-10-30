@@ -7,6 +7,7 @@
 // GET /mgr-reports?report=sku&fromDate=&toDate=[&query=][&salespersonId=…]
 // GET /mgr-reports?report=trade&fromDate=&toDate=[&salespersonId=…]
 // GET /mgr-reports?report=work&fromDate=&toDate=[&salespersonId=…]
+// GET /mgr-reports?report=training&fromDate=&toDate=[&salespersonId=…]
 //
 // The six SFA reports, asked of the team or of one rep in it. They run through
 // the same report_*_of() cores the rep's own /reports uses, so a figure here is
@@ -87,7 +88,16 @@ Deno.serve(handler(async (req, db) => {
         p_to_date: date(params.get("toDate"), "toDate"),
       })));
 
+    // The caller's own EDAC coaching plans, not the reps' work: the team list
+    // above only narrows it to one rep when salespersonId is given.
+    case "training":
+      return json(ruled(await db.rpc("mgr_report_training", {
+        p_from: date(params.get("fromDate"), "fromDate"),
+        p_to: date(params.get("toDate"), "toDate"),
+        p_rep: one,
+      })));
+
     default:
-      throw new HttpError(400, "report must be one of activities, sales, orders, sku, trade, work");
+      throw new HttpError(400, "report must be one of activities, sales, orders, sku, trade, work, training");
   }
 }));
