@@ -59,6 +59,19 @@ const outranks = (a: VisitRow, b: VisitRow): boolean => {
   return (a.check_in_at ?? "") > (b.check_in_at ?? "");
 };
 
+const DAY_MS = 86_400_000;
+const CYCLE_START = Date.UTC(2024, 0, 1); // a Monday: week 1
+
+/**
+ * Week 1..4 of the MCL cycle, counted in whole weeks from 2024-01-01. Mirrors
+ * the database's mcl_week() (migration 20261107090000) — keep the two in step.
+ */
+function mclWeek(date: Date, isoWeekday: number): number {
+  const monday = date.getTime() - (isoWeekday - 1) * DAY_MS;
+  const weeks = Math.floor(Math.round((monday - CYCLE_START) / DAY_MS) / 7);
+  return ((weeks % 4) + 4) % 4 + 1;
+}
+
 Deno.serve(handler(async (req, db) => {
   const date = new URL(req.url).searchParams.get("date");
   if (!date) throw new HttpError(400, "date is required (YYYY-MM-DD)");
@@ -70,6 +83,7 @@ Deno.serve(handler(async (req, db) => {
     throw new HttpError(400, `date is not a valid date: ${date}`);
   }
   const isoWeekday = parsed.getUTCDay() === 0 ? 7 : parsed.getUTCDay();
+  const cycleWeek = mclWeek(parsed, isoWeekday);
 
   // Reconcile before reading, so the route the rep is shown is already true.
   //
@@ -101,6 +115,8 @@ Deno.serve(handler(async (req, db) => {
       .select(ROUTE_COLUMNS)
       .eq("is_active", true)
       .contains("visit_weekdays", [isoWeekday])
+      // Every week, or this week of the 4-week cycle.
+      .or(`visit_weeks.eq.{},visit_weeks.cs.{${cycleWeek}}`)
       .order("visit_order", { ascending: true })
       .then((r) => unwrap(r) as RouteRow[]),
     db
