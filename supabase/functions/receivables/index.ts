@@ -13,7 +13,7 @@
 // receipt that is half recorded and no way for the rep to tell which half.
 // =============================================================================
 
-import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
+import { handler, HttpError, json, unwrap, currentSalespersonId } from "../_shared/client.ts";
 
 interface Allocation {
   id?: string;
@@ -62,7 +62,7 @@ Deno.serve(handler(async (req, db) => {
   }
 
   const me = (unwrap(
-    await db.from("salesperson").select("id"),
+    await db.from("salesperson").select("id").eq("id", await currentSalespersonId(db)),
   ) as { id: string }[])[0];
 
   if (!me) throw new HttpError(403, "no salesperson is linked to this account");

@@ -13,7 +13,7 @@
 // database rather than in whichever layer happens to be asking.
 // =============================================================================
 
-import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
+import { handler, HttpError, json, unwrap, currentSalespersonId } from "../_shared/client.ts";
 
 // channel_id and shop_type_id come along because the must-stock lists are scoped
 // by them: the stock screen resolves which SKUs are required from the outlet's own
@@ -103,7 +103,7 @@ Deno.serve(handler(async (req, db) => {
   // Needed only to scope the registered outlets below. RLS answers every other
   // query here without being told who is asking.
   const me = (unwrap(
-    await db.from("salesperson").select("id"),
+    await db.from("salesperson").select("id").eq("id", await currentSalespersonId(db)),
   ) as { id: string }[])[0];
 
   if (!me) throw new HttpError(403, "no salesperson is linked to this account");

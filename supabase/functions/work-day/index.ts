@@ -15,7 +15,7 @@
 // before they stand in the depot pressing a button that will be refused.
 // =============================================================================
 
-import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
+import { handler, HttpError, json, unwrap, currentSalespersonId } from "../_shared/client.ts";
 
 interface Me {
   id: string;
@@ -43,7 +43,7 @@ Deno.serve(handler(async (req, db) => {
   const me = (unwrap(
     await db
       .from("salesperson")
-      .select("id, branch:branch_id (id, code, name, address, lat, lng)"),
+      .select("id, branch:branch_id (id, code, name, address, lat, lng)").eq("id", await currentSalespersonId(db)),
   ) as Me[])[0];
 
   if (!me) throw new HttpError(403, "no salesperson is linked to this account");

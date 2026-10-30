@@ -73,6 +73,21 @@ export function handler(
   };
 }
 
+/** No salesperson has this id; stands in when the caller has none, so a lookup finds nothing. */
+const NO_SALESPERSON = "00000000-0000-0000-0000-000000000000";
+
+/**
+ * The caller's own salesperson id.
+ *
+ * Reading `salesperson` and taking the first row used to be enough, because RLS
+ * showed a rep only themselves. A supervisor sees their team as well, so the
+ * first row may be someone else's -- every "who am I" lookup filters by this.
+ */
+export async function currentSalespersonId(db: SupabaseClient): Promise<string> {
+  const id = unwrap(await db.rpc("current_salesperson_id")) as string | null;
+  return id ?? NO_SALESPERSON;
+}
+
 /** Raises on a PostgREST error so handlers do not each have to check. */
 export function unwrap<T>(
   result: { data: T | null; error: { message: string } | null },

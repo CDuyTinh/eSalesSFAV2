@@ -8,7 +8,7 @@
 // so a rep who edits five outlets never ends up with three saved and two not.
 // =============================================================================
 
-import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
+import { handler, HttpError, json, unwrap, currentSalespersonId } from "../_shared/client.ts";
 
 interface Entry {
   customer_id?: string;
@@ -44,7 +44,7 @@ Deno.serve(handler(async (req, db) => {
   }
 
   const me = (unwrap(
-    await db.from("salesperson").select("id,branch_id"),
+    await db.from("salesperson").select("id,branch_id").eq("id", await currentSalespersonId(db)),
   ) as { id: string; branch_id: string }[])[0];
 
   if (!me) throw new HttpError(403, "no salesperson is linked to this account");
