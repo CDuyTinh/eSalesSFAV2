@@ -9,7 +9,7 @@
 // salesperson itself, which is the same division of labour as everywhere else.
 // =============================================================================
 
-import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
+import { handler, HttpError, json, unwrap, currentSalespersonId } from "../_shared/client.ts";
 
 interface CreateBody {
   title?: string;
@@ -38,7 +38,7 @@ Deno.serve(handler(async (req, db) => {
     if (!title) throw new HttpError(400, "nhập nội dung công việc");
 
     const me = (unwrap(
-      await db.from("salesperson").select("id"),
+      await db.from("salesperson").select("id").eq("id", await currentSalespersonId(db)),
     ) as { id: string }[])[0];
     if (!me) throw new HttpError(403, "no salesperson is linked to this account");
 
