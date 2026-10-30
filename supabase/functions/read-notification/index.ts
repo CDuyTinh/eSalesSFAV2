@@ -22,6 +22,11 @@ const KINDS = [
   "customer_result",
   "trade_result",
   "work_plan",
+  // What the team sent up, on a supervisor's bell (eSalesManager).
+  "team_leave",
+  "team_customer",
+  "team_trade",
+  "team_work_plan",
 ] as const;
 
 interface Body {
