@@ -18,7 +18,12 @@ type Kind =
   | "leave_result"
   | "customer_result"
   | "trade_result"
-  | "work_plan";
+  | "work_plan"
+  // What the team sent up, for a supervisor (eSalesManager).
+  | "team_leave"
+  | "team_customer"
+  | "team_trade"
+  | "team_work_plan";
 
 interface Row {
   kind: Kind;
