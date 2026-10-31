@@ -8,6 +8,7 @@
 // GET  /mgr-work-with?visit=<visitId>&posm=1              → POSM the outlet holds
 // GET  /mgr-work-with?visit=<visitId>&surveys=1           → competitor / market surveys running
 // GET  /mgr-work-with?visit=<visitId>&survey=<surveyId>   → one competitor survey's grid
+// GET  /mgr-work-with?visit=<visitId>&feedback=1          → feedback topics, rules, what was filed
 // POST /mgr-work-with
 //        { action: "check_in",    rep_id, customer_id, lat?, lng?, accuracy_m?, note? }
 //        { action: "check_out",   visit_id, note?, lat?, lng? }
@@ -17,10 +18,12 @@
 //        { action: "order",       order: { … } }                → mgr_submit_order (the rep's order)
 //        { action: "posm_check",  check: { … } }                → submit_posm_check
 //        { action: "survey",      survey: { … } }               → submit_competitor_survey
+//        { action: "feedback",    feedback: { … } }             → submit_feedback
 //
 // The supervisor's call is their own visit (visit.work_with_salesperson_id names
-// the rep), so the SFA functions behind display, stock_count, posm_check and
-// survey accept it as they would a rep's: each wants a visit of the caller's.
+// the rep), so the SFA functions behind display, stock_count, posm_check,
+// survey and feedback accept it as they would a rep's: each wants a visit of
+// the caller's.
 // Only the order is booked to the rep, through mgr_submit_order.
 // =============================================================================
 
@@ -58,6 +61,7 @@ interface Body {
   order?: Record<string, unknown>;
   check?: Record<string, unknown>;
   survey?: Record<string, unknown>;
+  feedback?: Record<string, unknown>;
 }
 
 Deno.serve(handler(async (req, db) => {
@@ -66,6 +70,9 @@ Deno.serve(handler(async (req, db) => {
 
     const visit = params.get("visit");
     if (visit) {
+      if (params.get("feedback")) {
+        return json(ruled(await db.rpc("mgr_feedback_form", { p_visit_id: visit })));
+      }
       if (params.get("products")) {
         return json(ruled(await db.rpc("mgr_visit_products", { p_visit_id: visit })));
       }
@@ -167,6 +174,11 @@ Deno.serve(handler(async (req, db) => {
         if (!body.survey) throw new HttpError(400, "survey is required");
         // A count of answers saved, not a row id: the client reads id as a uuid.
         return json({ saved: ruled(await db.rpc("submit_competitor_survey", { p_payload: body.survey })) });
+      }
+
+      case "feedback": {
+        if (!body.feedback) throw new HttpError(400, "feedback is required");
+        return json({ id: ruled(await db.rpc("submit_feedback", { p_feedback: body.feedback })) });
       }
     }
     throw new HttpError(400, `unknown action: ${body.action}`);
