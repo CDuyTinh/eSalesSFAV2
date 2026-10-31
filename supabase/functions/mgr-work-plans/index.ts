@@ -2,6 +2,7 @@
 // eSalesManager — Giao việc / công việc của nhóm
 //
 // GET  /mgr-work-plans?fromDate=&toDate=&statuses=&salespersonId=  → team list
+// GET  /mgr-work-plans?fromDate=&toDate=&statuses=&mine=1           → the caller's own plans
 // GET  /mgr-work-plans?id=…                                         → one plan, photos signed
 // GET  /mgr-work-plans?categories=1                                 → work types
 // GET  /mgr-work-plans?customersOf=<salespersonId>&query=…          → object picker
@@ -10,6 +11,9 @@
 //                                    note?, place?, from_at, to_at, objects: [{id}] } }
 //        { action: "decide", id, approve, reason? }
 //        { action: "cancel", id, reason }
+//        { action: "plan", plan: { category_id, content, note?, place?, from_at, to_at,
+//                                  objects } }                → own plan, sent for approval
+//        { action: "status", id, status, reason? }    → own plan: submitted / completed / cancelled
 //
 // Legacy MyTaskController + TaskApproveController behind one route. Every
 // database function called here checks the caller's team itself.
@@ -54,8 +58,12 @@ interface Body {
   id?: string;
   approve?: boolean;
   reason?: string;
+  status?: string;
   plan?: Record<string, unknown>;
 }
+
+/** What a manager may do to their own plan; approving it is their boss's move. */
+const OWN_MOVES = ["submitted", "completed", "cancelled"];
 
 Deno.serve(handler(async (req, db) => {
   if (req.method === "GET") {
@@ -87,6 +95,7 @@ Deno.serve(handler(async (req, db) => {
       p_to_date: date(params.get("toDate")),
       p_statuses: list(params.get("statuses"), STATUSES),
       p_salesperson_id: params.get("salespersonId") || null,
+      p_mine: params.get("mine") === "1",
     })));
   }
 
@@ -97,6 +106,17 @@ Deno.serve(handler(async (req, db) => {
       if (!body.plan) throw new HttpError(400, "plan is required");
       const id = ruled(await db.rpc("mgr_assign_work_plan", { payload: body.plan }));
       return json({ id });
+    }
+
+    // The manager's own plan, written as the rep app writes one and sent
+    // straight for approval: the manager app keeps no drafts.
+    if (body.action === "plan") {
+      if (!body.plan) throw new HttpError(400, "plan is required");
+      const id = ruled(await db.rpc("save_work_plan", { payload: body.plan })) as string;
+      const status = ruled(await db.rpc("set_work_plan_status", {
+        p_plan_id: id, p_status: "submitted", p_reason: null,
+      }));
+      return json({ id, status });
     }
 
     if (!body.id) throw new HttpError(400, "id is required");
@@ -112,6 +132,16 @@ Deno.serve(handler(async (req, db) => {
     if (body.action === "cancel") {
       const status = ruled(await db.rpc("mgr_cancel_work_plan", {
         p_plan_id: body.id, p_reason: body.reason ?? null,
+      }));
+      return json({ id: body.id, status });
+    }
+
+    if (body.action === "status") {
+      if (!body.status || !OWN_MOVES.includes(body.status)) {
+        throw new HttpError(400, `status must be one of ${OWN_MOVES.join(", ")}`);
+      }
+      const status = ruled(await db.rpc("set_work_plan_status", {
+        p_plan_id: body.id, p_status: body.status, p_reason: body.reason ?? null,
       }));
       return json({ id: body.id, status });
     }
