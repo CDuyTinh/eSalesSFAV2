@@ -12,10 +12,12 @@
 //
 // The six SFA reports, asked of the team or of one rep in it. They run through
 // the same report_*_of() cores the rep's own /reports uses, so a figure here is
-// the figure the rep sees. Without salespersonId the whole team is reported.
+// the figure the rep sees. Without salespersonId the whole team is reported;
+// supervisorId and branchIds (comma-separated) narrow that team for an area
+// or regional manager, on every report.
 // =============================================================================
 
-import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
+import { handler, HttpError, idList, json, unwrap } from "../_shared/client.ts";
 
 const ORDER_STATUSES = ["new", "confirmed", "cancelled"];
 
@@ -39,9 +41,12 @@ Deno.serve(handler(async (req, db) => {
   const one = params.get("salespersonId");
   const sps: string[] = one
     ? [one]
-    // The team's reps, optionally those under one supervisor (AM/RM filter):
-    // managers sell nothing, so they have no place in a sales report.
-    : (ruled(await db.rpc("team_reps", { p_supervisor: params.get("supervisorId") || null })) as string[]);
+    // The team's reps, optionally those under one supervisor or at some branches
+    // (AM/RM filter): managers sell nothing, so they have no place in a sales report.
+    : (ruled(await db.rpc("team_reps", {
+      p_supervisor: params.get("supervisorId") || null,
+      p_branches: idList(params.get("branchIds")),
+    })) as string[]);
   if (sps.length === 0) return json({ empty: true });
 
   switch (params.get("report")) {

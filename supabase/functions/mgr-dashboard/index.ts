@@ -1,7 +1,7 @@
 // =============================================================================
 // eSalesManager — Tổng quan
 //
-// GET /mgr-dashboard?date=YYYY-MM-DD[&salespersonId=…]
+// GET /mgr-dashboard?date=YYYY-MM-DD[&salespersonId=…][&supervisorId=…][&branchIds=a,b]
 //
 // The team's day and month, the per-rep ranking and the sales line, for the
 // supervisor's first tab. Legacy OverviewController (API_DashboardOverview_Manager
@@ -9,7 +9,7 @@
 // the caller's team; naming a rep outside it is refused.
 // =============================================================================
 
-import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
+import { handler, HttpError, idList, json, unwrap } from "../_shared/client.ts";
 
 Deno.serve(handler(async (req, db) => {
   if (req.method !== "GET") throw new HttpError(405, "GET only");
@@ -24,6 +24,8 @@ Deno.serve(handler(async (req, db) => {
     p_date: date,
     p_salesperson_id: params.get("salespersonId") || null,
     p_supervisor_id: params.get("supervisorId") || null,
+    // A region, an area or one distributor, resolved to its branches on the phone.
+    p_branch_ids: idList(params.get("branchIds")),
   });
   if (result.error?.code === "P0001") throw new HttpError(403, result.error.message);
 
