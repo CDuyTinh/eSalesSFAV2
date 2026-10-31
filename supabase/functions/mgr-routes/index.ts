@@ -8,6 +8,7 @@
 //        { action: "set",    route_id, customer_id, weekdays: [1..7], weeks?: [1..4] }
 //        { action: "remove", route_id, customer_id }
 //        { action: "assign", route_id, salesperson_id, note? }
+//        { action: "reorder", route_id, customer_ids: [...] }   (the whole route, in call order)
 //
 // Legacy McpController + RouteAssignmentController. The database functions
 // check that the route is run by someone in the caller's team.
@@ -28,6 +29,7 @@ interface Body {
   weekdays?: number[];
   weeks?: number[];
   note?: string;
+  customer_ids?: string[];
 }
 
 Deno.serve(handler(async (req, db) => {
@@ -64,6 +66,14 @@ Deno.serve(handler(async (req, db) => {
         return json(ruled(await db.rpc("mgr_route_remove_customer", {
           p_route_id: body.route_id, p_customer_id: body.customer_id,
         })));
+
+      case "reorder":
+        if (!body.customer_ids?.length) throw new HttpError(400, "customer_ids is required");
+        return json({
+          changed: ruled(await db.rpc("mgr_route_reorder", {
+            p_route_id: body.route_id, p_customer_ids: body.customer_ids,
+          })),
+        });
 
       case "assign":
         if (!body.salesperson_id) throw new HttpError(400, "salesperson_id is required");
