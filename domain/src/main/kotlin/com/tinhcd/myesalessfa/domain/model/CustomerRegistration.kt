@@ -128,6 +128,8 @@ data class CustomerRegistrationRow(
     val address: String? = null,
     val status: RegistrationStatus,
     val note: String? = null,
+    /** Why the supervisor rejected it, when they said. */
+    val decisionNote: String? = null,
     val createdAt: String,
     val avatarUrl: String? = null,
     val photoCount: Int = 0,

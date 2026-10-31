@@ -26,6 +26,8 @@ data class SalespersonDto(
     @SerialName("full_name") val fullName: String,
     @SerialName("branch_id") val branchId: String,
     val branch: BranchDto? = null,
+    /** sr for a rep; ss / am / rm belong in the manager app. */
+    val position: String = "sr",
 )
 
 @Serializable

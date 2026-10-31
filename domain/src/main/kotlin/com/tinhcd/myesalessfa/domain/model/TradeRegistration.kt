@@ -41,6 +41,8 @@ data class TradeRegistration(
     val programName: String,
     val levelName: String? = null,
     val reason: String? = null,
+    /** Why the supervisor rejected it, when they said. */
+    val decisionNote: String? = null,
 )
 
 /** One entry in the programme filter row. */

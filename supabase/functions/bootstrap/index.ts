@@ -16,7 +16,7 @@
 import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
 
 const SALESPERSON_COLUMNS =
-  "id,code,full_name,branch_id,branch:branch_id(id,code,name)";
+  "id,code,full_name,branch_id,position,branch:branch_id(id,code,name)";
 
 // Nested two levels deep on purpose. The client caches each questionnaire as one
 // JSON row and only ever reads it whole, so a flat shape would only be reassembled
