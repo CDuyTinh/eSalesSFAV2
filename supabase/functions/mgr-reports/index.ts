@@ -38,7 +38,9 @@ Deno.serve(handler(async (req, db) => {
   const one = params.get("salespersonId");
   const sps: string[] = one
     ? [one]
-    : (unwrap(await db.rpc("team_salesperson_ids")) as string[]);
+    // The team's reps, optionally those under one supervisor (AM/RM filter):
+    // managers sell nothing, so they have no place in a sales report.
+    : (ruled(await db.rpc("team_reps", { p_supervisor: params.get("supervisorId") || null })) as string[]);
   if (sps.length === 0) return json({ empty: true });
 
   switch (params.get("report")) {
