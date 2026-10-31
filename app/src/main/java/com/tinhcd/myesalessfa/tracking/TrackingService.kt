@@ -15,6 +15,7 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.tinhcd.myesalessfa.MainActivity
 import com.tinhcd.myesalessfa.core.location.LocationProvider
+import com.tinhcd.myesalessfa.domain.model.TracePoint
 import com.tinhcd.myesalessfa.domain.repository.LocationTraceRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -23,6 +24,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.time.OffsetDateTime
 import javax.inject.Inject
 
 /**
@@ -66,6 +68,18 @@ class TrackingService : Service() {
             collecting = scope.launch {
                 val intervalMs = trace.intervalSeconds() * 1000L
                 trace.flush()
+                // A fresh fix now, so the trace starts at clock-in rather than one
+                // interval later.
+                location.currentLocation()?.let { here ->
+                    trace.record(
+                        TracePoint(
+                            recordedAt = OffsetDateTime.now().toString(),
+                            lat = here.lat, lng = here.lng, accuracyM = here.accuracyM,
+                            speedMps = null, batteryPct = batteryPct(),
+                        ),
+                    )
+                    trace.flush()
+                }
                 location.updates(intervalMs).collect { fix ->
                     trace.record(fix.copy(batteryPct = batteryPct()))
                     trace.flush()

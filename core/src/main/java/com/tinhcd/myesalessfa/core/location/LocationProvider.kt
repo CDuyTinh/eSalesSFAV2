@@ -62,8 +62,10 @@ class LocationProvider @Inject constructor(
     }
 
     /**
-     * A fix every [intervalMs], for the working-day trace. Balanced power: a
-     * street-level position is the point, and the phone has to last the day.
+     * A fix every [intervalMs], for the working-day trace. High accuracy: the
+     * balanced setting answers indoors from cell towers, kilometres out, and the
+     * server drops anything worse than gps_track_max_accuracy_m. At one fix
+     * every few minutes the GPS is idle nearly all the time anyway.
      * Battery is left to the caller, which knows when it is asking.
      */
     @SuppressLint("MissingPermission")
@@ -73,8 +75,10 @@ class LocationProvider @Inject constructor(
             return@callbackFlow
         }
         val client = LocationServices.getFusedLocationProviderClient(context)
-        val request = LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, intervalMs)
+        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, intervalMs)
             .setMinUpdateIntervalMillis(intervalMs / 2)
+            // Never a fix the phone had lying around from before the day began.
+            .setMaxUpdateAgeMillis(0)
             .build()
         val callback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
