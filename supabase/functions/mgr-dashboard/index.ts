@@ -23,6 +23,7 @@ Deno.serve(handler(async (req, db) => {
   const result = await db.rpc("mgr_dashboard", {
     p_date: date,
     p_salesperson_id: params.get("salespersonId") || null,
+    p_supervisor_id: params.get("supervisorId") || null,
   });
   if (result.error?.code === "P0001") throw new HttpError(403, result.error.message);
 

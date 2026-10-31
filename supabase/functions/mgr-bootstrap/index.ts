@@ -39,11 +39,14 @@ Deno.serve(handler(async (_req, db) => {
 
   const manager = me as Staff | null;
 
-  // Direct reports only for now (SS). AM/RM will want the whole subtree, which
-  // RLS already exposes; this filter is what narrows it to one level.
-  const team = manager
+  // The whole subtree: an SS gets their reps, an AM their SSs and those SSs'
+  // reps, an RM everything below. supervisor_id and position let the app tell
+  // the levels apart. Asked by id rather than left to RLS, which also shows
+  // other rows (the caller's own, for one) for reasons of its own.
+  const teamIds = manager ? unwrap(await db.rpc("team_salesperson_ids")) as string[] : [];
+  const team = teamIds.length > 0
     ? await db.from("salesperson").select(STAFF_COLUMNS)
-      .eq("supervisor_id", manager.id).eq("is_active", true)
+      .in("id", teamIds).eq("is_active", true)
       .order("code").then(unwrap)
     : [];
 

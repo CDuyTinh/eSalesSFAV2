@@ -46,7 +46,11 @@ $accounts = @(
     @{ code = 'nvbh01'; password = 'Esales@12345' },
     @{ code = 'nvbh02'; password = 'Esales@12345' },
     # Giám sát, for the eSalesManager app (repo eSalesManagerV2).
-    @{ code = 'gsbh01'; password = 'Esales@12345' }
+    @{ code = 'gsbh01'; password = 'Esales@12345' },
+    @{ code = 'gsbh02'; password = 'Esales@12345' },
+    @{ code = 'nvbh03'; password = 'Esales@12345' },
+    @{ code = 'amkv01'; password = 'Esales@12345' },
+    @{ code = 'rmv01';  password = 'Esales@12345' }
 )
 
 # One listing for all accounts; the dev project has a handful of users.
