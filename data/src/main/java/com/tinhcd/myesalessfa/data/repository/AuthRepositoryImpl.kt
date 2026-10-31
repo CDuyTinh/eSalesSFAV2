@@ -39,6 +39,9 @@ private const val EMAIL_DOMAIN = "@esales.local"
 /** No salesperson row points at this auth user. Permanent; head office must fix it. */
 const val ERROR_NOT_PROVISIONED = "account_not_provisioned"
 
+/** A supervisor or manager account; they sign in to the manager app instead. */
+const val ERROR_MANAGER_ACCOUNT = "manager_account"
+
 /** Reached only if the session vanished between opening the screen and saving. */
 const val ERROR_NO_SESSION = "no_session"
 
@@ -152,8 +155,8 @@ class AuthRepositoryImpl @Inject constructor(
         profileFlight.run { fetchProfile() }
 
     private suspend fun fetchProfile(): DataResult<Salesperson> {
-        val profile = try {
-            service.bootstrap(lang = activeLanguage()).orThrow().salesperson?.toDomain()
+        val row = try {
+            service.bootstrap(lang = activeLanguage()).orThrow().salesperson
         } catch (e: Exception) {
             // Logged because the rep is shown a fixed sentence, and without this a
             // failed bootstrap left no record anywhere of what the server said.
@@ -166,6 +169,16 @@ class AuthRepositoryImpl @Inject constructor(
             return DataResult.Failure(AppError.Auth(ERROR_PROFILE_UNAVAILABLE))
         }
 
+        if (row != null && row.position != "sr") {
+            // A supervisor's day, route and orders are not a rep's: clocking in here
+            // would start a rep's day under a manager's name. Permanent, like the
+            // case below, so the session goes too.
+            client.auth.signOut()
+            publish(SessionState.SignedOut)
+            return DataResult.Failure(AppError.Auth(ERROR_MANAGER_ACCOUNT))
+        }
+
+        val profile = row?.toDomain()
         if (profile == null) {
             // Authenticated, and the server answered plainly that no salesperson row
             // points at this auth user. Permanent, so treat it as a failed session

@@ -33,6 +33,7 @@ data class TradeRegistrationDto(
     @SerialName("program_name") val programName: String = "",
     @SerialName("level_name") val levelName: String? = null,
     val reason: String? = null,
+    @SerialName("decision_note") val decisionNote: String? = null,
 )
 
 @Serializable

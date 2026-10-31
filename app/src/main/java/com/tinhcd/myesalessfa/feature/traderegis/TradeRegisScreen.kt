@@ -357,6 +357,17 @@ private fun RegistrationCard(row: TradeRegistration) {
             row.reason?.takeIf { it.isNotBlank() }?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall)
             }
+
+            // The supervisor's word on it, red when it is why it was refused.
+            row.decisionNote?.takeIf { it.isNotBlank() }?.let { note ->
+                Text(
+                    "Phản hồi: $note",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (row.status == TradeRegistrationStatus.REJECTED) Color(0xFFC62828) else Color.Unspecified,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }

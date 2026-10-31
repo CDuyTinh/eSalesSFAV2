@@ -312,6 +312,17 @@ private fun RegistrationCard(row: CustomerRegistrationRow, onClick: () -> Unit) 
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline,
                 )
+
+                // Why it was refused: what the rep opens this list to find out.
+                row.decisionNote?.takeIf { it.isNotBlank() }?.let { note ->
+                    Text(
+                        text = "Phản hồi: $note",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (row.status == RegistrationStatus.REJECTED) Color(0xFFC62828) else Color.Unspecified,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
     }
@@ -449,6 +460,7 @@ private fun HeadCard(detail: CustomerRegistrationDetail) {
             detail.contactName?.takeIf { it.isNotBlank() }?.let { Field("Người liên hệ", it) }
             row.note?.takeIf { it.isNotBlank() }?.let { Field("Ghi chú", it) }
             Field("Ngày gửi", row.createdAt.take(10))
+            row.decisionNote?.takeIf { it.isNotBlank() }?.let { Field("Phản hồi", it) }
 
             if (!row.canEdit) {
                 Text(

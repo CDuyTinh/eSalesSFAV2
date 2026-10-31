@@ -72,6 +72,7 @@ private fun AppError.toMessage(): String = when (this) {
         "invalid_credentials" -> "Sai tên đăng nhập hoặc mật khẩu"
         // Permanent, and only head office can fix it.
         "account_not_provisioned" -> "Tài khoản chưa được gắn nhân viên bán hàng"
+        "manager_account" -> "Tài khoản quản lý — hãy đăng nhập ứng dụng eSales Manager"
         // Transient: the password was accepted, the profile was not fetched. Says so,
         // rather than blaming the account.
         "profile_unavailable" -> "Đã đăng nhập nhưng chưa tải được thông tin nhân viên. Thử lại."

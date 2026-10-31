@@ -140,6 +140,7 @@ private fun TradeRegistrationDto.toDomain() = TradeRegistration(
     programName = programName,
     levelName = levelName,
     reason = reason,
+    decisionNote = decisionNote,
 )
 
 private fun DisplayProgramOfferDto.toDomain() = DisplayProgramOffer(
