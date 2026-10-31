@@ -5,17 +5,28 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
+import android.os.Looper
 import com.google.android.gms.location.CurrentLocationRequest
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.tinhcd.myesalessfa.domain.model.GeoPoint
+import com.tinhcd.myesalessfa.domain.model.TracePoint
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.time.Instant
+import java.time.ZoneOffset
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * A single fresh fix, which is what check-in needs — not a stream.
+ * A single fresh fix, which is what check-in needs; and, separately, the
+ * working-day stream the tracking service records ([updates]).
  *
  * Deliberately asks for a *current* location rather than the last known one:
  * a stale fix from the previous shop is exactly how you end up recording a
@@ -48,5 +59,40 @@ class LocationProvider @Inject constructor(
             lng = location.longitude,
             accuracyM = if (location.hasAccuracy()) location.accuracy else null,
         )
+    }
+
+    /**
+     * A fix every [intervalMs], for the working-day trace. Balanced power: a
+     * street-level position is the point, and the phone has to last the day.
+     * Battery is left to the caller, which knows when it is asking.
+     */
+    @SuppressLint("MissingPermission")
+    fun updates(intervalMs: Long): Flow<TracePoint> = callbackFlow {
+        if (!hasPermission()) {
+            close()
+            return@callbackFlow
+        }
+        val client = LocationServices.getFusedLocationProviderClient(context)
+        val request = LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, intervalMs)
+            .setMinUpdateIntervalMillis(intervalMs / 2)
+            .build()
+        val callback = object : LocationCallback() {
+            override fun onLocationResult(result: LocationResult) {
+                result.locations.forEach { l ->
+                    trySend(
+                        TracePoint(
+                            recordedAt = Instant.ofEpochMilli(l.time).atOffset(ZoneOffset.ofHours(7)).toString(),
+                            lat = l.latitude,
+                            lng = l.longitude,
+                            accuracyM = if (l.hasAccuracy()) l.accuracy else null,
+                            speedMps = if (l.hasSpeed()) l.speed else null,
+                            batteryPct = null,
+                        ),
+                    )
+                }
+            }
+        }
+        client.requestLocationUpdates(request, callback, Looper.getMainLooper())
+        awaitClose { client.removeLocationUpdates(callback) }
     }
 }

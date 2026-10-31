@@ -1,5 +1,9 @@
 package com.tinhcd.myesalessfa.feature.shell
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -58,6 +62,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -70,11 +75,13 @@ import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.MenuEntry
 import com.tinhcd.myesalessfa.domain.model.RouteStop
 import com.tinhcd.myesalessfa.domain.model.SupportedMenu
+import com.tinhcd.myesalessfa.domain.model.WorkDayState
 import com.tinhcd.myesalessfa.domain.usecase.OpenVisit
 import com.tinhcd.myesalessfa.feature.incall.StepTiles
 import com.tinhcd.myesalessfa.domain.model.WorkDay
 import com.tinhcd.myesalessfa.feature.dashboard.DashboardScreen
 import com.tinhcd.myesalessfa.feature.route.RouteScreen
+import com.tinhcd.myesalessfa.tracking.TrackingService
 import kotlinx.coroutines.launch
 
 /**
@@ -110,6 +117,26 @@ fun MainShell(
 
     LaunchedEffect(state.signedOut) {
         if (state.signedOut) onSignedOut()
+    }
+
+    // The working-day trace follows the day itself: on while it is open, off
+    // once it is closed or not yet started. Decided here because this is the
+    // screen in front of the rep whenever the day changes state, and a location
+    // service may only be started from a visible app.
+    val context = LocalContext.current
+    val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    val dayState = state.workDay?.state
+    LaunchedEffect(dayState) {
+        when (dayState) {
+            WorkDayState.OPEN -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+                TrackingService.start(context)
+            }
+            WorkDayState.CLOSED, WorkDayState.NOT_STARTED -> TrackingService.stop(context)
+            null -> Unit
+        }
     }
 
     ModalNavigationDrawer(

@@ -29,6 +29,7 @@ import com.tinhcd.myesalessfa.data.repository.WorkNoteRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.ReceivableRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.ReportRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.TimekeepingRepositoryImpl
+import com.tinhcd.myesalessfa.data.repository.LocationTraceRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.WorkflowRepositoryImpl
 import com.tinhcd.myesalessfa.domain.repository.AuthRepository
 import com.tinhcd.myesalessfa.domain.repository.CatalogRepository
@@ -53,6 +54,7 @@ import com.tinhcd.myesalessfa.domain.repository.WorkNoteRepository
 import com.tinhcd.myesalessfa.domain.repository.ReceivableRepository
 import com.tinhcd.myesalessfa.domain.repository.ReportRepository
 import com.tinhcd.myesalessfa.domain.repository.TimekeepingRepository
+import com.tinhcd.myesalessfa.domain.repository.LocationTraceRepository
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository
 import com.tinhcd.myesalessfa.domain.repository.ReferenceDataSync
 import com.tinhcd.myesalessfa.domain.repository.CustomerRepository
@@ -99,6 +101,12 @@ abstract class RepositoryModule {
     abstract fun bindTimekeepingRepository(
         impl: TimekeepingRepositoryImpl,
     ): TimekeepingRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLocationTraceRepository(
+        impl: LocationTraceRepositoryImpl,
+    ): LocationTraceRepository
 
     @Binds
     @Singleton

@@ -10,6 +10,12 @@
     <!-- Voice notes on the feedback step, which sales_step has been configuring with
          allow_audio since the workflow was built. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- The working-day trace: a foreground service of type location, started
+         from the open app at clock-in, with a notification the rep can see. No
+         background-location permission: the service never starts unseen. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <uses-feature
         android:name="android.hardware.location.gps"
@@ -50,6 +56,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".tracking.TrackingService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
 
         <!--
           Lets the camera app write a photo into our own private storage. The
