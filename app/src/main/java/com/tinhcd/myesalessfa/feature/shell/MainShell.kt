@@ -124,8 +124,12 @@ fun MainShell(
     // screen in front of the rep whenever the day changes state, and a location
     // service may only be started from a visible app.
     val context = LocalContext.current
-    val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     val dayState = state.workDay?.state
+    // The service posts its notification when it starts, which may be before the
+    // rep allowed notifications; starting it again re-posts it.
+    val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted && dayState == WorkDayState.OPEN) TrackingService.start(context)
+    }
     LaunchedEffect(dayState) {
         when (dayState) {
             WorkDayState.OPEN -> {
