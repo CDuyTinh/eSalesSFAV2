@@ -117,3 +117,12 @@ export async function readAll<T>(
     if (rows.length < pageSize) return all;
   }
 }
+
+/**
+ * A comma-separated list of ids from the query string, or null when absent or
+ * empty — null being what the database functions read as "no narrowing".
+ */
+export function idList(value: string | null): string[] | null {
+  const ids = (value ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  return ids.length > 0 ? ids : null;
+}

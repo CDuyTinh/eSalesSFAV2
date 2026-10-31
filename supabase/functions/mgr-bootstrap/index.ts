@@ -15,7 +15,8 @@
 import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
 
 const STAFF_COLUMNS =
-  "id,code,full_name,position,branch_id,phone,supervisor_id,branch:branch_id(id,code,name)";
+  "id,code,full_name,position,branch_id,phone,supervisor_id," +
+  "branch:branch_id(id,code,name,area:area_id(id,code,name,region:region_id(id,code,name)))";
 
 interface KeyValue {
   key: string;
