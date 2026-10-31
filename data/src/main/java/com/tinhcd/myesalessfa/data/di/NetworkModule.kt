@@ -24,6 +24,7 @@ import com.tinhcd.myesalessfa.data.remote.service.SiteStockService
 import com.tinhcd.myesalessfa.data.remote.service.StockService
 import com.tinhcd.myesalessfa.data.remote.service.SurveyService
 import com.tinhcd.myesalessfa.data.remote.service.TimekeepingService
+import com.tinhcd.myesalessfa.data.remote.service.LocationTraceService
 import com.tinhcd.myesalessfa.data.remote.service.TradeRegistrationService
 import com.tinhcd.myesalessfa.data.remote.service.VisitService
 import com.tinhcd.myesalessfa.data.remote.service.WorkNoteService
@@ -166,6 +167,11 @@ object NetworkModule {
     @Singleton
     fun provideTimekeepingService(retrofit: Retrofit): TimekeepingService =
         retrofit.create(TimekeepingService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideLocationTraceService(retrofit: Retrofit): LocationTraceService =
+        retrofit.create(LocationTraceService::class.java)
 
     @Provides
     @Singleton
