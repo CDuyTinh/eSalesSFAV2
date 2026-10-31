@@ -165,7 +165,8 @@ Deno.serve(handler(async (req, db) => {
 
       case "survey": {
         if (!body.survey) throw new HttpError(400, "survey is required");
-        return json({ id: ruled(await db.rpc("submit_competitor_survey", { p_payload: body.survey })) });
+        // A count of answers saved, not a row id: the client reads id as a uuid.
+        return json({ saved: ruled(await db.rpc("submit_competitor_survey", { p_payload: body.survey })) });
       }
     }
     throw new HttpError(400, `unknown action: ${body.action}`);
