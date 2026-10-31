@@ -6,10 +6,12 @@
 // GET  /mgr-edac?id=<trainingId>&step=N[&customer=<id>] → a step's outlets, or its form
 // GET  /mgr-edac?history=1&from=&to=[&rep=]        → past coaching days
 // GET  /mgr-edac?result=<trainingId>              → every answer, photos signed
+// GET  /mgr-edac?criteria=1                        → the criteria and whether the caller may edit
 // POST /mgr-edac
 //        { action: "start",  rep_id? , plan_id? }                    → { id }
 //        { action: "save",   id, step, customer_id?, answers?, note?, finish? }
 //        { action: "finish", id, result, supervisor_photo, salesperson_photo }
+//        { action: "criterion", criterion: { id?, step, content, kind, kpi?, required, active, options } }
 //
 // Legacy EDACTrainingController. The database functions check that the day is
 // the caller's own and the rep is in their team.
@@ -52,11 +54,14 @@ interface Body {
   result?: string;
   supervisor_photo?: string;
   salesperson_photo?: string;
+  criterion?: Record<string, unknown>;
 }
 
 Deno.serve(handler(async (req, db) => {
   if (req.method === "GET") {
     const params = new URL(req.url).searchParams;
+
+    if (params.get("criteria")) return json(unwrap(await db.rpc("mgr_edac_criteria")));
 
     const result = params.get("result");
     if (result) {
@@ -107,6 +112,10 @@ Deno.serve(handler(async (req, db) => {
           p_note: body.note ?? null,
           p_finish: body.finish ?? false,
         })));
+
+      case "criterion":
+        if (!body.criterion) throw new HttpError(400, "criterion is required");
+        return json({ id: ruled(await db.rpc("mgr_edac_save_criterion", { payload: body.criterion })) });
 
       case "finish":
         if (!body.id) throw new HttpError(400, "id is required");
