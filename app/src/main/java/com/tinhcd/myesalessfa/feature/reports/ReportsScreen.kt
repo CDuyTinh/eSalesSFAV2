@@ -7,9 +7,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -279,40 +281,41 @@ private fun ActivitySummaryCard(summary: ActivitySummary) {
             fontWeight = FontWeight.Bold,
         )
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // One height per row: a tile with a share under it would otherwise stand taller.
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.height(IntrinsicSize.Min)) {
             StatTile(
                 label = "Ghé / KH",
                 value = "${summary.visited}/${summary.planned}",
                 colors = Kpi.Blue,
                 footer = summary.coverage?.let { "${(it * 100).toInt()}%" },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).fillMaxHeight(),
             )
             StatTile(
                 label = "Có đơn",
                 value = summary.strike.toString(),
                 colors = Kpi.Green,
                 footer = summary.strikeRate?.let { "${(it * 100).toInt()}%" },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).fillMaxHeight(),
             )
             StatTile(
                 label = "Không đơn",
                 value = summary.nonStrike.toString(),
                 colors = Kpi.Orange,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).fillMaxHeight(),
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.height(IntrinsicSize.Min)) {
             StatTile(
                 label = "Đóng cửa",
                 value = summary.closed.toString(),
                 colors = Kpi.Slate,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).fillMaxHeight(),
             )
             StatTile(
                 label = "Ngoài tuyến",
                 value = summary.unplanned.toString(),
                 colors = Kpi.Violet,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).fillMaxHeight(),
             )
             Spacer(Modifier.weight(1f))
         }

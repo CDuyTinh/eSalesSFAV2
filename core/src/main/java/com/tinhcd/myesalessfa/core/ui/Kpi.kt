@@ -61,7 +61,8 @@ fun StatTile(
             .background(Brush.verticalGradient(colors), RoundedCornerShape(12.dp))
             .padding(vertical = 12.dp, horizontal = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+        // Centred, so a tile stretched to its neighbours' height keeps its figure in the middle.
+        verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
     ) {
         Text(
             text = label,
