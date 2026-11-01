@@ -111,8 +111,6 @@ private fun DashboardContent(
         topBar = {
             TopAppBar(
                 title = { Text("Tổng quan") },
-                // The band's two lower corners rounded, as on the report menu.
-                modifier = Modifier.clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)),
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(Icons.Default.Menu, contentDescription = "Mở menu")
@@ -155,6 +153,19 @@ private fun DashboardContent(
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
+            // The header carried on below the top bar, its two lower corners
+            // rounded, so the first card sits over its edge — as on the report
+            // menu. Drawn here rather than by clipping the top bar, which would
+            // round the bar itself and leave nothing for the card to overlap.
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(HeaderOverlap)
+                    .background(
+                        MaterialTheme.brand.header,
+                        RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp),
+                    ),
+            )
             val overview = state.overview
             when {
                 // Only on the very first load. A refresh keeps the figures on
@@ -182,6 +193,9 @@ private fun DashboardContent(
         }
     }
 }
+
+/** How far the header runs on below the top bar; the list starts 16dp down, inside it. */
+private val HeaderOverlap = 44.dp
 
 @Composable
 private fun Figures(
