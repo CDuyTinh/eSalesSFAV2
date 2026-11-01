@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.tinhcd.myesalessfa.core.ui.ButtonPair
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.domain.model.NearExpiryLot
@@ -293,20 +294,13 @@ private fun DocumentPage(
                     Spacer(Modifier.height(6.dp))
                 }
 
-                PrimaryButton(
-                    text = "Hoàn thành bước này",
+                ButtonPair(
+                    text = "Hoàn thành",
                     onClick = onSubmit,
+                    onBack = onBack,
                     enabled = state.canSubmit,
                     loading = state.submitting,
-                    height = 46.dp,
                 )
-                Spacer(Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = onBack,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(44.dp),
-                ) { Text("Quay lại") }
             }
         }
     }

@@ -44,6 +44,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tinhcd.myesalessfa.core.ui.ButtonPair
 import com.tinhcd.myesalessfa.core.ui.HeaderShape
 import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
@@ -235,18 +236,13 @@ private fun NewCustomerContent(
                     }
 
                     item {
-                        PrimaryButton(
+                        ButtonPair(
                             text = "Gửi đăng ký",
                             onClick = onSubmit,
+                            onBack = onBack,
                             loading = state.submitting,
                             modifier = Modifier.padding(top = 8.dp),
                         )
-                    }
-                    item {
-                        OutlinedButton(
-                            onClick = onBack,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) { Text("Quay lại") }
                     }
                 }
             }

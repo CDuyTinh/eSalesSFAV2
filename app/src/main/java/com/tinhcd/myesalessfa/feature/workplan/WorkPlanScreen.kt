@@ -689,14 +689,26 @@ private fun ActionRow(
     onSubmit: () -> Unit,
     onClose: (WorkPlanStatus) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    // One row, the width shared equally: the backing-out action on the left in
+    // outline, the forward ones after it, as every form's foot reads.
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (plan.canCancel) {
+            OutlinedButton(
+                onClick = { onClose(WorkPlanStatus.CANCELLED) },
+                enabled = !working,
+                modifier = Modifier.weight(1f),
+            ) {
+                Text("Hủy kế hoạch", maxLines = 1)
+            }
+        }
+
         if (plan.canSubmit) {
             FilledTonalButton(
                 onClick = onSubmit,
                 enabled = !working,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.weight(1f),
             ) {
-                Text("Gửi duyệt")
+                Text("Gửi duyệt", maxLines = 1)
             }
         }
 
@@ -704,19 +716,9 @@ private fun ActionRow(
             FilledTonalButton(
                 onClick = { onClose(WorkPlanStatus.COMPLETED) },
                 enabled = !working,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.weight(1f),
             ) {
-                Text("Hoàn thành")
-            }
-        }
-
-        if (plan.canCancel) {
-            OutlinedButton(
-                onClick = { onClose(WorkPlanStatus.CANCELLED) },
-                enabled = !working,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Hủy kế hoạch")
+                Text("Hoàn thành", maxLines = 1)
             }
         }
     }

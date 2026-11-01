@@ -43,6 +43,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tinhcd.myesalessfa.core.ui.ButtonPair
 import com.tinhcd.myesalessfa.core.ui.HeaderShape
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
 import com.tinhcd.myesalessfa.core.ui.LoadingBox
@@ -167,19 +168,20 @@ private fun WorkDayContent(
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth(),
                         )
+                        OutlinedButton(
+                            onClick = onBack,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text("Quay lại") }
                     } else {
-                        PrimaryButton(
-                            text = if (state.closing) "Kết thúc ngày bán hàng" else "Bắt đầu ngày bán hàng",
+                        ButtonPair(
+                            text = if (state.closing) "Kết thúc ngày" else "Bắt đầu ngày",
                             onClick = onSubmit,
+                            onBack = onBack,
                             enabled = state.canSubmit,
                             loading = state.submitting,
+                            height = 52.dp,
                         )
                     }
-
-                    OutlinedButton(
-                        onClick = onBack,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { Text("Quay lại") }
                 }
             }
         }

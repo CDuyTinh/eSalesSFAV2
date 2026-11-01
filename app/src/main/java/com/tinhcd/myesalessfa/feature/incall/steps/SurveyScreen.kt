@@ -34,6 +34,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tinhcd.myesalessfa.core.ui.ButtonPair
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
 import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
@@ -320,20 +321,14 @@ private fun SurveyFooter(
                 )
             }
 
-            PrimaryButton(
-                text = "Hoàn thành bước này",
+            ButtonPair(
+                text = "Hoàn thành",
                 onClick = onSubmit,
+                onBack = onBack,
                 enabled = survey.canSubmit,
                 loading = submitting,
                 modifier = Modifier.padding(top = 8.dp),
             )
-
-            OutlinedButton(
-                onClick = onBack,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp),
-            ) { Text("Quay lại") }
         }
     }
 }

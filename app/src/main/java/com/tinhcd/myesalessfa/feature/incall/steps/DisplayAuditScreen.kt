@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.tinhcd.myesalessfa.core.ui.ButtonPair
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.formatDong
@@ -472,23 +473,14 @@ private fun AuditForm(
 
                 Spacer(Modifier.height(8.dp))
 
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedButton(
-                        onClick = onBack,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp),
-                    ) { Text("Quay lại") }
-
-                    PrimaryButton(
-                        text = if (audit.program == null) "Hoàn thành bước này" else "Gửi",
-                        onClick = onSubmit,
-                        enabled = audit.canSubmit,
-                        loading = state.submitting || state.capturing,
-                        height = 44.dp,
-                        modifier = Modifier.weight(1.4f),
-                    )
-                }
+                ButtonPair(
+                    text = if (audit.program == null) "Hoàn thành" else "Gửi",
+                    onClick = onSubmit,
+                    onBack = onBack,
+                    enabled = audit.canSubmit,
+                    loading = state.submitting || state.capturing,
+                    height = 44.dp,
+                )
             }
         }
     }

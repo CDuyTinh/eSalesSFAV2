@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.tinhcd.myesalessfa.core.ui.ButtonPair
 import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.domain.model.FeedbackRecording
@@ -168,16 +169,13 @@ fun FeedbackScreen(
                     )
                 }
 
-                PrimaryButton(
-                    text = if (state.submitting) "Đang lưu..." else "Hoàn thành bước này",
+                ButtonPair(
+                    text = "Hoàn thành",
                     onClick = viewModel::submit,
+                    onBack = onDone,
                     enabled = state.canSubmit,
-                    modifier = Modifier.fillMaxWidth(),
+                    loading = state.submitting,
                 )
-
-                TextButton(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
-                    Text("Quay lại")
-                }
             }
         }
     }

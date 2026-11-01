@@ -71,6 +71,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tinhcd.myesalessfa.core.ui.ButtonPair
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.core.ui.SearchBox
@@ -857,19 +858,15 @@ private fun ConfirmPage(
                         modifier = Modifier.padding(bottom = 8.dp),
                     )
                 }
-                PrimaryButton(
+                ButtonPair(
                     text = "Gửi đơn hàng",
                     onClick = viewModel::submit,
+                    onBack = onDone,
+                    backText = "Để sau",
                     enabled = state.order.canSubmit,
                     loading = state.submitting,
                     height = 44.dp,
                 )
-                OutlinedButton(
-                    onClick = onDone,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp),
-                ) { Text("Để sau") }
             }
         }
     }
