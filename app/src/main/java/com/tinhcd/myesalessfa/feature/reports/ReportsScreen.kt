@@ -1,5 +1,22 @@
 package com.tinhcd.myesalessfa.feature.reports
 
+import androidx.compose.material.icons.filled.Event
+import java.time.OffsetDateTime
+import java.time.LocalDateTime
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.material.icons.filled.Work
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Route
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.foundation.border
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -23,25 +40,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.TaskAlt
-import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.material.icons.filled.Workspaces
-import androidx.compose.material.icons.filled.WrongLocation
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.Card
@@ -82,7 +93,6 @@ import com.tinhcd.myesalessfa.core.ui.KpiBar
 import com.tinhcd.myesalessfa.core.ui.PercentPill
 import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.StatTile
-import com.tinhcd.myesalessfa.core.ui.StatusPill
 import com.tinhcd.myesalessfa.core.ui.compactMoney
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.core.ui.theme.brand
@@ -372,64 +382,72 @@ private fun ActivitySummaryCard(summary: ActivitySummary) {
     }
 }
 
+/**
+ * One visit, laid out as the legacy app's `daily_activities_report_item.dart`:
+ * the outlet code in a tag coloured by outcome with the in and out times
+ * opposite, the name, whether it was on the route, the address, then a rule and
+ * the time spent and the order taken.
+ */
 @Composable
 private fun ActivityRowCard(row: ActivityRow) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
-        Column(Modifier.padding(12.dp)) {
-            Row(verticalAlignment = Alignment.Top) {
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        text = row.customerName,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    Text(
-                        text = listOfNotNull(row.customerCode, row.address).joinToString(" · "),
-                        style = MaterialTheme.typography.bodySmall,
+    val closed = row.status == VisitStatus.CLOSED
+    val tagColour = when {
+        row.orderAmount > 0 -> ReportGreen
+        closed -> ReportRed
+        row.checkInAtEpochMs == null -> ReportGrey
+        else -> ReportOrange
+    }
+
+    ReportItemCard {
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SolidTag(row.customerCode, tagColour)
+                val checkIn = row.checkInAtEpochMs
+                when {
+                    closed -> Text(
+                        "Đã đóng cửa",
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
                     )
-                }
-                if (!row.planned) {
-                    Surface(
-                        color = UnplannedViolet,
-                        contentColor = Color.White,
-                        shape = CircleShape,
-                    ) {
-                        Text(
-                            text = "Ngoài tuyến",
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                        )
+
+                    checkIn != null -> Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        TimeInOut(clockOf(checkIn), checkIn = true)
+                        row.checkOutAtEpochMs?.let { TimeInOut(clockOf(it), checkIn = false) }
                     }
                 }
             }
+            Text(
+                row.customerName,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(top = 10.dp),
+            )
+            InfoLine(Icons.Default.Route, if (row.planned) "Trong tuyến" else "Ngoài tuyến")
+            row.address?.takeIf { it.isNotBlank() }?.let { InfoLine(Icons.Default.LocationOn, it) }
+        }
 
-            Spacer(Modifier.height(8.dp))
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = row.clock(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = if (row.orderAmount > 0) formatMoney(row.orderAmount) else "Không đơn",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (row.orderAmount > 0) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                )
+        // A closed shop with no order has nothing below the rule, so no rule.
+        if (!(closed && row.orderAmount == 0L)) {
+            HorizontalDivider(thickness = 2.dp, color = MaterialTheme.colorScheme.background)
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(Modifier.weight(1f)) {
+                    if (!closed) InfoLine(Icons.Default.Schedule, row.stayLabel(), topPadding = 0.dp)
+                }
+                if (row.orderAmount > 0) {
+                    Text(
+                        formatMoney(row.orderAmount),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = ReportGreen,
+                    )
+                }
             }
         }
     }
@@ -460,26 +478,12 @@ private fun SalesTab(
                 when (state.cut) {
                     SalesCut.CUSTOMER -> {
                         if (report.customers.isEmpty()) item { EmptyCut() }
-                        items(report.customers, key = { it.customerCode }) { row ->
-                            AmountRow(
-                                title = row.customerName,
-                                subtitle = "${row.customerCode} · ${row.orders} đơn",
-                                amount = row.revenue,
-                                share = report.revenue,
-                            )
-                        }
+                        items(report.customers, key = { it.customerCode }) { row -> CustomerSalesCard(row) }
                     }
 
                     SalesCut.PRODUCT -> {
                         if (report.products.isEmpty()) item { EmptyCut() }
-                        items(report.products, key = { it.productCode }) { row ->
-                            AmountRow(
-                                title = row.productName,
-                                subtitle = "${row.productCode} · ${row.baseQty} ${row.baseUom}",
-                                amount = row.revenue,
-                                share = report.revenue,
-                            )
-                        }
+                        items(report.products, key = { it.productCode }) { row -> ProductSalesCard(row) }
                     }
                 }
             }
@@ -564,54 +568,77 @@ private fun CutSelector(selected: SalesCut, onSelect: (SalesCut) -> Unit) {
 }
 
 /**
- * A line of the breakdown, with a bar showing its share of the month.
- *
- * The bar is what makes the list readable at a glance: sorted by revenue, the
- * question is never the exact figure but whether the top line is most of the
- * month or merely the first of many.
+ * A customer's month, as the legacy MTD tab lists it: the name and the figure
+ * in bold, the small print below.
  */
 @Composable
-private fun AmountRow(title: String, subtitle: String, amount: Long, share: Long) {
-    Column {
-        Row(verticalAlignment = Alignment.Top) {
-            Column(Modifier.weight(1f)) {
+private fun CustomerSalesCard(row: CustomerSales) {
+    ReportItemCard {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
+                    row.customerName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
                 )
+                Spacer(Modifier.width(8.dp))
                 Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    formatMoney(row.revenue),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = ReportBlue,
                 )
             }
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = formatMoney(amount),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-            )
+            Row {
+                Text(
+                    row.customerCode,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                Text("${row.orders} đơn hàng", style = MaterialTheme.typography.bodyMedium)
+            }
         }
+    }
+}
 
-        val fraction = if (share > 0) (amount.toFloat() / share).coerceIn(0f, 1f) else 0f
-        Box(
-            Modifier
-                .padding(top = 6.dp)
-                .fillMaxWidth()
-                .height(4.dp)
-                .background(
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                    CircleShape,
-                ),
-        ) {
-            Box(
-                Modifier
-                    .fillMaxWidth(fraction)
-                    .height(4.dp)
-                    .background(MaterialTheme.colorScheme.primary, CircleShape),
-            )
+/**
+ * A product's month, after the legacy `_itemProduct`: a picture square, the
+ * name in bold, code and unit, then quantity and amount. There are no product
+ * pictures here yet, so the square holds a box.
+ */
+@Composable
+private fun ProductSalesCard(row: ProductSales) {
+    ReportItemCard {
+        Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+            PicturePlaceholder(Icons.Default.Inventory2, size = 64.dp, shape = RoundedCornerShape(10.dp))
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(row.productName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    buildAnnotatedString {
+                        append(row.productCode)
+                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
+                            append(" | ${row.baseUom}")
+                        }
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Row {
+                    Text(
+                        "${row.baseQty} ${row.baseUom}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        formatMoney(row.revenue),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
         }
     }
 }
@@ -631,8 +658,6 @@ private fun EmptyCut() {
 // Shared
 // -----------------------------------------------------------------------------
 
-private val UnplannedViolet = Color(0xFF5C00D4)
-
 private val DateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
 private val MonthFormat = DateTimeFormatter.ofPattern("'Tháng' MM/yyyy")
@@ -645,6 +670,149 @@ private val MoneyFormat = DecimalFormat(
 )
 
 private fun formatMoney(value: Long): String = MoneyFormat.format(value)
+
+// -----------------------------------------------------------------------------
+// The legacy item card's pieces
+// -----------------------------------------------------------------------------
+
+/** The legacy item colours (`#04A489`, `#F5A202`, `#D92332`, `#A4A4A8`, `#2D2DFE`). */
+private val ReportGreen = Color(0xFF04A489)
+private val ReportOrange = Color(0xFFF5A202)
+private val ReportRed = Color(0xFFD92332)
+private val ReportGrey = Color(0xFFA4A4A8)
+private val ReportBlue = Color(0xFF2D2DFE)
+
+/** The legacy item: white, 12dp corners, a soft shadow. */
+@Composable
+private fun ReportItemCard(content: @Composable ColumnScope.() -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        content = content,
+    )
+}
+
+/** A filled, rounded tag with white text — the legacy status tag. */
+@Composable
+private fun SolidTag(text: String, colour: Color) {
+    Surface(color = colour, contentColor = Color.White, shape = RoundedCornerShape(12.dp)) {
+        Text(
+            text,
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+        )
+    }
+}
+
+/** A small grey icon and a line of grey text. */
+@Composable
+private fun InfoLine(icon: ImageVector, text: String, topPadding: Dp = 6.dp) {
+    Row(Modifier.padding(top = topPadding), verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            icon,
+            contentDescription = null,
+            modifier = Modifier.size(15.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** A check-in (blue) or check-out (red) time, with its arrow. */
+@Composable
+private fun TimeInOut(time: String, checkIn: Boolean) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            if (checkIn) Icons.AutoMirrored.Filled.Login else Icons.AutoMirrored.Filled.Logout,
+            contentDescription = if (checkIn) "Vào" else "Ra",
+            modifier = Modifier.size(15.dp),
+            tint = if (checkIn) ReportBlue else ReportRed,
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(time, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** Where the legacy card has a picture this data does not: a tinted shape with an icon. */
+@Composable
+private fun PicturePlaceholder(icon: ImageVector, size: Dp, shape: Shape) {
+    Box(
+        Modifier
+            .size(size)
+            .background(MaterialTheme.colorScheme.surfaceVariant, shape)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            modifier = Modifier.size(size * 0.5f),
+            tint = MaterialTheme.colorScheme.outline,
+        )
+    }
+}
+
+/**
+ * An outlet's picture stand-in: the first letters of its last two words, since
+ * the first ones are the trade ("Tạp hoá", "Siêu thị") and would make every
+ * shop "TH" or "ST".
+ */
+@Composable
+private fun InitialsAvatar(name: String, size: Dp) {
+    val initials = name.split(' ').filter { it.isNotBlank() }.takeLast(2)
+        .joinToString("") { it.first().uppercase() }
+    Box(
+        Modifier
+            .size(size)
+            .background(MaterialTheme.brand.header.copy(alpha = 0.12f), CircleShape)
+            .border(1.dp, MaterialTheme.brand.header.copy(alpha = 0.3f), CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            initials,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.brand.header,
+        )
+    }
+}
+
+/**
+ * A server date or timestamp as dd/MM/yyyy, whichever shape it came in.
+ * Anything unreadable is shown as it came rather than dropped.
+ */
+private fun formatReportDate(raw: String): String =
+    parseReportInstant(raw)?.toLocalDate()?.format(DateFormat) ?: raw
+
+/** "28/10/2026, 08:00 - 11:30" — the legacy card's working-time line. */
+private fun workWhen(fromAt: String, toAt: String): String {
+    val from = parseReportInstant(fromAt) ?: return fromAt
+    val to = parseReportInstant(toAt)
+    val day = from.toLocalDate().format(DateFormat)
+    val start = from.toLocalTime().format(ClockFormat)
+    return if (to == null) "$day, $start" else "$day, $start - ${to.toLocalTime().format(ClockFormat)}"
+}
+
+/** Timestamps with an offset in the phone's zone; bare dates at midnight. */
+private fun parseReportInstant(raw: String): LocalDateTime? {
+    val text = raw.trim().replace(' ', 'T')
+    // Postgres writes "+07" where ISO wants "+07:00".
+    val iso = text.replace(Regex("([+-]\\d{2})$"), "$1:00")
+    return runCatching { OffsetDateTime.parse(iso).atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime() }
+        .recoverCatching { LocalDateTime.parse(text) }
+        .recoverCatching { LocalDate.parse(text.take(10)).atStartOfDay() }
+        .getOrNull()
+}
+
+/** The time in the shop, as the card's lower line says it. */
+private fun ActivityRow.stayLabel(): String = when {
+    minutes != null -> "$minutes phút"
+    checkInAtEpochMs != null && checkOutAtEpochMs == null -> "Đang viếng thăm"
+    else -> status.label()
+}
 
 
 // -----------------------------------------------------------------------------
@@ -847,48 +1015,64 @@ private fun OrdersTab(
     }
 }
 
+/**
+ * An order, after the legacy `_buildReportOrderItem`: status tag and date,
+ * the order number against the goods value, the customer against the amount
+ * owed, the line count, and whether it was taken on the route.
+ */
 @Composable
 private fun OrderReportCard(row: OrderReportRow) {
-    RowCard {
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = row.customerName,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
+    ReportItemCard {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SolidTag(row.status.label, orderColour(row.status))
+                Text(
+                    formatReportDate(row.orderDate),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    row.orderNo,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(formatMoney(row.subTotal), style = MaterialTheme.typography.bodyLarge)
+            }
+            Row(verticalAlignment = Alignment.Top) {
+                Text(
+                    row.customerName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    formatMoney(row.totalAmount),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = ReportGreen,
+                    modifier = Modifier.padding(start = 14.dp),
+                )
+            }
+            Row {
+                Text(
+                    "Số dòng hàng",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(row.lineCount.toString(), style = MaterialTheme.typography.bodyMedium)
+            }
+            InfoLine(
+                Icons.Default.ShoppingCart,
+                if (row.inRoute) "Đơn trong tuyến" else "Đơn ngoài tuyến",
+                topPadding = 0.dp,
             )
-            StatusPill(row.status.label, orderColour(row.status))
-        }
-
-        Text(
-            text = formatMoney(row.totalAmount),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = orderColour(row.status),
-        )
-
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-
-        Text(
-            text = "${row.orderNo} · ${row.customerCode}",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            MetaLabel(Icons.Default.CalendarMonth, row.orderDate)
-            MetaLabel(Icons.Default.Inventory2, "${row.lineCount} mặt hàng")
-            // Off-route is the interesting case, so only it is said.
-            if (!row.inRoute) MetaLabel(Icons.Default.WrongLocation, "Ngoài tuyến")
         }
     }
 }
@@ -897,27 +1081,6 @@ private fun orderColour(status: OrderReportStatus): Color = when (status) {
     OrderReportStatus.NEW -> Color(0xFFF5A202)
     OrderReportStatus.CONFIRMED -> Color(0xFF04A489)
     OrderReportStatus.CANCELLED -> Color(0xFFC62828)
-}
-
-/** An icon and a word, for the third line of a card. */
-@Composable
-private fun MetaLabel(icon: ImageVector, text: String) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            icon,
-            contentDescription = null,
-            modifier = Modifier.size(13.dp),
-            tint = MaterialTheme.colorScheme.outline,
-        )
-        Text(
-            text,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.outline,
-        )
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -952,10 +1115,6 @@ private fun SkuTab(
             ReportEmpty(Icons.Default.Inventory2, state.error ?: "Đang tải báo cáo SKU")
             return@Column
         }
-
-        // The busiest SKU sets the scale for every bar below it, so the rows read
-        // as a ranking rather than as five bars that all look full.
-        val top = report.items.maxOfOrNull { it.qtyTotal } ?: 0
 
         LazyColumn(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
@@ -1006,90 +1165,49 @@ private fun SkuTab(
                     )
                 }
             } else {
-                itemsIndexed(report.items, key = { _, it -> it.productId }) { index, row ->
-                    SkuReportCard(rank = index + 1, row = row, top = top)
-                }
+                items(report.items, key = { it.productId }) { row -> SkuReportCard(row) }
             }
         }
     }
 }
 
+/**
+ * A product's quantity, after the legacy SKU list: a round picture, the name
+ * against the quantity and unit, the code against what has been confirmed.
+ */
 @Composable
-private fun SkuReportCard(rank: Int, row: SkuReportRow, top: Int) {
-    RowCard {
+private fun SkuReportCard(row: SkuReportRow) {
+    ReportItemCard {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // The rank, because the list is ordered by quantity and a reader
-            // should not have to infer that from the bars.
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                modifier = Modifier.size(26.dp),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
+            PicturePlaceholder(Icons.Default.Inventory2, size = 40.dp, shape = CircleShape)
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.Top) {
+                    Text(row.productName, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                    Spacer(Modifier.width(8.dp))
+                    Text("${row.qtyTotal} ${row.stockUom}", style = MaterialTheme.typography.bodyLarge)
+                }
+                Row(verticalAlignment = Alignment.Top) {
                     Text(
-                        rank.toString(),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        row.productCode,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        buildAnnotatedString {
+                            withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
+                                append("Đã xác nhận: ")
+                            }
+                            withStyle(SpanStyle(color = ReportGreen)) { append(row.qtyConfirmed.toString()) }
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                 }
             }
-
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = row.productName,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = row.productCode,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline,
-                )
-            }
-
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = row.qtyTotal.toString(),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = row.stockUom,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline,
-                )
-            }
-        }
-
-        // Against the busiest SKU, not against its own total: this bar answers
-        // "how big is this one" and the pill beside it answers "how much of it
-        // is approved".
-        KpiBar(
-            progress = if (top > 0) row.qtyTotal.toFloat() / top else 0f,
-            ramp = Kpi.Blue,
-        )
-
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "Xác nhận ${row.qtyConfirmed} · chờ ${row.qtyPending}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outline,
-            )
-            Text(
-                text = formatMoney(row.amountTotal),
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.SemiBold,
-            )
         }
     }
 }
@@ -1180,56 +1298,38 @@ private fun TradeTab(
     }
 }
 
+/**
+ * A sign-up, after the legacy trade list: the outlet's picture (its initials,
+ * here), the programme in bold, and below it who signed and how.
+ */
 @Composable
 private fun TradeReportCard(row: TradeReportRow) {
-    val colour = tradeColour(row.kind)
-
-    RowCard {
+    ReportItemCard {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(
-                shape = CircleShape,
-                color = colour.copy(alpha = 0.14f),
-                modifier = Modifier.size(34.dp),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        if (row.kind == TradeReportKind.DISPLAY) Icons.Default.ViewCarousel
-                        else Icons.Default.Workspaces,
-                        contentDescription = null,
-                        modifier = Modifier.size(17.dp),
-                        tint = colour,
-                    )
+            InitialsAvatar(row.customerName, size = 48.dp)
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(row.programName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    "${row.customerCode} · ${row.customerName}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    SolidTag(row.kind.label, tradeColour(row.kind))
+                    row.levelName?.let {
+                        Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
+                InfoLine(Icons.Default.Event, "Đăng ký ${formatReportDate(row.registeredAt)}", topPadding = 0.dp)
             }
-
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = row.customerName,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = row.programName,
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-
-            StatusPill(row.kind.label, colour)
         }
-
-        Text(
-            text = listOfNotNull(row.levelName, row.programCode, row.registeredAt)
-                .joinToString(" · "),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.outline,
-        )
     }
 }
 
@@ -1316,61 +1416,35 @@ private fun WorkResultTab(
     }
 }
 
+/**
+ * A finished plan, after the legacy `work_result_report_item.dart`: its
+ * status tag, what it was, when, and what kind of work.
+ */
 @Composable
 private fun WorkResultCard(row: WorkResultRow) {
     val done = row.status == WorkPlanStatus.COMPLETED
-    val colour = if (done) Color(0xFF04A489) else Color(0xFF718096)
 
-    RowCard {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                if (done) Icons.Default.CheckCircle else Icons.Default.Cancel,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = colour,
-            )
+    ReportItemCard {
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+            // The legacy colours: a completed plan is settled business, grey; a
+            // cancelled one is what a reader is looking for, red.
+            SolidTag(if (done) "Hoàn thành" else "Đã hủy", if (done) ReportGrey else ReportRed)
             Text(
-                text = row.content,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
+                row.content,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(top = 10.dp),
             )
-            StatusPill(row.status.label, colour)
-        }
-
-        row.outcome?.takeIf { it.isNotBlank() }?.let {
-            Text(it, style = MaterialTheme.typography.bodySmall)
-        }
-
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            MetaLabel(Icons.Default.Workspaces, row.categoryName)
-            MetaLabel(Icons.Default.CalendarMonth, row.fromAt.take(10))
-            if (row.objectCount > 0) {
-                MetaLabel(Icons.Default.Groups, "${row.objectCount} đối tượng")
-            }
+            InfoLine(Icons.Default.Schedule, workWhen(row.fromAt, row.toAt))
+            InfoLine(Icons.Default.Work, row.categoryName)
+            if (row.objectCount > 0) InfoLine(Icons.Default.Groups, "${row.objectCount} đối tượng")
+            row.outcome?.takeIf { it.isNotBlank() }?.let { InfoLine(Icons.AutoMirrored.Filled.Notes, it) }
         }
     }
 }
 
 private fun clockOf(epochMs: Long): String = ClockFormat
     .format(Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()))
-
-/**
- * The times, and how long it took. A visit still open says so rather than
- * showing a duration that would keep growing while nobody is in the shop.
- */
-private fun ActivityRow.clock(): String {
-    val start = checkInAtEpochMs ?: return status.label()
-    val end = checkOutAtEpochMs ?: return "${clockOf(start)} · đang mở"
-    return "${clockOf(start)} - ${clockOf(end)}" + (minutes?.let { " · $it phút" } ?: "")
-}
 
 private fun VisitStatus.label(): String = when (this) {
     VisitStatus.PLANNED -> "Chưa ghé"
