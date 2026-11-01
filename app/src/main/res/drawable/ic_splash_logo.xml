@@ -2,15 +2,15 @@
 <!--
   Splash mark: a stocked shelf, which is what this app is about.
 
-  A deliberately simple geometric mark, and also, drawn smaller, the launcher
-  icon's foreground and monochrome layers (drawable/ic_launcher_foreground.xml),
-  so the icon on the home screen and the splash it opens are the same picture.
-  Replace both together when there is a real brand asset.
+  A deliberately simple geometric mark. It is shown drawn smaller, through
+  drawable/ic_launcher_foreground.xml, as both the launcher icon and the splash
+  icon, so the icon on the home screen and the splash it opens are the same
+  picture. Replace it when there is a real brand asset.
 
-  Geometry follows the splash icon spec: a 108dp canvas with all content inside the
-  central two thirds (18..90), which is the circle the platform reserves for the icon.
-  The content (24..84) also sits inside the adaptive icon's 66dp safe zone (21..87),
-  so no launcher mask clips it. Drawn white so it reads on the brand blue background.
+  Not used at this size anywhere: the shelf's corners (24..84 on a 108dp canvas)
+  fall outside the circle Android 12+ shows a splash icon through, and on a
+  Samsung they were visibly cut off. Drawn white so it reads on the brand blue
+  background.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
