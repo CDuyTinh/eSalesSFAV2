@@ -9,6 +9,7 @@
 // POST /mgr-work-plans
 //        { action: "assign", plan: { salesperson_id, category_id, content,
 //                                    note?, place?, from_at, to_at, objects: [{id}] } }
+//          + repeat?: { every: "day" | "week", until: YYYY-MM-DD }   → one task per occurrence, { count }
 //        { action: "decide", id, approve, reason? }
 //        { action: "cancel", id, reason }
 //        { action: "update", id, plan: { category_id, content, note?, place?, from_at,
@@ -62,6 +63,8 @@ interface Body {
   reason?: string;
   status?: string;
   plan?: Record<string, unknown>;
+  /** Assign as a series: every working day or every week, until a date. */
+  repeat?: { every: string; until: string };
 }
 
 /** What a manager may do to their own plan; approving it is their boss's move. */
@@ -106,6 +109,12 @@ Deno.serve(handler(async (req, db) => {
 
     if (body.action === "assign") {
       if (!body.plan) throw new HttpError(400, "plan is required");
+      if (body.repeat) {
+        const count = ruled(await db.rpc("mgr_assign_work_plan_repeat", {
+          payload: body.plan, p_every: body.repeat.every, p_until: date(body.repeat.until) ?? null,
+        }));
+        return json({ count });
+      }
       const id = ruled(await db.rpc("mgr_assign_work_plan", { payload: body.plan }));
       return json({ id });
     }
