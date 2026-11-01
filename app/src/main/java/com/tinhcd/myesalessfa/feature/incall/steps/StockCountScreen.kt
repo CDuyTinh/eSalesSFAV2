@@ -67,9 +67,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.core.ui.SearchBox
+import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
 import com.tinhcd.myesalessfa.domain.model.StockScope
@@ -120,7 +120,7 @@ fun StockCountScreen(
     ) { padding ->
         Box(Modifier.padding(padding)) {
             when {
-                state.loading -> LoadingBox()
+                state.loading -> SkeletonList(count = 7, lines = 1)
 
                 state.catalogue.isEmpty() -> ErrorBox(
                     state.error ?: "Danh mục sản phẩm trống. Đăng nhập lại để tải về.",

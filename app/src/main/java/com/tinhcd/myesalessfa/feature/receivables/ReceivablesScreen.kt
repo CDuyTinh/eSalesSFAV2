@@ -50,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
 import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
+import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.PaymentDraft
@@ -132,7 +133,7 @@ private fun CustomerList(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when {
-                state.loading -> LoadingBox()
+                state.loading -> SkeletonList(count = 5)
                 state.error != null -> ErrorBox(state.error, onRetry = onRetry)
                 state.customers.isEmpty() -> ErrorBox("Không có khách hàng nào còn nợ")
                 else -> LazyColumn(

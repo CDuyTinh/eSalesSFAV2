@@ -49,8 +49,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
+import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.domain.model.SupportedSteps
 import com.tinhcd.myesalessfa.domain.model.WorkflowStep
@@ -86,7 +86,7 @@ fun InCallTab(
 
     Box(modifier.fillMaxSize()) {
         when {
-            state.loading -> LoadingBox()
+            state.loading -> SkeletonList(count = 6, lines = 1)
             state.workflow == null ->
                 ErrorBox(state.error ?: "Không có dữ liệu", onRetry = viewModel::load)
 

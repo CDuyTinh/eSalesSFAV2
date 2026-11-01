@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
+import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.FocusProduct
@@ -94,7 +94,7 @@ private fun FocusProductsContent(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when {
-                state.loading -> LoadingBox()
+                state.loading -> SkeletonList(count = 5)
                 state.error != null -> ErrorBox(state.error, onRetry = onRetry)
                 state.products.isEmpty() ->
                     ErrorBox("Hiện không có sản phẩm trọng tâm nào đang chạy")

@@ -60,8 +60,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
+import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.formatDong
 import com.tinhcd.myesalessfa.domain.model.AuditPhoto
 import com.tinhcd.myesalessfa.domain.model.DisplayProgram
@@ -144,7 +144,7 @@ fun DisplayAuditScreen(
         },
     ) { padding ->
         when {
-            state.loading -> LoadingBox(Modifier.padding(padding))
+            state.loading -> SkeletonList(Modifier.padding(padding), count = 3, lines = 3)
 
             state.page == DisplayAuditPage.PROGRAMS -> ProgramList(
                 programs = state.programs,

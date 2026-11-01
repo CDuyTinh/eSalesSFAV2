@@ -48,8 +48,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
+import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.domain.model.CompetitorCriterion
 import com.tinhcd.myesalessfa.domain.model.CompetitorPairing
 import com.tinhcd.myesalessfa.domain.model.DraftCompetitorSurvey
@@ -132,7 +132,7 @@ private fun SurveyListPage(
         },
     ) { padding ->
         when {
-            state.loading -> LoadingBox(Modifier.padding(padding))
+            state.loading -> SkeletonList(Modifier.padding(padding), count = 3)
 
             state.error != null && state.surveys.isEmpty() ->
                 ErrorBox(state.error, onRetry = onRetry, modifier = Modifier.padding(padding))

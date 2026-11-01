@@ -68,10 +68,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.Kpi
 import com.tinhcd.myesalessfa.core.ui.KpiBar
 import com.tinhcd.myesalessfa.core.ui.PercentPill
+import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.StatTile
 import com.tinhcd.myesalessfa.core.ui.StatusPill
 import com.tinhcd.myesalessfa.core.ui.compactMoney
@@ -235,7 +235,7 @@ private fun ActivitiesTab(state: ReportsUiState, onDateChanged: (LocalDate) -> U
 
         when {
             report == null && state.error != null -> ErrorBox(state.error)
-            report == null -> LoadingBox()
+            report == null -> SkeletonList(count = 5)
             else -> LazyColumn(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -450,7 +450,7 @@ private fun SalesTab(
 
         when {
             report == null && state.error != null -> ErrorBox(state.error)
-            report == null -> LoadingBox()
+            report == null -> SkeletonList(count = 5)
             else -> LazyColumn(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
