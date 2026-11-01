@@ -11,6 +11,8 @@
 //                                    note?, place?, from_at, to_at, objects: [{id}] } }
 //        { action: "decide", id, approve, reason? }
 //        { action: "cancel", id, reason }
+//        { action: "update", id, plan: { category_id, content, note?, place?, from_at,
+//                                        to_at, objects } }  → change a task you assigned
 //        { action: "plan", plan: { category_id, content, note?, place?, from_at, to_at,
 //                                  objects } }                → own plan, sent for approval
 //        { action: "status", id, status, reason? }    → own plan: submitted / completed / cancelled
@@ -120,6 +122,13 @@ Deno.serve(handler(async (req, db) => {
     }
 
     if (!body.id) throw new HttpError(400, "id is required");
+
+    // Change a task the caller handed down, while it is still to be done.
+    if (body.action === "update") {
+      if (!body.plan) throw new HttpError(400, "plan is required");
+      ruled(await db.rpc("mgr_update_work_plan", { p_plan_id: body.id, payload: body.plan }));
+      return json({ id: body.id });
+    }
 
     if (body.action === "decide") {
       if (typeof body.approve !== "boolean") throw new HttpError(400, "approve is required");
