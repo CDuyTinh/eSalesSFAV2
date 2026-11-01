@@ -2,12 +2,15 @@
 // eSalesManager — Lập tuyến (MCP) & phân tuyến
 //
 // GET  /mgr-routes                          → the team's routes
-// GET  /mgr-routes?id=<routeId>             → outlets, schedule, history
+// GET  /mgr-routes?id=<routeId>             → outlets, schedule, history, a hand-over
+//                                              waiting for its date, sales by month
 // GET  /mgr-routes?candidates=<routeId>&query=… → outlets that could join it
 // POST /mgr-routes
 //        { action: "set",    route_id, customer_id, weekdays: [1..7], weeks?: [1..4] }
 //        { action: "remove", route_id, customer_id }
-//        { action: "assign", route_id, salesperson_id, note? }
+//        { action: "assign", route_id, salesperson_id, note?, effective_date? }
+//                                     (a later date waits for that morning)
+//        { action: "create", salesperson_id, name, code? }     → { id }
 //        { action: "reorder", route_id, customer_ids: [...] }   (the whole route, in call order)
 //
 // Legacy McpController + RouteAssignmentController. The database functions
@@ -30,13 +33,24 @@ interface Body {
   weeks?: number[];
   note?: string;
   customer_ids?: string[];
+  effective_date?: string;
+  name?: string;
+  code?: string;
 }
 
 Deno.serve(handler(async (req, db) => {
   if (req.method === "GET") {
     const params = new URL(req.url).searchParams;
     const id = params.get("id");
-    if (id) return json(ruled(await db.rpc("mgr_route_detail", { p_route_id: id })));
+    if (id) {
+      // The route, a hand-over still waiting for its date, and six months of sales.
+      const [detail, pending, sales] = await Promise.all([
+        db.rpc("mgr_route_detail", { p_route_id: id }).then(ruled),
+        db.rpc("mgr_route_pending", { p_route_id: id }).then(ruled),
+        db.rpc("mgr_route_sales", { p_route_id: id, p_months: 6 }).then(ruled),
+      ]);
+      return json({ ...(detail as Record<string, unknown>), pending_assignment: pending, sales });
+    }
 
     const candidates = params.get("candidates");
     if (candidates) {
@@ -49,6 +63,16 @@ Deno.serve(handler(async (req, db) => {
 
   if (req.method === "POST") {
     const body = await req.json() as Body;
+
+    if (body.action === "create") {
+      if (!body.salesperson_id) throw new HttpError(400, "salesperson_id is required");
+      return json({
+        id: ruled(await db.rpc("mgr_route_create", {
+          p_salesperson_id: body.salesperson_id, p_name: body.name ?? "", p_code: body.code ?? null,
+        })),
+      });
+    }
+
     if (!body.route_id) throw new HttpError(400, "route_id is required");
 
     switch (body.action) {
@@ -79,6 +103,7 @@ Deno.serve(handler(async (req, db) => {
         if (!body.salesperson_id) throw new HttpError(400, "salesperson_id is required");
         return json(ruled(await db.rpc("mgr_route_assign", {
           p_route_id: body.route_id, p_salesperson_id: body.salesperson_id, p_note: body.note ?? null,
+          p_effective_date: body.effective_date ?? null,
         })));
     }
     throw new HttpError(400, `unknown action: ${body.action}`);
