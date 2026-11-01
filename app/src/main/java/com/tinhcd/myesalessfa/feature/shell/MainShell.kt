@@ -61,6 +61,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -71,6 +72,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tinhcd.myesalessfa.core.ui.tileColor
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.core.ui.SkeletonDashboard
 import com.tinhcd.myesalessfa.core.ui.theme.brand
@@ -372,11 +374,12 @@ private fun SheetMenu(
         }
 
         Column(Modifier.padding(vertical = 8.dp)) {
-            tab.children.chunked(4).forEach { row ->
+            tab.children.chunked(4).forEachIndexed { rowIndex, row ->
                 Row(Modifier.fillMaxWidth()) {
-                    row.forEach { entry ->
+                    row.forEachIndexed { column, entry ->
                         MenuTile(
                             entry = entry,
+                            colour = tileColor(rowIndex * 4 + column),
                             onClick = { onSelect(entry) },
                             modifier = Modifier.weight(1f),
                         )
@@ -429,7 +432,7 @@ private fun SheetMenu(
  * not open rather than wonder where it went.
  */
 @Composable
-private fun MenuTile(entry: MenuEntry, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun MenuTile(entry: MenuEntry, colour: Color, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val scheme = MaterialTheme.colorScheme
 
     Column(
@@ -440,7 +443,7 @@ private fun MenuTile(entry: MenuEntry, onClick: () -> Unit, modifier: Modifier =
     ) {
         Surface(
             shape = RoundedCornerShape(16.dp),
-            color = if (entry.implemented) scheme.primaryContainer else scheme.surfaceVariant,
+            color = if (entry.implemented) colour.copy(alpha = 0.14f) else scheme.surfaceVariant,
             modifier = Modifier.size(50.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
@@ -448,7 +451,7 @@ private fun MenuTile(entry: MenuEntry, onClick: () -> Unit, modifier: Modifier =
                     imageVector = if (entry.implemented) entry.code.menuIcon() else Icons.Default.Lock,
                     contentDescription = null,
                     tint = if (entry.implemented) {
-                        scheme.onPrimaryContainer
+                        colour
                     } else {
                         scheme.onSurfaceVariant
                     },
