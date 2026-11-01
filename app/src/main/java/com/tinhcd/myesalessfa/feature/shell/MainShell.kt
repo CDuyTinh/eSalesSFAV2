@@ -72,6 +72,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
+import com.tinhcd.myesalessfa.core.ui.SkeletonDashboard
 import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.MenuEntry
 import com.tinhcd.myesalessfa.domain.model.RouteStop
@@ -173,6 +174,12 @@ fun MainShell(
             )
         },
     ) {
+        // A frame or two after launch, before the cached menu is read: the
+        // overview's skeleton, and no bar to rearrange a moment later.
+        if (!state.menuLoaded) {
+            SkeletonDashboard(Modifier.statusBarsPadding())
+            return@ModalNavigationDrawer
+        }
         Column(Modifier.fillMaxSize()) {
             Box(Modifier.weight(1f)) {
                 when (state.selectedTab) {

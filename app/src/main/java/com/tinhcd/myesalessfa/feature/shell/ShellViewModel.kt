@@ -24,6 +24,12 @@ import javax.inject.Inject
 
 data class ShellUiState(
     val menu: AppMenu = AppMenu.Fallback,
+    /**
+     * False until the cached menu has been read. Until then the bar would be the
+     * one-tab fallback with nothing selected, which showed "not in this build"
+     * for a moment after every launch; the shell shows a skeleton instead.
+     */
+    val menuLoaded: Boolean = false,
     val selectedTab: String? = null,
     /** The sheet tab whose entries are showing, or null when none is open. */
     val openSheet: MenuEntry? = null,
@@ -73,7 +79,7 @@ class ShellViewModel @Inject constructor(
         viewModelScope.launch {
             val menu = configRepository.menu()
             _state.update {
-                it.copy(menu = menu, selectedTab = it.selectedTab ?: menu.defaultTab?.code)
+                it.copy(menu = menu, menuLoaded = true, selectedTab = it.selectedTab ?: menu.defaultTab?.code)
             }
         }
         viewModelScope.launch {
