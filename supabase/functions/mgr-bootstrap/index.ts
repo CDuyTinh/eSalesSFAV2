@@ -32,10 +32,14 @@ Deno.serve(handler(async (_req, db) => {
   const { data: auth, error } = await db.auth.getUser();
   if (error || !auth?.user) throw new HttpError(401, "invalid session");
 
-  const [me, settings] = await Promise.all([
+  const [me, settings, rejectReasons] = await Promise.all([
     db.from("salesperson").select(STAFF_COLUMNS)
       .eq("user_id", auth.user.id).maybeSingle().then(unwrap),
     db.from("app_setting").select("key,value").then(unwrap),
+    // Offered as chips when refusing; the note stays free text.
+    db.from("reason_code").select("name")
+      .eq("kind", "approval_reject").eq("is_active", true)
+      .order("code").then(unwrap),
   ]);
 
   const manager = me as Staff | null;
@@ -57,5 +61,6 @@ Deno.serve(handler(async (_req, db) => {
     settings: Object.fromEntries(
       (settings as KeyValue[]).map((r) => [r.key, r.value]),
     ),
+    reject_reasons: (rejectReasons as { name: string }[]).map((r) => r.name),
   });
 }));
