@@ -24,7 +24,6 @@ import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.Kpi
 import com.tinhcd.myesalessfa.core.ui.KpiBar
 import com.tinhcd.myesalessfa.core.ui.PercentPill
+import com.tinhcd.myesalessfa.core.ui.SkeletonDashboard
 import com.tinhcd.myesalessfa.core.ui.StatTile
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.core.ui.theme.brand
@@ -158,7 +158,7 @@ private fun DashboardContent(
                 // Only on the very first load. A refresh keeps the figures on
                 // screen and replaces them when the new ones land.
                 overview == null && state.loading ->
-                    CircularProgressIndicator(Modifier.align(Alignment.Center))
+                    SkeletonDashboard()
 
                 overview == null ->
                     EmptyState(

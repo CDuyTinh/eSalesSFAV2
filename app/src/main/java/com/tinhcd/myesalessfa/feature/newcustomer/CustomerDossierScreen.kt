@@ -67,6 +67,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
 import com.tinhcd.myesalessfa.core.ui.LoadingBox
+import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.CustomerDraft
@@ -182,7 +183,7 @@ private fun ListPage(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when {
-                state.loading && state.board.items.isEmpty() -> LoadingBox()
+                state.loading && state.board.items.isEmpty() -> SkeletonList(count = 5)
                 state.error != null && state.board.items.isEmpty() ->
                     ErrorBox(state.error, onRetry = onRetry)
 

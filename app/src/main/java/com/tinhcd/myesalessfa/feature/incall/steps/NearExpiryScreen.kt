@@ -57,8 +57,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
+import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.domain.model.NearExpiryLot
 import com.tinhcd.myesalessfa.domain.model.PricedProduct
 import java.io.File
@@ -130,7 +130,7 @@ fun NearExpiryScreen(
         },
     ) { padding ->
         when {
-            state.loading -> LoadingBox(Modifier.padding(padding))
+            state.loading -> SkeletonList(Modifier.padding(padding), count = 5)
 
             onPicker -> ProductPicker(
                 state = state,

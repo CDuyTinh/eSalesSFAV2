@@ -53,6 +53,7 @@ import com.tinhcd.myesalessfa.core.ui.ErrorBox
 import com.tinhcd.myesalessfa.core.ui.Kpi
 import com.tinhcd.myesalessfa.core.ui.KpiBar
 import com.tinhcd.myesalessfa.core.ui.LoadingBox
+import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.StatTile
 import com.tinhcd.myesalessfa.core.ui.StatusPill
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
@@ -148,7 +149,7 @@ private fun ListPage(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when {
-                state.loading && state.board.items.isEmpty() -> LoadingBox()
+                state.loading && state.board.items.isEmpty() -> SkeletonList(count = 5)
                 state.error != null && state.board.items.isEmpty() ->
                     ErrorBox(state.error, onRetry = onRetry)
 
@@ -504,7 +505,7 @@ private fun OffersPage(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when {
-                state.offersLoading -> LoadingBox()
+                state.offersLoading -> SkeletonList(count = 4)
 
                 state.offers.isEmpty -> EmptyBox(
                     "Khách hàng này không còn chương trình nào để đăng ký",

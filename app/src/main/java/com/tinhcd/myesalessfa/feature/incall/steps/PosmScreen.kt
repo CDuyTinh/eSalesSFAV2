@@ -60,8 +60,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
+import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.domain.model.DraftPosmCheck
 import com.tinhcd.myesalessfa.domain.model.DraftPosmMovement
 import com.tinhcd.myesalessfa.domain.model.DraftPosmRegistration
@@ -154,7 +154,7 @@ fun PosmScreen(
         },
     ) { padding ->
         when {
-            state.loading -> LoadingBox(Modifier.padding(padding))
+            state.loading -> SkeletonList(Modifier.padding(padding), count = 4)
 
             onChecking && state.check != null -> CheckForm(
                 check = state.check!!,

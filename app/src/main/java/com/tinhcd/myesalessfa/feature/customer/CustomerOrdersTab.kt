@@ -36,7 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
+import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.formatDong
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.domain.model.CustomerOrder
@@ -67,7 +67,7 @@ fun CustomerOrdersTab(
 ) {
     Box(modifier.fillMaxSize()) {
         when {
-            state.loading -> LoadingBox()
+            state.loading -> SkeletonList(count = 5)
             state.error != null -> ErrorBox(state.error, onRetry = onRetry)
             state.orders.isEmpty() -> EmptyOrders()
             else -> LazyColumn(

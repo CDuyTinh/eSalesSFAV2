@@ -74,8 +74,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.SearchBox
+import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.Customer
@@ -197,7 +197,7 @@ private fun RouteContent(
             }
 
             when {
-                state.loading && state.stops.isEmpty() -> LoadingBox()
+                state.loading && state.stops.isEmpty() -> SkeletonList(count = 5, lines = 3)
                 state.error != null -> ErrorBox(state.error, onRetry = onRetry)
                 state.stops.isEmpty() ->
                     ErrorBox("Không có khách hàng nào trong tuyến hôm nay")
