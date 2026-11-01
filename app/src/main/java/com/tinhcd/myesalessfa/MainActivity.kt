@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.os.SystemClock
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import android.graphics.Color
+import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
@@ -71,7 +73,10 @@ class MainActivity : ComponentActivity() {
             elapsed < SPLASH_MIN_MS || (rootViewModel.startDestination.value == null && elapsed < SPLASH_MAX_MS)
         }
 
-        enableEdgeToEdge()
+        // Every screen opens on the brand-blue header, in light theme too, so the
+        // status bar icons are always the light ones; the default picks dark
+        // icons for a light theme and they vanish into the blue.
+        enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT))
         setContent {
             MyeSalesTheme {
                 val start by rootViewModel.startDestination.collectAsStateWithLifecycle()
