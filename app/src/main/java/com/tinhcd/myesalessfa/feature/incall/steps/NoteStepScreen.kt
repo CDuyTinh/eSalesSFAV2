@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tinhcd.myesalessfa.core.ui.ButtonPair
 import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 
@@ -109,19 +110,15 @@ private fun NoteForm(
             )
         }
 
-        PrimaryButton(
-            text = "Hoàn thành bước này",
+        // An optional step stays skippable; leaving without finishing a required
+        // one is allowed too, it just keeps check-out closed.
+        ButtonPair(
+            text = "Hoàn thành",
             onClick = onSubmit,
+            onBack = onBack,
             enabled = state.canSubmit,
             loading = state.submitting,
         )
-
-        // An optional step stays skippable; leaving without finishing a required
-        // one is allowed too, it just keeps check-out closed.
-        OutlinedButton(
-            onClick = onBack,
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text("Quay lại") }
 
         if (state.isRequired) {
             Text(

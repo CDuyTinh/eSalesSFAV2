@@ -66,6 +66,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tinhcd.myesalessfa.core.ui.ButtonPair
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.core.ui.SearchBox
@@ -663,24 +664,14 @@ private fun StockFooter(
             // 44dp rather than the app's usual 52. This bar carries two buttons
             // above a list the rep is working down, and the list is what they
             // came for.
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedButton(
-                    onClick = onBack,
-                    contentPadding = PaddingValues(horizontal = 12.dp),
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(44.dp),
-                ) { Text("Quay lại") }
-
-                PrimaryButton(
-                    text = "Gửi phiếu kiểm tồn",
-                    onClick = onSubmit,
-                    enabled = state.count.canSubmit,
-                    loading = state.submitting,
-                    height = 44.dp,
-                    modifier = Modifier.weight(1.7f),
-                )
-            }
+            ButtonPair(
+                text = "Gửi phiếu",
+                onClick = onSubmit,
+                onBack = onBack,
+                enabled = state.count.canSubmit,
+                loading = state.submitting,
+                height = 44.dp,
+            )
         }
     }
 }

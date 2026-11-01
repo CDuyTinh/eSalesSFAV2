@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -248,3 +249,60 @@ val TileColors = listOf(
 
 /** The [TileColors] entry for the tile at [index]. */
 fun tileColor(index: Int): Color = TileColors[index.mod(TileColors.size)]
+
+/**
+ * The two buttons at the foot of a form, side by side and half the width each:
+ * going back on the left, the step's action on the right.
+ *
+ * Side by side rather than stacked: two full-width buttons one above the other
+ * take twice the height off the form above them, and the rep has to read both
+ * to know which is which. Labels are kept short to fit half a phone; the
+ * screen's title says what is being finished.
+ */
+@Composable
+fun ButtonPair(
+    text: String,
+    onClick: () -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    backText: String = "Quay lại",
+    enabled: Boolean = true,
+    loading: Boolean = false,
+    height: Dp = 46.dp,
+) {
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        OutlinedButton(
+            onClick = onBack,
+            contentPadding = PairPadding,
+            modifier = Modifier.weight(1f).height(height),
+        ) { PairLabel(backText) }
+        Button(
+            onClick = onClick,
+            enabled = enabled && !loading,
+            contentPadding = PairPadding,
+            modifier = Modifier.weight(1f).height(height),
+        ) {
+            if (loading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                )
+            } else {
+                PairLabel(text)
+            }
+        }
+    }
+}
+
+private val PairPadding = PaddingValues(horizontal = 12.dp)
+
+@Composable
+private fun PairLabel(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.labelLarge,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
+}

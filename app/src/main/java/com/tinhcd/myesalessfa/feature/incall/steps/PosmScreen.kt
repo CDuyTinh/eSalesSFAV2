@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.tinhcd.myesalessfa.core.ui.ButtonPair
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.domain.model.DraftPosmCheck
@@ -324,39 +325,56 @@ private fun PosmList(
                 // Nothing in the shop is a real answer, and the rep needs a way to
                 // give it. Without this the step would sit unfinished forever on
                 // every outlet that holds none of the company's furniture.
-                if (state.nothingPlaced) {
-                    PrimaryButton(
-                        text = "Xác nhận không có POSM",
+                //
+                // Registering is on the registration tab, because that is where
+                // the rep is already looking at what the shop has asked for, and
+                // hidden when the branch is running no POSM programme at all —
+                // there would be nothing on the form.
+                val canRegister = state.tab == PosmTab.REGISTERED && state.catalogue.any { it.canRegister }
+                when {
+                    // Three actions: registering takes the row above the pair.
+                    state.nothingPlaced && canRegister -> {
+                        OutlinedButton(
+                            onClick = onRegister,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp),
+                        ) {
+                            Icon(Icons.Default.AddCircleOutline, contentDescription = null)
+                            Text("  Đăng ký POSM cho cửa hàng")
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        ButtonPair(
+                            text = "Không có POSM",
+                            onClick = onCompleteEmpty,
+                            onBack = onBack,
+                            loading = state.submitting,
+                            height = 44.dp,
+                        )
+                    }
+
+                    state.nothingPlaced -> ButtonPair(
+                        text = "Không có POSM",
                         onClick = onCompleteEmpty,
+                        onBack = onBack,
                         loading = state.submitting,
                         height = 44.dp,
                     )
-                    Spacer(Modifier.height(8.dp))
-                }
 
-                // On the registration tab, because that is where the rep is
-                // already looking at what the shop has asked for. Hidden when
-                // the branch is running no POSM programme at all — there would
-                // be nothing on the form.
-                if (state.tab == PosmTab.REGISTERED && state.catalogue.any { it.canRegister }) {
-                    OutlinedButton(
+                    canRegister -> ButtonPair(
+                        text = "Đăng ký POSM",
                         onClick = onRegister,
+                        onBack = onBack,
+                        height = 44.dp,
+                    )
+
+                    else -> OutlinedButton(
+                        onClick = onBack,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(44.dp),
-                    ) {
-                        Icon(Icons.Default.AddCircleOutline, contentDescription = null)
-                        Text("  Đăng ký POSM cho cửa hàng")
-                    }
-                    Spacer(Modifier.height(8.dp))
+                    ) { Text("Quay lại") }
                 }
-
-                OutlinedButton(
-                    onClick = onBack,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(44.dp),
-                ) { Text("Quay lại") }
             }
         }
     }
@@ -805,23 +823,14 @@ private fun CheckForm(
 
                 Spacer(Modifier.height(8.dp))
 
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedButton(
-                        onClick = onBack,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp),
-                    ) { Text("Quay lại") }
-
-                    PrimaryButton(
-                        text = "Lưu",
-                        onClick = onSubmit,
-                        enabled = check.canSubmit,
-                        loading = submitting || capturing,
-                        height = 44.dp,
-                        modifier = Modifier.weight(1.4f),
-                    )
-                }
+                ButtonPair(
+                    text = "Lưu",
+                    onClick = onSubmit,
+                    onBack = onBack,
+                    enabled = check.canSubmit,
+                    loading = submitting || capturing,
+                    height = 44.dp,
+                )
             }
         }
     }
@@ -1030,20 +1039,13 @@ private fun RegisterForm(
                     Spacer(Modifier.height(8.dp))
                 }
 
-                PrimaryButton(
+                ButtonPair(
                     text = "Gửi đăng ký",
                     onClick = onSubmit,
+                    onBack = onBack,
                     enabled = draft.canSubmit && !submitting,
                     loading = submitting,
-                    height = 46.dp,
                 )
-                Spacer(Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = onBack,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(44.dp),
-                ) { Text("Quay lại") }
             }
         }
     }
@@ -1269,20 +1271,13 @@ private fun MovementForm(
                     Spacer(Modifier.height(6.dp))
                 }
 
-                PrimaryButton(
-                    text = if (delivering) "Xác nhận đã giao" else "Xác nhận đã thu hồi",
+                ButtonPair(
+                    text = if (delivering) "Xác nhận giao" else "Xác nhận thu hồi",
                     onClick = onSubmit,
+                    onBack = onBack,
                     enabled = draft.canSubmit && !submitting && !capturing,
                     loading = submitting,
-                    height = 46.dp,
                 )
-                Spacer(Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = onBack,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(44.dp),
-                ) { Text("Quay lại") }
             }
         }
     }
