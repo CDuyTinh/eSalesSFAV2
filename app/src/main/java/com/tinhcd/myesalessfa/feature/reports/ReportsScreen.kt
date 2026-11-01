@@ -43,7 +43,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -260,108 +259,62 @@ private fun ActivitiesTab(state: ReportsUiState, onDateChanged: (LocalDate) -> U
     }
 }
 
-@Composable
-private fun ActivitySummaryCard(summary: ActivitySummary) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom,
-            ) {
-                Text(
-                    text = "Doanh số trong ngày",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = formatMoney(summary.orderAmount),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-
-            HorizontalDivider()
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Metric(
-                    label = "Ghé / Kế hoạch",
-                    value = "${summary.visited}/${summary.planned}",
-                    percent = summary.coverage,
-                    modifier = Modifier.weight(1f),
-                )
-                Metric(
-                    label = "Có đơn",
-                    value = summary.strike.toString(),
-                    percent = summary.strikeRate,
-                    modifier = Modifier.weight(1f),
-                )
-                Metric(
-                    label = "Không đơn",
-                    value = summary.nonStrike.toString(),
-                    percent = null,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Metric(
-                    label = "Đóng cửa",
-                    value = summary.closed.toString(),
-                    percent = null,
-                    modifier = Modifier.weight(1f),
-                )
-                Metric(
-                    label = "Ngoài tuyến",
-                    value = summary.unplanned.toString(),
-                    percent = null,
-                    modifier = Modifier.weight(1f),
-                )
-                Spacer(Modifier.weight(1f))
-            }
-        }
-    }
-}
-
 /**
- * A figure with its share underneath, where a share means anything.
- *
- * The percentage is omitted rather than shown as 0% when there was nothing to be
- * a share of — a rep with no MCP stops today has not achieved 0% of anything.
+ * The day at a glance, in the same shape as the other reports: the money
+ * first, then each figure in its own coloured block. A percentage sits under
+ * a figure only where it is a share of something — a rep with no stops planned
+ * today has not achieved 0% of anything.
  */
 @Composable
-private fun Metric(
-    label: String,
-    value: String,
-    percent: Float?,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier) {
+private fun ActivitySummaryCard(summary: ActivitySummary) {
+    SummaryCard {
         Text(
-            text = label,
+            "Doanh số trong ngày (VND)",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
         )
         Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
+            formatMoney(summary.orderAmount),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
         )
-        if (percent != null) {
-            Text(
-                text = "${(percent * 100).toInt()}%",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary,
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatTile(
+                label = "Ghé / KH",
+                value = "${summary.visited}/${summary.planned}",
+                colors = Kpi.Blue,
+                footer = summary.coverage?.let { "${(it * 100).toInt()}%" },
+                modifier = Modifier.weight(1f),
             )
+            StatTile(
+                label = "Có đơn",
+                value = summary.strike.toString(),
+                colors = Kpi.Green,
+                footer = summary.strikeRate?.let { "${(it * 100).toInt()}%" },
+                modifier = Modifier.weight(1f),
+            )
+            StatTile(
+                label = "Không đơn",
+                value = summary.nonStrike.toString(),
+                colors = Kpi.Orange,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatTile(
+                label = "Đóng cửa",
+                value = summary.closed.toString(),
+                colors = Kpi.Slate,
+                modifier = Modifier.weight(1f),
+            )
+            StatTile(
+                label = "Ngoài tuyến",
+                value = summary.unplanned.toString(),
+                colors = Kpi.Violet,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.weight(1f))
         }
     }
 }
