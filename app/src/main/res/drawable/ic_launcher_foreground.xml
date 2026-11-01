@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  The launcher's foreground: the splash shelf mark, drawn smaller. At full size it
+  The launcher and splash icon: the shelf mark, drawn smaller. At full size it
   runs to the edge of the launcher's mask and reads cramped beside other icons;
-  the splash screen keeps it at full size.
+  smaller also keeps its corners inside the splash screen's circle.
 -->
 <inset xmlns:android="http://schemas.android.com/apk/res/android"
     android:drawable="@drawable/ic_splash_logo"
