@@ -1,11 +1,13 @@
 package com.tinhcd.myesalessfa.tracking
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.BatteryManager
 import android.os.Build
@@ -142,8 +144,21 @@ class TrackingService : Service() {
         private const val NOTIFICATION_ID = 4101
         private const val ACTION_STOP = "com.tinhcd.myesalessfa.tracking.STOP"
 
-        /** Safe to call repeatedly: a running service keeps its one collection. */
+        /**
+         * Safe to call repeatedly: a running service keeps its one collection.
+         *
+         * Does nothing without location permission. A service started with
+         * startForegroundService must reach startForeground within seconds or the
+         * system kills the app, and a location-type service cannot without the
+         * permission — so starting one anyway crashed the app on open (seen on a
+         * phone whose app data had been cleared, with the day still open).
+         */
         fun start(context: Context) {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
             ContextCompat.startForegroundService(context, Intent(context, TrackingService::class.java))
         }
 

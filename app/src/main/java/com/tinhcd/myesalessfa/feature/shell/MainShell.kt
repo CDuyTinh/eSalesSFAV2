@@ -69,6 +69,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.core.ui.theme.brand
@@ -141,6 +142,12 @@ fun MainShell(
             WorkDayState.CLOSED, WorkDayState.NOT_STARTED -> TrackingService.stop(context)
             null -> Unit
         }
+    }
+    // Location may be allowed only later (on the work-day or check-in screen);
+    // trying again whenever the shell is back in view starts the trace then.
+    LifecycleResumeEffect(dayState) {
+        if (dayState == WorkDayState.OPEN) TrackingService.start(context)
+        onPauseOrDispose { }
     }
 
     ModalNavigationDrawer(
