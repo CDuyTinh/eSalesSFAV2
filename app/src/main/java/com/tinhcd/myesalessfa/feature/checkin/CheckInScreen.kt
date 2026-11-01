@@ -568,7 +568,11 @@ private fun CheckInPreview() {
                 onClose = {},
             )
             Column(Modifier.padding(16.dp)) {
-                Card(shape = RoundedCornerShape(12.dp)) {
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                ) {
                     Column {
                         DistanceRow(
                             gate = CheckInGate.NeedsReason(

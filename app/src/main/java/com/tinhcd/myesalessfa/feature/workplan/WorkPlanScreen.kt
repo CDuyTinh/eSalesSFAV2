@@ -276,7 +276,11 @@ private fun MonthCard(
     onMonth: (YearMonth) -> Unit,
     onDay: (LocalDate?) -> Unit,
 ) {
-    Card(Modifier.fillMaxWidth()) {
+    Card(
+        Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(
                 Modifier.fillMaxWidth(),
@@ -585,7 +589,11 @@ private fun DetailPage(
 @Composable
 private fun HeadCard(detail: WorkPlanDetail) {
     val plan = detail.plan
-    Card(Modifier.fillMaxWidth()) {
+    Card(
+        Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(
                 Modifier.fillMaxWidth(),
@@ -621,7 +629,11 @@ private fun HeadCard(detail: WorkPlanDetail) {
 
 @Composable
 private fun ObjectRow(target: WorkPlanObject) {
-    Card(Modifier.fillMaxWidth()) {
+    Card(
+        Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
         Column(Modifier.padding(12.dp)) {
             Text(target.name, style = MaterialTheme.typography.bodyMedium)
             val sub = listOfNotNull(target.code, target.address)
@@ -640,7 +652,11 @@ private fun ObjectRow(target: WorkPlanObject) {
 
 @Composable
 private fun HistoryCard(history: List<WorkPlanEvent>) {
-    Card(Modifier.fillMaxWidth()) {
+    Card(
+        Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             history.forEach { event ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -855,7 +871,11 @@ private fun EditPage(
                         }
                     }
                     items(draft.objects, key = { it.targetId }) { target ->
-                        Card(Modifier.fillMaxWidth()) {
+                        Card(
+                            Modifier.fillMaxWidth(),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        ) {
                             Row(
                                 Modifier.fillMaxWidth().padding(12.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -920,7 +940,11 @@ private fun DayAndTime(fromAt: String, toAt: String, onWindow: (String, String) 
     val from = clockLabel(fromAt)
     val to = clockLabel(toAt)
 
-    Card(Modifier.fillMaxWidth()) {
+    Card(
+        Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = day,
