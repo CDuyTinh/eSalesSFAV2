@@ -50,6 +50,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
+import com.tinhcd.myesalessfa.core.ui.HeaderBand
 import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.PasswordChange
 import com.tinhcd.myesalessfa.domain.model.PasswordRule
@@ -109,24 +110,27 @@ private fun AccountContent(
             )
         },
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            item { ProfileCard(me = state.me) }
-            item { SectionTitle("Đổi mật khẩu") }
-            item {
-                PasswordCard(
-                    change = state.change,
-                    changing = state.changing,
-                    changed = state.changed,
-                    error = state.error,
-                    onCurrent = onCurrent,
-                    onNew = onNew,
-                    onConfirm = onConfirm,
-                    onSubmit = onSubmit,
-                )
+        Box(Modifier.fillMaxSize().padding(padding)) {
+        HeaderBand()
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                item { ProfileCard(me = state.me) }
+                item { SectionTitle("Đổi mật khẩu") }
+                item {
+                    PasswordCard(
+                        change = state.change,
+                        changing = state.changing,
+                        changed = state.changed,
+                        error = state.error,
+                        onCurrent = onCurrent,
+                        onNew = onNew,
+                        onConfirm = onConfirm,
+                        onSubmit = onSubmit,
+                    )
+                }
             }
         }
     }
@@ -137,7 +141,8 @@ private fun ProfileCard(me: Salesperson?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -236,7 +241,8 @@ private fun PasswordCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
