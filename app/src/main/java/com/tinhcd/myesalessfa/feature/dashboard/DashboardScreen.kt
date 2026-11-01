@@ -111,6 +111,8 @@ private fun DashboardContent(
         topBar = {
             TopAppBar(
                 title = { Text("Tổng quan") },
+                // The band's two lower corners rounded, as on the report menu.
+                modifier = Modifier.clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)),
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(Icons.Default.Menu, contentDescription = "Mở menu")
