@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tinhcd.myesalessfa.core.ui.tileColor
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.core.ui.SkeletonList
@@ -198,11 +199,12 @@ internal fun StepTiles(
     columns: Int = 3,
 ) {
     Column(modifier) {
-        steps.chunked(columns).forEach { row ->
+        steps.chunked(columns).forEachIndexed { rowIndex, row ->
             Row(Modifier.fillMaxWidth()) {
-                row.forEach { step ->
+                row.forEachIndexed { column, step ->
                     StepTile(
                         step = step,
+                        colour = tileColor(rowIndex * columns + column),
                         onClick = { onOpenStep(step.step.formId) },
                         modifier = Modifier.weight(1f),
                     )
@@ -220,6 +222,7 @@ internal fun StepTiles(
 @Composable
 private fun StepTile(
     step: WorkflowStep,
+    colour: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -234,11 +237,9 @@ private fun StepTile(
         Box(contentAlignment = Alignment.TopEnd) {
             Surface(
                 shape = RoundedCornerShape(16.dp),
-                color = when {
-                    step.isDone -> scheme.primaryContainer
-                    !step.canOpen -> scheme.surfaceVariant
-                    else -> scheme.primaryContainer
-                },
+                // Each step its own colour, as the menu sheets have; a step that
+                // cannot be opened yet stays grey so the colour still means "go".
+                color = if (step.canOpen || step.isDone) colour.copy(alpha = 0.14f) else scheme.surfaceVariant,
                 modifier = Modifier
                     .padding(6.dp)
                     .size(50.dp),
@@ -248,7 +249,7 @@ private fun StepTile(
                         imageVector = step.step.formId.stepIcon(),
                         contentDescription = null,
                         tint = if (step.canOpen || step.isDone) {
-                            scheme.onPrimaryContainer
+                            colour
                         } else {
                             scheme.onSurfaceVariant
                         },

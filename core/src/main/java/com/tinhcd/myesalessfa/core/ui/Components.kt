@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -228,3 +229,22 @@ fun HeaderBand(modifier: Modifier = Modifier, depth: Dp = 44.dp) {
             .background(MaterialTheme.brand.header, HeaderShape),
     )
 }
+
+/**
+ * Icon colours for a grid of menu tiles, as the report menu's illustrations
+ * are coloured: one per tile, taken in turn, so neighbours never match. The
+ * icon is drawn in the colour and its square in a pale wash of it.
+ */
+val TileColors = listOf(
+    Color(0xFF2D6CDF), // blue
+    Color(0xFFF57C00), // orange
+    Color(0xFF04A489), // green
+    Color(0xFF7B3FE4), // violet
+    Color(0xFFE53935), // red
+    Color(0xFF00A3BF), // teal
+    Color(0xFFD81B60), // pink
+    Color(0xFFF5A202), // amber
+)
+
+/** The [TileColors] entry for the tile at [index]. */
+fun tileColor(index: Int): Color = TileColors[index.mod(TileColors.size)]
