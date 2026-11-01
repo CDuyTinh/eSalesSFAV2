@@ -66,6 +66,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tinhcd.myesalessfa.core.ui.HeaderShape
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
 import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.SkeletonList
@@ -169,6 +170,7 @@ private fun ListPage(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.clip(HeaderShape),
                 title = { Text("Kế hoạch làm việc") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -485,6 +487,7 @@ private fun DetailPage(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.clip(HeaderShape),
                 title = { Text("Chi tiết kế hoạch") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -760,6 +763,7 @@ private fun EditPage(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.clip(HeaderShape),
                 title = { Text(if (draft.id == null) "Lập kế hoạch" else "Sửa kế hoạch") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -979,6 +983,7 @@ private fun PickerPage(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.clip(HeaderShape),
                 title = { Text("Chọn khách hàng") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

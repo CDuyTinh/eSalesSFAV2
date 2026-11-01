@@ -65,6 +65,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.tinhcd.myesalessfa.core.ui.HeaderShape
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
 import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.SkeletonList
@@ -162,6 +163,7 @@ private fun ListPage(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.clip(HeaderShape),
                 title = { Text("Khách hàng mới") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -347,6 +349,7 @@ private fun DetailPage(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.clip(HeaderShape),
                 title = { Text("Chi tiết hồ sơ") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -572,6 +575,7 @@ private fun EditPage(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.clip(HeaderShape),
                 title = { Text("Sửa hồ sơ") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

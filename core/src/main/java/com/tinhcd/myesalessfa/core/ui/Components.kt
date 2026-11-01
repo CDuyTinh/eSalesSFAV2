@@ -1,5 +1,6 @@
 package com.tinhcd.myesalessfa.core.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.tinhcd.myesalessfa.core.ui.theme.brand
 
 @Composable
 fun LoadingBox(modifier: Modifier = Modifier) {
@@ -202,4 +204,27 @@ fun SearchBox(
             }
         }
     }
+}
+
+/**
+ * The lower edge of every brand-blue toolbar: both corners rounded, as the
+ * legacy app's headers are. Clip a TopAppBar with it; screens whose first card
+ * overlaps the header draw a band in this shape instead.
+ */
+val HeaderShape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+
+/**
+ * The toolbar's colour carried a little way down in [HeaderShape], drawn behind
+ * a screen's content so its first card sits over the edge (the dashboard's look).
+ * Put it first in a Box under a square TopAppBar; a 16dp list padding then
+ * leaves the card overlapping by the rest.
+ */
+@Composable
+fun HeaderBand(modifier: Modifier = Modifier, depth: Dp = 44.dp) {
+    Box(
+        modifier
+            .fillMaxWidth()
+            .height(depth)
+            .background(MaterialTheme.brand.header, HeaderShape),
+    )
 }
