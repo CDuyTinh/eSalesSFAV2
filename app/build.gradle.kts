@@ -72,6 +72,8 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+    // The report menu's illustrations, kept as the legacy app's SVG files.
+    implementation(libs.coil.svg)
     implementation(libs.play.services.maps)
     implementation(libs.maps.compose)
 
