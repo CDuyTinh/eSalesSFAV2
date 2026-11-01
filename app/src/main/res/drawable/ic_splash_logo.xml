@@ -2,14 +2,15 @@
 <!--
   Splash mark: a stocked shelf, which is what this app is about.
 
-  A placeholder, deliberately a simple geometric one. The launcher icon is still the
-  Android Studio template — a green robot — so pointing the splash at it would put the
-  stock mascot on a branded screen. This at least belongs to the product. Replace both
-  together when there is a real brand asset.
+  A deliberately simple geometric mark, and also, drawn smaller, the launcher
+  icon's foreground and monochrome layers (drawable/ic_launcher_foreground.xml),
+  so the icon on the home screen and the splash it opens are the same picture.
+  Replace both together when there is a real brand asset.
 
   Geometry follows the splash icon spec: a 108dp canvas with all content inside the
   central two thirds (18..90), which is the circle the platform reserves for the icon.
-  Drawn white so it reads on the brand blue background.
+  The content (24..84) also sits inside the adaptive icon's 66dp safe zone (21..87),
+  so no launcher mask clips it. Drawn white so it reads on the brand blue background.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
