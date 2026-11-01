@@ -143,7 +143,7 @@ private fun illustrationFor(kind: ReportKind): String = when (kind) {
 }
 
 /** The band's far corner, a shade deeper, as the legacy header's gradient runs. */
-private fun Color.darken(): Color = Color(red * 0.8f, green * 0.8f, blue * 0.8f, alpha)
+internal fun Color.darken(): Color = Color(red * 0.8f, green * 0.8f, blue * 0.8f, alpha)
 
 @Preview(name = "Danh mục báo cáo", showBackground = true, heightDp = 700)
 @Composable

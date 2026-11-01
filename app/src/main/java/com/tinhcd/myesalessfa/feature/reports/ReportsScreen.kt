@@ -1,5 +1,8 @@
 package com.tinhcd.myesalessfa.feature.reports
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -40,6 +43,7 @@ import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.material.icons.filled.Workspaces
 import androidx.compose.material.icons.filled.WrongLocation
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -50,6 +54,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -57,6 +62,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -144,76 +152,127 @@ private fun ReportsContent(
     onTradeKind: (TradeReportKind?) -> Unit,
     onRefresh: () -> Unit,
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(state.kind.label) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Quay lại",
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onRefresh, enabled = !state.loading) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Tải lại")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.brand.header,
-                    titleContentColor = MaterialTheme.brand.onHeader,
-                    navigationIconContentColor = MaterialTheme.brand.onHeader,
-                    actionIconContentColor = MaterialTheme.brand.onHeader,
-                ),
-            )
-        },
-    ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
-            when (state.kind) {
-                ReportKind.ACTIVITIES -> ActivitiesTab(
-                    state = state,
-                    onDateChanged = onDateChanged,
-                )
+    var filtering by rememberSaveable { mutableStateOf(false) }
 
-                ReportKind.SALES -> SalesTab(
-                    state = state,
-                    onMonthChanged = onMonthChanged,
-                    onCutSelected = onCutSelected,
+    Box(Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text(state.kind.label, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            // The period is no longer on the page, so it is said here:
+                            // a number without its dates is a number nobody can check.
+                            Text(
+                                periodLabel(state),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.brand.onHeader.copy(alpha = 0.85f),
+                            )
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Quay lại",
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { filtering = true }) {
+                            Icon(Icons.Default.FilterList, contentDescription = "Bộ lọc")
+                        }
+                        IconButton(onClick = onRefresh, enabled = !state.loading) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Tải lại")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.brand.header,
+                        titleContentColor = MaterialTheme.brand.onHeader,
+                        navigationIconContentColor = MaterialTheme.brand.onHeader,
+                        actionIconContentColor = MaterialTheme.brand.onHeader,
+                    ),
                 )
-
-                ReportKind.ORDERS -> OrdersTab(
-                    state = state,
-                    onWindowChanged = onWindowChanged,
-                    onOrderStatus = onOrderStatus,
+            },
+        ) { padding ->
+            Box(Modifier.fillMaxSize().padding(padding)) {
+                // The toolbar's colour carried a little way down with rounded corners,
+                // drawn behind the report so its first card sits over the edge — the
+                // dashboard's band, so the two read as one app.
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(HeaderOverlap)
+                        .background(
+                            MaterialTheme.brand.header,
+                            RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp),
+                        ),
                 )
+                when (state.kind) {
+                    ReportKind.ACTIVITIES -> ActivitiesTab(
+                        state = state,
+                    )
 
-                ReportKind.SKU -> SkuTab(
-                    state = state,
-                    onWindowChanged = onWindowChanged,
-                    onSkuQuery = onSkuQuery,
-                )
+                    ReportKind.SALES -> SalesTab(
+                        state = state,
+                        onCutSelected = onCutSelected,
+                    )
 
-                ReportKind.TRADE -> TradeTab(
-                    state = state,
-                    onWindowChanged = onWindowChanged,
-                    onTradeKind = onTradeKind,
-                )
+                    ReportKind.ORDERS -> OrdersTab(
+                        state = state,
+                        onOrderStatus = onOrderStatus,
+                    )
 
-                ReportKind.WORK_RESULT -> WorkResultTab(
-                    state = state,
-                    onWindowChanged = onWindowChanged,
-                )
-            }
+                    ReportKind.SKU -> SkuTab(
+                        state = state,
+                        onSkuQuery = onSkuQuery,
+                    )
 
-            // Over the top of whatever is already there, rather than replacing it:
-            // stepping a day back should not blank the screen it is comparing to.
-            if (state.loading) {
-                LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
+                    ReportKind.TRADE -> TradeTab(
+                        state = state,
+                        onTradeKind = onTradeKind,
+                    )
+
+                    ReportKind.WORK_RESULT -> WorkResultTab(
+                        state = state,
+                    )
+                }
+
+                // Over the top of whatever is already there, rather than replacing it:
+                // changing the period should not blank the screen it is comparing to.
+                if (state.loading) {
+                    LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
+                }
             }
         }
+
+        AnimatedVisibility(
+            visible = filtering,
+            enter = slideInVertically { it },
+            exit = slideOutVertically { it },
+        ) {
+            ReportFilterScreen(
+                kind = state.kind,
+                date = state.date,
+                month = state.month,
+                window = state.window,
+                onDismiss = { filtering = false },
+                onApplyDate = onDateChanged,
+                onApplyMonth = onMonthChanged,
+                onApplyWindow = onWindowChanged,
+            )
+        }
     }
+}
+
+/** How far the toolbar's colour runs under the first card. */
+private val HeaderOverlap = 44.dp
+
+/** The period the report on screen covers, as the toolbar states it. */
+private fun periodLabel(state: ReportsUiState): String = when (state.kind) {
+    ReportKind.ACTIVITIES -> "Ngày ${DateFormat.format(state.date)}"
+    ReportKind.SALES -> MonthFormat.format(state.month)
+    else -> "${DateFormat.format(state.window.fromDate)} - ${DateFormat.format(state.window.toDate)}"
 }
 
 // -----------------------------------------------------------------------------
@@ -221,19 +280,10 @@ private fun ReportsContent(
 // -----------------------------------------------------------------------------
 
 @Composable
-private fun ActivitiesTab(state: ReportsUiState, onDateChanged: (LocalDate) -> Unit) {
+private fun ActivitiesTab(state: ReportsUiState) {
     val report = state.activities
 
     Column(Modifier.fillMaxSize()) {
-        PeriodStepper(
-            label = DateFormat.format(state.date),
-            onPrevious = { onDateChanged(state.date.minusDays(1)) },
-            // A report about tomorrow is not a report; it is an empty page that
-            // looks like a bad day.
-            onNext = { onDateChanged(state.date.plusDays(1)) },
-            nextEnabled = state.date.isBefore(LocalDate.now()),
-        )
-
         when {
             report == null && state.error != null -> ErrorBox(state.error)
             report == null -> SkeletonList(count = 5)
@@ -392,19 +442,11 @@ private fun ActivityRowCard(row: ActivityRow) {
 @Composable
 private fun SalesTab(
     state: ReportsUiState,
-    onMonthChanged: (LocalDate) -> Unit,
     onCutSelected: (SalesCut) -> Unit,
 ) {
     val report = state.sales
 
     Column(Modifier.fillMaxSize()) {
-        PeriodStepper(
-            label = MonthFormat.format(state.month),
-            onPrevious = { onMonthChanged(state.month.minusMonths(1)) },
-            onNext = { onMonthChanged(state.month.plusMonths(1)) },
-            nextEnabled = state.month.isBefore(LocalDate.now().withDayOfMonth(1)),
-        )
-
         when {
             report == null && state.error != null -> ErrorBox(state.error)
             report == null -> SkeletonList(count = 5)
@@ -589,39 +631,6 @@ private fun EmptyCut() {
 // Shared
 // -----------------------------------------------------------------------------
 
-/** Back one period, forward one, and never past the period we are living in. */
-@Composable
-private fun PeriodStepper(
-    label: String,
-    onPrevious: () -> Unit,
-    onNext: () -> Unit,
-    nextEnabled: Boolean,
-) {
-    Surface(color = MaterialTheme.colorScheme.surfaceVariant) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(onClick = onPrevious) {
-                Icon(Icons.Default.ChevronLeft, contentDescription = "Kỳ trước")
-            }
-            Text(
-                text = label,
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.weight(1f),
-            )
-            IconButton(onClick = onNext, enabled = nextEnabled) {
-                Icon(
-                    Icons.Default.ChevronRight,
-                    contentDescription = "Kỳ sau",
-                    modifier = Modifier.size(24.dp),
-                )
-            }
-        }
-    }
-}
-
 private val UnplannedViolet = Color(0xFF5C00D4)
 
 private val DateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy")
@@ -645,40 +654,6 @@ private fun formatMoney(value: Long): String = MoneyFormat.format(value)
 // behind it. The tiles are the dashboard's own, so a rep moving between the
 // Overview tab and a report is reading one language rather than two.
 // -----------------------------------------------------------------------------
-
-/** Moves the shared range a whole month at a time, which is how a rep thinks. */
-@Composable
-private fun WindowStepper(window: ReportWindow, onWindowChanged: (ReportWindow) -> Unit) {
-    val start = window.fromDate
-    val label = "${start.format(DateFormat)} - ${window.toDate.format(DateFormat)}"
-
-    PeriodStepper(
-        label = label,
-        onPrevious = {
-            val previous = start.minusMonths(1)
-            onWindowChanged(
-                ReportWindow(
-                    previous.withDayOfMonth(1),
-                    previous.withDayOfMonth(previous.lengthOfMonth()),
-                ),
-            )
-        },
-        onNext = {
-            val next = start.plusMonths(1)
-            onWindowChanged(
-                ReportWindow(
-                    next.withDayOfMonth(1),
-                    // Never past today: a range running into the future would
-                    // show an empty tail the rep cannot do anything about.
-                    minOf(next.withDayOfMonth(next.lengthOfMonth()), LocalDate.now()),
-                ),
-            )
-        },
-        // Stepping forward past this month would ask for a range that has not
-        // happened.
-        nextEnabled = start.withDayOfMonth(1) < LocalDate.now().withDayOfMonth(1),
-    )
-}
 
 /** The card every report's summary sits in. One shape, four contents. */
 @Composable
@@ -795,14 +770,11 @@ private fun DetailLine(label: String, value: String) {
 @Composable
 private fun OrdersTab(
     state: ReportsUiState,
-    onWindowChanged: (ReportWindow) -> Unit,
     onOrderStatus: (OrderReportStatus?) -> Unit,
 ) {
     val report = state.orders
 
     Column(Modifier.fillMaxSize()) {
-        WindowStepper(state.window, onWindowChanged)
-
         if (report == null) {
             ReportEmpty(Icons.Default.ReceiptLong, state.error ?: "Đang tải báo cáo đơn hàng")
             return@Column
@@ -955,21 +927,24 @@ private fun MetaLabel(icon: ImageVector, text: String) {
 @Composable
 private fun SkuTab(
     state: ReportsUiState,
-    onWindowChanged: (ReportWindow) -> Unit,
     onSkuQuery: (String) -> Unit,
 ) {
     val report = state.sku
 
     Column(Modifier.fillMaxSize()) {
-        WindowStepper(state.window, onWindowChanged)
-
         OutlinedTextField(
             value = state.skuQuery,
             onValueChange = onSkuQuery,
-            label = { Text("Tìm theo tên hoặc mã sản phẩm") },
+            placeholder = { Text("Tìm theo tên hoặc mã sản phẩm") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             singleLine = true,
             shape = RoundedCornerShape(12.dp),
+            // White and label-less: it sits on the toolbar band, where a floating
+            // label would land on the blue.
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            ),
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         )
 
@@ -1126,14 +1101,11 @@ private fun SkuReportCard(rank: Int, row: SkuReportRow, top: Int) {
 @Composable
 private fun TradeTab(
     state: ReportsUiState,
-    onWindowChanged: (ReportWindow) -> Unit,
     onTradeKind: (TradeReportKind?) -> Unit,
 ) {
     val report = state.trade
 
     Column(Modifier.fillMaxSize()) {
-        WindowStepper(state.window, onWindowChanged)
-
         if (report == null) {
             ReportEmpty(Icons.Default.Workspaces, state.error ?: "Đang tải báo cáo thương mại")
             return@Column
@@ -1273,13 +1245,10 @@ private fun tradeColour(kind: TradeReportKind): Color = when (kind) {
 @Composable
 private fun WorkResultTab(
     state: ReportsUiState,
-    onWindowChanged: (ReportWindow) -> Unit,
 ) {
     val report = state.workResult
 
     Column(Modifier.fillMaxSize()) {
-        WindowStepper(state.window, onWindowChanged)
-
         if (report == null) {
             ReportEmpty(Icons.Default.TaskAlt, state.error ?: "Đang tải báo cáo kết quả công việc")
             return@Column
