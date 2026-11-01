@@ -615,7 +615,11 @@ private fun parseExpiry(raw: String): LocalDate? {
 /** One shot of the batch, with the way to take it back. */
 @Composable
 private fun NearExpiryPhotoTile(localPath: String, onRemove: () -> Unit) {
-    Card(shape = RoundedCornerShape(12.dp)) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
         Box(
             Modifier
                 .fillMaxWidth()
