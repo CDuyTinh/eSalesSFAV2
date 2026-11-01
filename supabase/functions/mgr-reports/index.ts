@@ -3,7 +3,7 @@
 //
 // GET /mgr-reports?report=activities&date=YYYY-MM-DD[&salespersonId=…]
 // GET /mgr-reports?report=sales&month=YYYY-MM-01[&salespersonId=…]
-// GET /mgr-reports?report=orders&fromDate=&toDate=[&statuses=new,confirmed][&salespersonId=…]
+// GET /mgr-reports?report=orders&fromDate=&toDate=[&statuses=new,confirmed][&salespersonId=…][&offset=0&limit=100]
 // GET /mgr-reports?report=sku&fromDate=&toDate=[&query=][&salespersonId=…]
 // GET /mgr-reports?report=trade&fromDate=&toDate=[&salespersonId=…]
 // GET /mgr-reports?report=work&fromDate=&toDate=[&salespersonId=…]
@@ -68,7 +68,9 @@ Deno.serve(handler(async (req, db) => {
         p_from_date: date(params.get("fromDate"), "fromDate"),
         p_to_date: date(params.get("toDate"), "toDate"),
         p_statuses: statuses.length ? statuses : null,
-        p_limit: 200,
+        // A page at a time: the team's month runs to hundreds of orders.
+        p_limit: Math.min(Math.max(Number(params.get("limit") ?? 100) || 100, 1), 200),
+        p_offset: Math.max(Number(params.get("offset") ?? 0) || 0, 0),
       })));
     }
 
