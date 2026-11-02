@@ -2,6 +2,7 @@ package com.tinhcd.myesalessfa.data.repository
 
 import com.tinhcd.myesalessfa.data.local.MenuItemEntity
 import com.tinhcd.myesalessfa.domain.model.AppMenu
+import com.tinhcd.myesalessfa.domain.model.AppUpdatePolicy
 import com.tinhcd.myesalessfa.domain.model.MenuEntry
 import com.tinhcd.myesalessfa.domain.model.MenuKind
 import com.tinhcd.myesalessfa.domain.model.SupportedMenu
@@ -139,6 +140,13 @@ class ConfigRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updatePolicy(): AppUpdatePolicy = AppUpdatePolicy(
+        latestCode = dao.setting(KEY_VERSION_LATEST)?.trim()?.toIntOrNull(),
+        minCode = dao.setting(KEY_VERSION_MIN)?.trim()?.toIntOrNull(),
+        url = dao.setting(KEY_UPDATE_URL)?.trim()?.takeIf { it.isNotEmpty() },
+        note = dao.setting(KEY_UPDATE_NOTE)?.trim()?.takeIf { it.isNotEmpty() },
+    )
+
     /**
      * One call where there were four. Settings and translations arrive as maps
      * rather than row lists — they are only ever read by key, and the
@@ -213,6 +221,10 @@ class ConfigRepositoryImpl @Inject constructor(
         const val KEY_STOCK_BEFORE_ORDER = "require_stock_before_order"
         const val KEY_BRANCH_RADIUS = "gps_branch_radius_m"
         const val KEY_LATE_AFTER = "checkin_late_after"
+        const val KEY_VERSION_LATEST = "sfa_version_latest"
+        const val KEY_VERSION_MIN = "sfa_version_min"
+        const val KEY_UPDATE_URL = "sfa_update_url"
+        const val KEY_UPDATE_NOTE = "sfa_update_note"
     }
 }
 

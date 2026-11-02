@@ -1,5 +1,7 @@
 package com.tinhcd.myesalessfa.feature.shell
 
+import com.tinhcd.myesalessfa.core.ui.UpdateDialog
+import com.tinhcd.myesalessfa.BuildConfig
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -248,6 +250,16 @@ fun MainShell(
 
     state.unavailableMessage?.let { label ->
         NotBuiltDialog(label = label, onDismiss = viewModel::dismissUnavailable)
+    }
+
+    state.update?.let { notice ->
+        UpdateDialog(
+            required = notice.required,
+            versionName = BuildConfig.VERSION_NAME,
+            note = notice.note,
+            url = notice.url,
+            onLater = viewModel::postponeUpdate,
+        )
     }
 }
 
