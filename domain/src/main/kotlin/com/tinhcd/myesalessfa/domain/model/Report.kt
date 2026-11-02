@@ -60,6 +60,9 @@ data class CustomerSales(
     val customerName: String,
     val orders: Int,
     val revenue: Long,
+    /** Revenue on orders still awaiting confirmation, the legacy "chưa giao". */
+    val pendingRevenue: Long = 0,
+    val avatarUrl: String? = null,
 )
 
 data class ProductSales(
@@ -68,6 +71,9 @@ data class ProductSales(
     val baseUom: String,
     val baseQty: Int,
     val revenue: Long,
+    /** Quantity on orders still awaiting confirmation. */
+    val pendingQty: Int = 0,
+    val imageUrl: String? = null,
 )
 
 /**
@@ -85,6 +91,8 @@ data class SalesReport(
     val target: Long?,
     val customers: List<CustomerSales>,
     val products: List<ProductSales>,
+    /** The month's revenue on orders still awaiting confirmation. */
+    val pendingRevenue: Long = 0,
 ) {
     val gap: Long? get() = target?.let { it - revenue }
 

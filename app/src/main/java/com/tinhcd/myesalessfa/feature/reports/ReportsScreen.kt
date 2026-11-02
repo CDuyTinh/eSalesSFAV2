@@ -1,5 +1,9 @@
 package com.tinhcd.myesalessfa.feature.reports
 
+import androidx.compose.material.icons.filled.Storefront
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.SubcomposeAsyncImage
 import androidx.compose.material.icons.filled.Event
 import java.time.OffsetDateTime
 import java.time.LocalDateTime
@@ -518,6 +522,13 @@ private fun SalesTotalCard(report: SalesReport) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            if (report.pendingRevenue > 0) {
+                Text(
+                    text = "Chờ xử lý: ${formatMoney(report.pendingRevenue)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
 
             val target = report.target
             val gap = report.gap
@@ -599,45 +610,72 @@ private fun CustomerSalesCard(row: CustomerSales) {
                 )
                 Text("${row.orders} đơn hàng", style = MaterialTheme.typography.bodyMedium)
             }
+            // The legacy "Doanh số chưa giao". Orders here have no delivery
+            // status, so it is what still awaits confirmation.
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            Row {
+                Text(
+                    "Doanh số chờ xử lý",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(formatMoney(row.pendingRevenue), style = MaterialTheme.typography.bodyMedium)
+            }
         }
     }
 }
 
 /**
  * A product's month, after the legacy `_itemProduct`: a picture square, the
- * name in bold, code and unit, then quantity and amount. There are no product
- * pictures here yet, so the square holds a box.
+ * name in bold, code and unit, then quantity and amount, and below a rule the
+ * quantity still awaiting confirmation. The square holds a box until the
+ * product has a picture.
  */
 @Composable
 private fun ProductSalesCard(row: ProductSales) {
     ReportItemCard {
-        Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-            PicturePlaceholder(Icons.Default.Inventory2, size = 64.dp, shape = RoundedCornerShape(10.dp))
-            Spacer(Modifier.width(16.dp))
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(row.productName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        ProductSalesBody(row)
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        Text(
+            buildAnnotatedString {
+                withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) { append("SL chờ xử lý: ") }
+                withStyle(SpanStyle(color = ReportBlue)) { append("${row.pendingQty} ${row.baseUom}") }
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+        )
+    }
+}
+
+@Composable
+private fun ProductSalesBody(row: ProductSales) {
+    Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+        ReportPicture(row.imageUrl, Icons.Default.Inventory2, size = 64.dp, shape = RoundedCornerShape(10.dp))
+        Spacer(Modifier.width(16.dp))
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(row.productName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                buildAnnotatedString {
+                    append(row.productCode)
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
+                        append(" | ${row.baseUom}")
+                    }
+                },
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Row {
                 Text(
-                    buildAnnotatedString {
-                        append(row.productCode)
-                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
-                            append(" | ${row.baseUom}")
-                        }
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
+                    "${row.baseQty} ${row.baseUom}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
                 )
-                Row {
-                    Text(
-                        "${row.baseQty} ${row.baseUom}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Text(
-                        formatMoney(row.revenue),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
+                Text(
+                    formatMoney(row.revenue),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
             }
         }
     }
@@ -751,6 +789,26 @@ private fun PicturePlaceholder(icon: ImageVector, size: Dp, shape: Shape) {
             contentDescription = null,
             modifier = Modifier.size(size * 0.5f),
             tint = MaterialTheme.colorScheme.outline,
+        )
+    }
+}
+
+/**
+ * A product's or outlet's picture when it has one, the [PicturePlaceholder]
+ * while it loads, when it fails, and when there is none.
+ */
+@Composable
+private fun ReportPicture(url: String?, icon: ImageVector, size: Dp, shape: Shape) {
+    if (url.isNullOrBlank()) {
+        PicturePlaceholder(icon, size, shape)
+    } else {
+        SubcomposeAsyncImage(
+            model = url,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            loading = { PicturePlaceholder(icon, size, shape) },
+            error = { PicturePlaceholder(icon, size, shape) },
+            modifier = Modifier.size(size).clip(shape),
         )
     }
 }
@@ -1061,12 +1119,12 @@ private fun OrderReportCard(row: OrderReportRow) {
             }
             Row {
                 Text(
-                    "Số dòng hàng",
+                    "Tổng số lượng",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 )
-                Text(row.lineCount.toString(), style = MaterialTheme.typography.bodyMedium)
+                Text(row.qtyTotal.toString(), style = MaterialTheme.typography.bodyMedium)
             }
             InfoLine(
                 Icons.Default.ShoppingCart,
@@ -1182,7 +1240,7 @@ private fun SkuReportCard(row: SkuReportRow) {
             Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            PicturePlaceholder(Icons.Default.Inventory2, size = 40.dp, shape = CircleShape)
+            ReportPicture(row.imageUrl, Icons.Default.Inventory2, size = 40.dp, shape = CircleShape)
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(verticalAlignment = Alignment.Top) {
@@ -1309,7 +1367,11 @@ private fun TradeReportCard(row: TradeReportRow) {
             Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            InitialsAvatar(row.customerName, size = 48.dp)
+            if (row.avatarUrl.isNullOrBlank()) {
+                InitialsAvatar(row.customerName, size = 48.dp)
+            } else {
+                ReportPicture(row.avatarUrl, Icons.Default.Storefront, size = 48.dp, shape = CircleShape)
+            }
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(row.programName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)

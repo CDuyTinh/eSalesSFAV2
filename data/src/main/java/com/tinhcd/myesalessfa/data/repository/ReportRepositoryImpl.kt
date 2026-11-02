@@ -169,6 +169,7 @@ private fun SalesReportDto.toDomain() = SalesReport(
     revenue = revenue,
     orderCount = orderCount,
     target = target,
+    pendingRevenue = pendingRevenue,
     customers = customers.map { it.toDomain() },
     products = products.map { it.toDomain() },
 )
@@ -178,6 +179,8 @@ private fun CustomerSalesDto.toDomain() = CustomerSales(
     customerName = customerName,
     orders = orders,
     revenue = revenue,
+    pendingRevenue = pendingRevenue,
+    avatarUrl = avatarUrl,
 )
 
 private fun ProductSalesDto.toDomain() = ProductSales(
@@ -186,6 +189,8 @@ private fun ProductSalesDto.toDomain() = ProductSales(
     baseUom = baseUom,
     baseQty = baseQty,
     revenue = revenue,
+    pendingQty = pendingQty,
+    imageUrl = imageUrl,
 )
 
 private fun String.toVisitStatus(): VisitStatus = when (this) {
@@ -209,6 +214,7 @@ private fun OrderReportRowDto.toDomain() = OrderReportRow(
     status = OrderReportStatus.fromWire(status),
     inRoute = inRoute,
     lineCount = lineCount,
+    qtyTotal = qtyTotal,
     subTotal = subTotal,
     discountAmount = discountAmount,
     vatAmount = vatAmount,
@@ -220,6 +226,7 @@ private fun SkuReportRowDto.toDomain() = SkuReportRow(
     productCode = productCode,
     productName = productName,
     stockUom = stockUom,
+    imageUrl = imageUrl,
     qtyConfirmed = qtyConfirmed,
     qtyPending = qtyPending,
     qtyTotal = qtyTotal,
@@ -233,6 +240,7 @@ private fun TradeReportRowDto.toDomain() = TradeReportRow(
     portion = portion,
     customerCode = customerCode,
     customerName = customerName,
+    avatarUrl = avatarUrl,
     programCode = programCode,
     programName = programName,
     levelName = levelName,
