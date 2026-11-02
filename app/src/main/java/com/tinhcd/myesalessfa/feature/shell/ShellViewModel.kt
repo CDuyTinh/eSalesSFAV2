@@ -1,5 +1,8 @@
 package com.tinhcd.myesalessfa.feature.shell
 
+import com.tinhcd.myesalessfa.domain.repository.ReferenceDataSync
+import com.tinhcd.myesalessfa.domain.model.AppUpdateNeed
+import com.tinhcd.myesalessfa.BuildConfig
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.model.AppMenu
@@ -24,6 +27,8 @@ import javax.inject.Inject
 
 data class ShellUiState(
     val menu: AppMenu = AppMenu.Fallback,
+    /** A newer build head office wants in use, while it is still to be shown. */
+    val update: UpdateNotice? = null,
     /**
      * False until the cached menu has been read. Until then the bar would be the
      * one-tab fallback with nothing selected, which showed "not in this build"
@@ -70,7 +75,11 @@ class ShellViewModel @Inject constructor(
     private val configRepository: ConfigRepository,
     private val timekeeping: TimekeepingRepository,
     private val getOpenVisit: GetOpenVisitUseCase,
+    private val referenceDataSync: ReferenceDataSync,
 ) : ViewModel() {
+
+    /** The latest build the rep has already said "later" to, this launch. */
+    private var postponedUpdate: Int? = null
 
     private val _state = MutableStateFlow(ShellUiState())
     val state: StateFlow<ShellUiState> = _state.asStateFlow()
@@ -93,7 +102,30 @@ class ShellViewModel @Inject constructor(
         viewModelScope.launch {
             timekeeping.today.collect { day -> _state.update { it.copy(workDay = day) } }
         }
+        // Read again after every sync: the policy arrives with the settings, and
+        // the first sync of a launch may finish after the shell is up.
+        viewModelScope.launch {
+            referenceDataSync.state.collect { checkForUpdate() }
+        }
         refreshWorkDay()
+    }
+
+    private suspend fun checkForUpdate() {
+        val policy = configRepository.updatePolicy()
+        val notice = when (policy.check(BuildConfig.VERSION_CODE)) {
+            AppUpdateNeed.REQUIRED -> UpdateNotice(required = true, latestCode = policy.latestCode, note = policy.note, url = policy.url)
+            AppUpdateNeed.OPTIONAL ->
+                if (policy.latestCode == postponedUpdate) null
+                else UpdateNotice(required = false, latestCode = policy.latestCode, note = policy.note, url = policy.url)
+            AppUpdateNeed.NONE -> null
+        }
+        _state.update { it.copy(update = notice) }
+    }
+
+    /** "Để sau" on an optional update: not again this launch, unless a newer one appears. */
+    fun postponeUpdate() {
+        postponedUpdate = _state.value.update?.latestCode
+        _state.update { it.copy(update = null) }
     }
 
     fun refreshWorkDay() {
@@ -185,3 +217,11 @@ class ShellViewModel @Inject constructor(
         }
     }
 }
+
+/** What the update dialog says: whether it can be put off, and where to get the build. */
+data class UpdateNotice(
+    val required: Boolean,
+    val latestCode: Int?,
+    val note: String?,
+    val url: String?,
+)

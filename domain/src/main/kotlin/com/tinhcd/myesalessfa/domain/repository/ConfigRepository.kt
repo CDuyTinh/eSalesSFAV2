@@ -2,6 +2,7 @@ package com.tinhcd.myesalessfa.domain.repository
 
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.AppMenu
+import com.tinhcd.myesalessfa.domain.model.AppUpdatePolicy
 import com.tinhcd.myesalessfa.domain.model.CheckInPolicy
 import com.tinhcd.myesalessfa.domain.model.ReasonCode
 import com.tinhcd.myesalessfa.domain.model.ReasonKind
@@ -12,6 +13,9 @@ interface ConfigRepository {
 
     /** The depot equivalent: its own radius, and when a clock-in counts as late. */
     suspend fun workDayPolicy(): WorkDayPolicy
+
+    /** Which builds head office wants in use, as of the last sync. */
+    suspend fun updatePolicy(): AppUpdatePolicy
 
     /**
      * The shell's tabs and their sheet entries, already translated and ordered.
