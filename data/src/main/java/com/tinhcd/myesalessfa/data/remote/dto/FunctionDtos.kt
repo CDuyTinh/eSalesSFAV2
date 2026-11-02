@@ -318,6 +318,8 @@ data class CustomerSalesDto(
     @SerialName("customer_name") val customerName: String,
     val orders: Int = 0,
     val revenue: Long = 0,
+    @SerialName("pending_revenue") val pendingRevenue: Long = 0,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
 )
 
 @Serializable
@@ -327,6 +329,8 @@ data class ProductSalesDto(
     @SerialName("base_uom") val baseUom: String = "",
     @SerialName("base_qty") val baseQty: Int = 0,
     val revenue: Long = 0,
+    @SerialName("pending_qty") val pendingQty: Int = 0,
+    @SerialName("image_url") val imageUrl: String? = null,
 )
 
 @Serializable
@@ -336,6 +340,7 @@ data class SalesReportDto(
     @SerialName("order_count") val orderCount: Int = 0,
     /** Absent when head office set none. Not the same as zero. */
     val target: Long? = null,
+    @SerialName("pending_revenue") val pendingRevenue: Long = 0,
     val customers: List<CustomerSalesDto> = emptyList(),
     val products: List<ProductSalesDto> = emptyList(),
 )

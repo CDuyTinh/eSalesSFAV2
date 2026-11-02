@@ -51,6 +51,8 @@ data class OrderReportRow(
     /** Booked inside a visit, rather than off-route. */
     val inRoute: Boolean,
     val lineCount: Int,
+    /** Every line's quantity in the base unit. */
+    val qtyTotal: Int = 0,
     val subTotal: Long,
     val discountAmount: Long,
     val vatAmount: Long,
@@ -85,6 +87,7 @@ data class SkuReportRow(
     val productCode: String,
     val productName: String,
     val stockUom: String,
+    val imageUrl: String? = null,
     val qtyConfirmed: Int,
     val qtyPending: Int,
     val qtyTotal: Int,
@@ -126,6 +129,7 @@ data class TradeReportRow(
     val portion: Int,
     val customerCode: String,
     val customerName: String,
+    val avatarUrl: String? = null,
     val programCode: String,
     val programName: String,
     val levelName: String?,
