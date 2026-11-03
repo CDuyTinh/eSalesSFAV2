@@ -9,6 +9,8 @@
 // GET /mgr-reports?report=work&fromDate=&toDate=[&salespersonId=…]
 // GET /mgr-reports?report=training&fromDate=&toDate=[&salespersonId=…]
 // GET /mgr-reports?report=tracking&date=YYYY-MM-DD[&salespersonId=…][&supervisorId=…]
+// GET /mgr-reports?report=photos&date=YYYY-MM-DD&salespersonId=…
+//        → that rep's punch and visit photos for the day, signed for an hour
 //
 // The six SFA reports, asked of the team or of one rep in it. They run through
 // the same report_*_of() cores the rep's own /reports uses, so a figure here is
@@ -18,6 +20,7 @@
 // =============================================================================
 
 import { handler, HttpError, idList, json, unwrap } from "../_shared/client.ts";
+import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
 
 const ORDER_STATUSES = ["new", "confirmed", "cancelled"];
 
@@ -26,6 +29,28 @@ function date(value: string | null, name: string): string {
     throw new HttpError(400, `${name} is required (YYYY-MM-DD)`);
   }
   return value;
+}
+
+type Row = Record<string, unknown>;
+
+/**
+ * Adds a signed url beside every storage path the rows carry, in one call. The
+ * caller's own client signs, so the storage policy decides what a manager may
+ * see, as it does for the approvals' photos.
+ */
+async function signPaths(db: SupabaseClient, rows: Row[], fields: string[]): Promise<Row[]> {
+  const paths = [...new Set(rows.flatMap((r) => fields.map((f) => r[f]).filter((p): p is string => typeof p === "string")))];
+  if (paths.length === 0) return rows;
+  const { data } = await db.storage.from("visit-photos").createSignedUrls(paths, 60 * 60);
+  const urls = new Map((data ?? []).map((s) => [s.path, s.signedUrl]));
+  return rows.map((r) => {
+    const out: Row = { ...r };
+    for (const f of fields) {
+      const p = r[f];
+      out[f.replace(/_path$/, "_url")] = typeof p === "string" ? urls.get(p) ?? null : null;
+    }
+    return out;
+  });
 }
 
 /** A refusal raised in plpgsql (rep outside the team) is a 403, not a 500. */
@@ -39,6 +64,17 @@ Deno.serve(handler(async (req, db) => {
   const params = new URL(req.url).searchParams;
 
   const one = params.get("salespersonId");
+
+  if (params.get("report") === "photos") {
+    if (!one) throw new HttpError(400, "salespersonId is required");
+    const day = ruled(await db.rpc("mgr_staff_photos", {
+      p_salesperson_id: one, p_date: date(params.get("date"), "date"),
+    })) as { punches: Row[]; visits: Row[] };
+    return json({
+      punches: await signPaths(db, day.punches, ["photo_path"]),
+      visits: await signPaths(db, day.visits, ["check_in_photo_path", "check_out_photo_path"]),
+    });
+  }
   const sps: string[] = one
     ? [one]
     // The team's reps, optionally those under one supervisor or at some branches
