@@ -5,6 +5,8 @@ import com.tinhcd.myesalessfa.data.remote.dto.WorkDayDto
 import com.tinhcd.myesalessfa.data.remote.dto.WorkDayPunchDto
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import com.tinhcd.myesalessfa.data.remote.service.TimekeepingService
+import com.tinhcd.myesalessfa.data.remote.storage.PhotoUploader
+import com.tinhcd.myesalessfa.data.session.SessionStore
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.Branch
 import com.tinhcd.myesalessfa.domain.model.WorkDay
@@ -16,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,6 +33,8 @@ import javax.inject.Singleton
 @Singleton
 class TimekeepingRepositoryImpl @Inject constructor(
     private val service: TimekeepingService,
+    private val session: SessionStore,
+    private val uploader: PhotoUploader,
 ) : TimekeepingRepository {
 
     private val _today = MutableStateFlow<WorkDay?>(null)
@@ -48,8 +53,17 @@ class TimekeepingRepositoryImpl @Inject constructor(
     override suspend fun closeDay(punch: WorkDayPunch) = submit("check_out", punch)
 
     private suspend fun submit(type: String, punch: WorkDayPunch): DataResult<Unit> = try {
+        // The punch's id is chosen here, as a visit's is, so its photo can go up
+        // first under the path storage authorises (<rep>/<punch>/<file>).
+        val id = UUID.randomUUID().toString()
+        val photoPath = punch.photoLocalPath?.let { path ->
+            val me = session.current.value ?: throw IllegalStateException("not_signed_in")
+            uploader.upload(me.id, id, path)
+        }
+
         service.submitPunch(
             WorkDayPunchDto(
+                id = id,
                 type = type,
                 workDate = punch.date.toString(),
                 happenedAt = OffsetDateTime.now(ZoneOffset.UTC).toString(),
@@ -58,8 +72,10 @@ class TimekeepingRepositoryImpl @Inject constructor(
                 accuracyM = punch.point?.accuracyM?.toDouble(),
                 distanceM = punch.distanceM,
                 reasonId = punch.reasonId,
+                photoPath = photoPath,
             ),
         ).orThrow()
+        punch.photoLocalPath?.let(uploader::deleteLocal)
 
         // Deliberately not checked: the punch landed, and a failed re-read should
         // not be reported as a failed punch. The screen leaves on success either

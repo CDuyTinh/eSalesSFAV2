@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -55,6 +56,8 @@ import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.domain.model.SupportedSteps
 import com.tinhcd.myesalessfa.domain.model.WorkflowStep
+import com.tinhcd.myesalessfa.feature.photo.PhotoBlock
+import com.tinhcd.myesalessfa.feature.photo.rememberCameraCapture
 
 /**
  * Công việc — the steps this visit still owes, and the check-out that closes it.
@@ -84,6 +87,11 @@ fun InCallTab(
     LaunchedEffect(state.checkedOut) {
         if (state.checkedOut) onCheckedOut()
     }
+
+    val capturePhoto = rememberCameraCapture(
+        newTarget = { viewModel.newPhotoTarget().uri },
+        onTaken = viewModel::onPhotoTaken,
+    )
 
     Box(modifier.fillMaxSize()) {
         when {
@@ -131,6 +139,17 @@ fun InCallTab(
                                     modifier = Modifier.padding(bottom = 8.dp),
                                 )
                             }
+                            // Taken on the way out, once the steps are done: the last
+                            // thing the rep does at the shop, as the shop front was the first.
+                            PhotoBlock(
+                                title = "Ảnh check-out",
+                                path = state.photoLocalPath,
+                                required = state.photoRequired,
+                                busy = state.capturing,
+                                onCapture = capturePhoto,
+                                onRemove = viewModel::removePhoto,
+                                contentPadding = PaddingValues(bottom = 12.dp),
+                            )
                             if (state.error != null) {
                                 Text(
                                     state.error.orEmpty(),
@@ -146,7 +165,7 @@ fun InCallTab(
                             PrimaryButton(
                                 text = "Check-out",
                                 onClick = viewModel::checkOut,
-                                enabled = workflow.canCheckOut,
+                                enabled = state.canCheckOut,
                                 loading = state.submitting,
                                 height = 44.dp,
                             )

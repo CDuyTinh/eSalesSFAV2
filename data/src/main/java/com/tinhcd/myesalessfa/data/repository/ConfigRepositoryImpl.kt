@@ -54,6 +54,8 @@ class ConfigRepositoryImpl @Inject constructor(
             allowReasonWhenFar = dao.setting(KEY_ALLOW_REASON)?.toBooleanStrictOrNull()
                 ?: fallback.allowReasonWhenFar,
             photoRequired = dao.setting(KEY_CHECKIN_PHOTO)?.toBooleanStrictOrNull() ?: fallback.photoRequired,
+            checkOutPhotoRequired = dao.setting(KEY_CHECKOUT_PHOTO)?.toBooleanStrictOrNull()
+                ?: fallback.checkOutPhotoRequired,
         )
     }
 
@@ -72,6 +74,8 @@ class ConfigRepositoryImpl @Inject constructor(
                 ?: fallback.allowReasonWhenFar,
             lateAfter = dao.setting(KEY_LATE_AFTER)
                 ?.let { runCatching { LocalTime.parse(it) }.getOrNull() },
+            photoRequired = dao.setting(KEY_TIMEKEEPING_PHOTO)?.toBooleanStrictOrNull()
+                ?: fallback.photoRequired,
         )
     }
 
@@ -223,6 +227,8 @@ class ConfigRepositoryImpl @Inject constructor(
         const val KEY_BRANCH_RADIUS = "gps_branch_radius_m"
         const val KEY_LATE_AFTER = "checkin_late_after"
         const val KEY_CHECKIN_PHOTO = "checkin_photo_required"
+        const val KEY_CHECKOUT_PHOTO = "checkout_photo_required"
+        const val KEY_TIMEKEEPING_PHOTO = "timekeeping_photo_required"
         const val KEY_VERSION_LATEST = "sfa_version_latest"
         const val KEY_VERSION_MIN = "sfa_version_min"
         const val KEY_UPDATE_URL = "sfa_update_url"

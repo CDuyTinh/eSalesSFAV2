@@ -60,6 +60,8 @@ data class CheckInPolicy(
      * want of a setting is worse than a visit without its picture.
      */
     val photoRequired: Boolean = false,
+    /** A photograph before the visit can close (`checkout_photo_required`). Off when unset, likewise. */
+    val checkOutPhotoRequired: Boolean = false,
 ) {
     companion object {
         /**

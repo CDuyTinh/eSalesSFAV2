@@ -215,6 +215,8 @@ data class WorkDayDto(
 /** A punch at the depot. `type` is check_in or check_out; the server fixes nothing else. */
 @Serializable
 data class WorkDayPunchDto(
+    /** Chosen on the phone so the photo can be stored under it before the punch is sent. */
+    val id: String? = null,
     val type: String,
     @SerialName("work_date") val workDate: String,
     @SerialName("happened_at") val happenedAt: String,
@@ -223,6 +225,7 @@ data class WorkDayPunchDto(
     @SerialName("accuracy_m") val accuracyM: Double? = null,
     @SerialName("distance_m") val distanceM: Double? = null,
     @SerialName("reason_id") val reasonId: String? = null,
+    @SerialName("photo_path") val photoPath: String? = null,
 )
 
 @Serializable

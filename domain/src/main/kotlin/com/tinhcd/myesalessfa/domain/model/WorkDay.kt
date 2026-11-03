@@ -74,6 +74,11 @@ data class WorkDayPolicy(
     val allowReasonWhenFar: Boolean,
     /** Clocking in after this is flagged. Null when the market does not track it. */
     val lateAfter: LocalTime?,
+    /**
+     * A photograph at each punch (`timekeeping_photo_required`): the rep at the
+     * depot, which a GPS fix alone cannot show. Off when unset.
+     */
+    val photoRequired: Boolean = false,
 ) {
     companion object {
         /** Used before settings load. Strict for the same reason [CheckInPolicy] is. */
@@ -92,4 +97,6 @@ data class WorkDayPunch(
     val point: GeoPoint?,
     val distanceM: Double?,
     val reasonId: String?,
+    /** The punch photo, on the device until the punch takes it up. */
+    val photoLocalPath: String? = null,
 )

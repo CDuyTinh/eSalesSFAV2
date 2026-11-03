@@ -70,14 +70,22 @@ class CheckInRepositoryImpl @Inject constructor(
         }
     }
 
-    /** Two fields, so the body is built here rather than given a type of its own. */
-    override suspend fun checkOut(visitId: String): DataResult<Unit> = try {
+    /**
+     * A few fields, so the body is built here rather than given a type of its own.
+     * The photo goes up first, into the visit's own folder, for the reason the
+     * check-in gives: a check-out whose photo did not land is not sent.
+     */
+    override suspend fun checkOut(visitId: String, photoLocalPath: String?): DataResult<Unit> = try {
+        val me = session.current.value ?: throw IllegalStateException("not_signed_in")
+        val photoPath = photoLocalPath?.let { uploader.upload(me.id, visitId, it) }
         service.submitCheckout(
             buildJsonObject {
                 put("visit_id", visitId)
                 put("check_out_at", OffsetDateTime.now(ZoneOffset.UTC).toString())
+                photoPath?.let { put("check_out_photo_path", it) }
             },
         ).orThrow()
+        photoLocalPath?.let(uploader::deleteLocal)
         DataResult.Success(Unit)
     } catch (e: Exception) {
         DataResult.Failure(e.toAppError())
