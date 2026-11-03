@@ -55,6 +55,16 @@ $accounts = @(
     @{ code = 'nvbh04'; password = 'Esales@12345' }
 )
 
+# Plus every active salesperson still without a login (the demo dataset's
+# staff), so adding people to the data does not mean editing this list.
+$unlinked = Invoke-RestMethod -Method Get -Headers $headers `
+    -Uri "$baseUrl/rest/v1/salesperson?select=code&user_id=is.null&is_active=eq.true&order=code"
+foreach ($row in $unlinked) {
+    if (-not ($accounts | Where-Object { $_.code -eq $row.code })) {
+        $accounts += @{ code = $row.code; password = 'Esales@12345' }
+    }
+}
+
 # One listing for all accounts; the dev project has a handful of users.
 $allUsers = (Invoke-RestMethod -Method Get -Headers $headers `
     -Uri "$baseUrl/auth/v1/admin/users?page=1&per_page=200").users
