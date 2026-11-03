@@ -3,6 +3,7 @@ package com.tinhcd.myesalessfa.data.repository
 import com.tinhcd.myesalessfa.data.remote.dto.NewVisitDto
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
 import com.tinhcd.myesalessfa.data.remote.service.VisitService
+import com.tinhcd.myesalessfa.data.remote.storage.PhotoUploader
 import com.tinhcd.myesalessfa.data.session.SessionStore
 import com.tinhcd.myesalessfa.domain.AppError
 import com.tinhcd.myesalessfa.domain.DataResult
@@ -13,6 +14,7 @@ import kotlinx.serialization.json.put
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,6 +29,7 @@ import javax.inject.Singleton
 class CheckInRepositoryImpl @Inject constructor(
     private val service: VisitService,
     private val session: SessionStore,
+    private val uploader: PhotoUploader,
 ) : CheckInRepository {
 
     override suspend fun checkIn(request: CheckInRequest): DataResult<Unit> {
@@ -34,8 +37,15 @@ class CheckInRepositoryImpl @Inject constructor(
             ?: return DataResult.Failure(AppError.Auth("not_signed_in"))
 
         return try {
+            // The visit's id is chosen here so the shop-front photo can go up
+            // first, under the path storage authorises (<rep>/<visit>/<file>);
+            // a check-in whose photo did not land is not sent at all.
+            val visitId = UUID.randomUUID().toString()
+            val photoPath = request.photoLocalPath?.let { uploader.upload(me.id, visitId, it) }
+
             service.submitVisit(
                 NewVisitDto(
+                    id = visitId,
                     customerId = request.customerId,
                     salespersonId = me.id,
                     branchId = me.branchId,
@@ -46,10 +56,14 @@ class CheckInRepositoryImpl @Inject constructor(
                     checkInLng = request.point.lng,
                     checkInAccuracyM = request.point.accuracyM?.toDouble(),
                     checkInDistanceM = request.distanceM,
-                    checkInPhotoPath = request.photoPath,
+                    checkInPhotoPath = photoPath,
+                    // Was never sent: the screen asked for a reason and the row
+                    // arrived without one.
+                    checkInReasonId = request.reasonId,
                     note = request.note,
                 ),
             ).orThrow()
+            request.photoLocalPath?.let(uploader::deleteLocal)
             DataResult.Success(Unit)
         } catch (e: Exception) {
             DataResult.Failure(e.toAppError())

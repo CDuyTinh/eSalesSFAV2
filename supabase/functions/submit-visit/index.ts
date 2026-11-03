@@ -16,6 +16,8 @@
 import { handler, HttpError, json, unwrap, currentSalespersonId } from "../_shared/client.ts";
 
 interface Body {
+  /** Chosen by the app, so the check-in photo can be filed under it first. */
+  id?: string;
   customer_id?: string;
   visit_date?: string;
   check_in_at?: string;
@@ -34,6 +36,9 @@ Deno.serve(handler(async (req, db) => {
   const body = await req.json() as Body;
   if (!body.customer_id) throw new HttpError(400, "customer_id is required");
   if (!body.check_in_at) throw new HttpError(400, "check_in_at is required");
+  if (body.id !== undefined && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.id)) {
+    throw new HttpError(400, "id must be a uuid");
+  }
 
   const me = (unwrap(
     await db.from("salesperson").select("id,branch_id").eq("id", await currentSalespersonId(db)),
@@ -65,6 +70,7 @@ Deno.serve(handler(async (req, db) => {
 
   unwrap(
     await db.from("visit").insert({
+      ...(body.id ? { id: body.id } : {}),
       customer_id: body.customer_id,
       salesperson_id: me.id,
       branch_id: me.branch_id,

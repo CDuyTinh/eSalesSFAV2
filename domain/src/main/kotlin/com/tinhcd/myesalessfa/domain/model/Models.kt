@@ -91,7 +91,9 @@ data class CheckInRequest(
     val customerId: String,
     val point: GeoPoint,
     val distanceM: Double,
-    val photoPath: String?,
-    val reasonCode: String?,
+    /** The shop-front photo as taken, on the device; uploaded with the check-in. */
+    val photoLocalPath: String?,
+    /** Why the rep checked in despite the gate (too far, weak GPS), as a reason_code id. */
+    val reasonId: String?,
     val note: String?,
 )

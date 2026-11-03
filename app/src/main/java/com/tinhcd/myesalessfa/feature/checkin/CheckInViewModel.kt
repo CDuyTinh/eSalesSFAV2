@@ -1,5 +1,7 @@
 package com.tinhcd.myesalessfa.feature.checkin
 
+import com.tinhcd.myesalessfa.core.photo.PhotoTarget
+import com.tinhcd.myesalessfa.core.photo.PhotoStore
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -41,6 +43,11 @@ data class CheckInUiState(
      * never asked for it.
      */
     val note: String = "",
+    /** The shop-front photo, on the device until the check-in takes it up. */
+    val photoLocalPath: String? = null,
+    val capturing: Boolean = false,
+    /** Head office wants the shop front before the visit starts. */
+    val photoRequired: Boolean = false,
     val submitting: Boolean = false,
     val error: String? = null,
     val finished: Boolean = false,
@@ -50,7 +57,8 @@ data class CheckInUiState(
     val needsReason: Boolean get() = gate is CheckInGate.NeedsReason
 
     val canSubmit: Boolean
-        get() = !submitting && !locating &&
+        get() = !submitting && !locating && !capturing &&
+            (!photoRequired || photoLocalPath != null) &&
             when (gate) {
                 is CheckInGate.Allowed -> true
                 is CheckInGate.NeedsReason -> selectedReason != null
@@ -66,7 +74,10 @@ class CheckInViewModel @Inject constructor(
     private val configRepository: ConfigRepository,
     private val evaluate: EvaluateCheckInUseCase,
     private val locationProvider: LocationProvider,
+    private val photoStore: PhotoStore,
 ) : ViewModel() {
+
+    private var pendingPhoto: PhotoTarget? = null
 
     private val customerId: String = checkNotNull(savedStateHandle["customerId"])
 
@@ -78,6 +89,7 @@ class CheckInViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             policy = configRepository.checkInPolicy()
+            _state.update { it.copy(photoRequired = policy.photoRequired) }
             when (val result = routeRepository.getStop(customerId, LocalDate.now())) {
                 is DataResult.Success -> {
                     _state.update {
@@ -129,6 +141,36 @@ class CheckInViewModel @Inject constructor(
 
     fun onNoteChange(value: String) = _state.update { it.copy(note = value) }
 
+    fun newPhotoTarget(): PhotoTarget = photoStore.newTarget().also {
+        pendingPhoto = it
+        _state.update { state -> state.copy(capturing = true, error = null) }
+    }
+
+    /** A retake replaces the photo; the one it replaces is deleted from the phone. */
+    fun onPhotoTaken(saved: Boolean) {
+        val target = pendingPhoto
+        pendingPhoto = null
+        if (!saved || target == null) {
+            target?.let { photoStore.delete(it.path) }
+            _state.update { it.copy(capturing = false) }
+            return
+        }
+        viewModelScope.launch {
+            if (photoStore.compress(target.path) <= 0L) {
+                photoStore.delete(target.path)
+                _state.update { it.copy(capturing = false, error = "Không lưu được ảnh, thử lại") }
+                return@launch
+            }
+            _state.value.photoLocalPath?.let(photoStore::delete)
+            _state.update { it.copy(capturing = false, photoLocalPath = target.path) }
+        }
+    }
+
+    fun removePhoto() {
+        _state.value.photoLocalPath?.let(photoStore::delete)
+        _state.update { it.copy(photoLocalPath = null) }
+    }
+
     fun submit() {
         val current = _state.value
         val customer = current.customer ?: return
@@ -147,8 +189,8 @@ class CheckInViewModel @Inject constructor(
                     is CheckInGate.NeedsReason -> g.distanceM ?: 0.0
                     else -> 0.0
                 },
-                photoPath = null,
-                reasonCode = current.selectedReason?.code,
+                photoLocalPath = current.photoLocalPath,
+                reasonId = current.selectedReason?.id,
                 // Blank is not a note. Sending "" would fill a column someone
                 // will later query for "check-ins that came with a note".
                 note = current.note.trim().takeIf { it.isNotEmpty() },
