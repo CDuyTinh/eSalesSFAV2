@@ -23,6 +23,7 @@
 import { handler, HttpError, json, unwrap, currentSalespersonId } from "../_shared/client.ts";
 
 interface Body {
+  id?: string;
   type?: "check_in" | "check_out";
   work_date?: string;
   happened_at?: string;
@@ -31,6 +32,7 @@ interface Body {
   accuracy_m?: number | null;
   distance_m?: number | null;
   reason_id?: string | null;
+  photo_path?: string | null;
 }
 
 Deno.serve(handler(async (req, db) => {
@@ -41,6 +43,9 @@ Deno.serve(handler(async (req, db) => {
     throw new HttpError(400, "type must be check_in or check_out");
   }
   if (!body.happened_at) throw new HttpError(400, "happened_at is required");
+  if (body.id !== undefined && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.id)) {
+    throw new HttpError(400, "id must be a uuid");
+  }
 
   // Same rule as a visit: the day the rep was standing there, not the day the
   // request happened to arrive.
@@ -81,7 +86,10 @@ Deno.serve(handler(async (req, db) => {
     }
   }
 
+  // The id is the phone's when it sent one: the punch photo was stored under
+  // it before this request was made. Older builds send none and get a default.
   const inserted = await db.from("timekeeping").insert({
+    ...(body.id ? { id: body.id } : {}),
     salesperson_id: me.id,
     branch_id: me.branch_id,
     type: body.type,
@@ -92,6 +100,7 @@ Deno.serve(handler(async (req, db) => {
     accuracy_m: body.accuracy_m ?? null,
     distance_m: body.distance_m ?? null,
     reason_id: body.reason_id ?? null,
+    photo_path: body.photo_path ?? null,
   }).select("id");
 
   // The index is what refuses a second punch; this only dresses its answer.

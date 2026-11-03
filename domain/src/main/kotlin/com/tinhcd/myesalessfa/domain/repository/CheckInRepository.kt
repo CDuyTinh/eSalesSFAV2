@@ -10,5 +10,5 @@ interface CheckInRepository {
      */
     suspend fun checkIn(request: CheckInRequest): DataResult<Unit>
 
-    suspend fun checkOut(visitId: String): DataResult<Unit>
+    suspend fun checkOut(visitId: String, photoLocalPath: String? = null): DataResult<Unit>
 }

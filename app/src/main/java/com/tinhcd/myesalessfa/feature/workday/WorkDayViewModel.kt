@@ -2,6 +2,8 @@ package com.tinhcd.myesalessfa.feature.workday
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tinhcd.myesalessfa.core.photo.PhotoStore
+import com.tinhcd.myesalessfa.core.photo.PhotoTarget
 import com.tinhcd.myesalessfa.core.location.LocationProvider
 import com.tinhcd.myesalessfa.domain.AppError
 import com.tinhcd.myesalessfa.domain.DataResult
@@ -36,6 +38,9 @@ data class WorkDayUiState(
     val submitting: Boolean = false,
     val error: String? = null,
     val finished: Boolean = false,
+    /** The punch photo, on the device until the punch takes it up. */
+    val photoLocalPath: String? = null,
+    val capturing: Boolean = false,
 ) {
     val needsReason: Boolean get() = gate is CheckInGate.NeedsReason
 
@@ -47,7 +52,8 @@ data class WorkDayUiState(
     val closing: Boolean get() = day?.state == WorkDayState.OPEN
 
     val canSubmit: Boolean
-        get() = !submitting && !locating && day != null &&
+        get() = !submitting && !locating && !capturing && day != null &&
+            (!policy.photoRequired || photoLocalPath != null) &&
             day.state != WorkDayState.CLOSED &&
             // A depot cannot be left while the rep is still inside a shop.
             (!closing || day.canCloseDay) &&
@@ -71,10 +77,13 @@ class WorkDayViewModel @Inject constructor(
     private val configRepository: ConfigRepository,
     private val evaluate: EvaluateCheckInUseCase,
     private val locationProvider: LocationProvider,
+    private val photoStore: PhotoStore,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(WorkDayUiState())
     val state: StateFlow<WorkDayUiState> = _state.asStateFlow()
+
+    private var pendingPhoto: PhotoTarget? = null
 
     init {
         load()
@@ -131,6 +140,36 @@ class WorkDayViewModel @Inject constructor(
 
     fun selectReason(reason: ReasonCode) = _state.update { it.copy(selectedReason = reason) }
 
+    fun newPhotoTarget(): PhotoTarget = photoStore.newTarget().also {
+        pendingPhoto = it
+        _state.update { state -> state.copy(capturing = true, error = null) }
+    }
+
+    /** Same handling as the check-in photo: a retake replaces, and deletes, the last. */
+    fun onPhotoTaken(saved: Boolean) {
+        val target = pendingPhoto
+        pendingPhoto = null
+        if (!saved || target == null) {
+            target?.let { photoStore.delete(it.path) }
+            _state.update { it.copy(capturing = false) }
+            return
+        }
+        viewModelScope.launch {
+            if (photoStore.compress(target.path) <= 0L) {
+                photoStore.delete(target.path)
+                _state.update { it.copy(capturing = false, error = "Không lưu được ảnh, thử lại") }
+                return@launch
+            }
+            _state.value.photoLocalPath?.let(photoStore::delete)
+            _state.update { it.copy(capturing = false, photoLocalPath = target.path) }
+        }
+    }
+
+    fun removePhoto() {
+        _state.value.photoLocalPath?.let(photoStore::delete)
+        _state.update { it.copy(photoLocalPath = null) }
+    }
+
     fun submit() {
         val current = _state.value
         val day = current.day ?: return
@@ -148,6 +187,7 @@ class WorkDayViewModel @Inject constructor(
                     else -> null
                 },
                 reasonId = current.selectedReason?.id,
+                photoLocalPath = current.photoLocalPath,
             )
 
             val result = if (current.closing) {
@@ -158,7 +198,7 @@ class WorkDayViewModel @Inject constructor(
 
             when (result) {
                 is DataResult.Success -> _state.update {
-                    it.copy(submitting = false, finished = true)
+                    it.copy(submitting = false, finished = true, photoLocalPath = null)
                 }
 
                 // The server's own words, not a generic failure: its refusals are

@@ -58,6 +58,8 @@ import com.tinhcd.myesalessfa.domain.model.WorkDay
 import com.tinhcd.myesalessfa.domain.model.WorkDayPolicy
 import com.tinhcd.myesalessfa.domain.model.WorkDayState
 import com.tinhcd.myesalessfa.feature.checkin.prompt
+import com.tinhcd.myesalessfa.feature.photo.PhotoBlock
+import com.tinhcd.myesalessfa.feature.photo.rememberCameraCapture
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -83,6 +85,11 @@ fun WorkDayScreen(
         if (state.finished) onDone()
     }
 
+    val capturePhoto = rememberCameraCapture(
+        newTarget = { viewModel.newPhotoTarget().uri },
+        onTaken = viewModel::onPhotoTaken,
+    )
+
     WorkDayContent(
         state = state,
         onBack = onDone,
@@ -90,6 +97,8 @@ fun WorkDayScreen(
         onRefreshLocation = viewModel::refreshLocation,
         onSelectReason = viewModel::selectReason,
         onSubmit = viewModel::submit,
+        onCapturePhoto = capturePhoto,
+        onRemovePhoto = viewModel::removePhoto,
     )
 }
 
@@ -102,6 +111,8 @@ private fun WorkDayContent(
     onRefreshLocation: () -> Unit,
     onSelectReason: (ReasonCode) -> Unit,
     onSubmit: () -> Unit,
+    onCapturePhoto: () -> Unit = {},
+    onRemovePhoto: () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -146,6 +157,24 @@ private fun WorkDayContent(
                             selected = state.selectedReason,
                             onSelect = onSelectReason,
                         )
+                    }
+
+                    if (day.state != WorkDayState.CLOSED) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        ) {
+                            PhotoBlock(
+                                title = "Ảnh chấm công",
+                                path = state.photoLocalPath,
+                                required = state.policy.photoRequired,
+                                busy = state.capturing,
+                                onCapture = onCapturePhoto,
+                                onRemove = onRemovePhoto,
+                            )
+                        }
                     }
 
                     // Only ever the server's own refusal or a failed read. Both are
