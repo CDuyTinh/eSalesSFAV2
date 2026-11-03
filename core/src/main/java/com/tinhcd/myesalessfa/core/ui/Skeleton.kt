@@ -40,8 +40,10 @@ import androidx.compose.ui.unit.dp
  * Skeleton screens: grey blocks in the shape of what is coming, with a light
  * sweeping across them, in place of a spinner. The page keeps its layout while
  * it loads, so nothing jumps when the figures arrive, and the rep can see
- * what kind of screen it will be. Used where the shape is known in advance —
- * lists of cards and the overview; forms keep the spinner.
+ * what kind of screen it will be. Every page that loads before it can show
+ * anything uses one: lists of cards, details cards, forms, the map. Spinners
+ * are left for work in progress inside a page — a button waiting on the
+ * server, a GPS fix being taken.
  */
 
 /** The shimmer: a soft band moving left to right across the placeholder. */
@@ -177,6 +179,49 @@ fun SkeletonDashboard(modifier: Modifier = Modifier) {
                         SkeletonBlock(Modifier.weight(1f), height = 120.dp * h)
                     }
                 }
+            }
+        }
+    }
+}
+
+/**
+ * A form still loading: a label and an input box per field, then the button
+ * pair at the bottom — the shape of the note, feedback, survey and new
+ * customer forms.
+ */
+@Composable
+fun SkeletonForm(modifier: Modifier = Modifier, fields: Int = 4) {
+    Column(
+        modifier.fillMaxWidth().padding(16.dp).semantics { contentDescription = "Đang tải" },
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                repeat(fields) { i ->
+                    if (i > 0) Spacer(Modifier.height(4.dp))
+                    SkeletonBlock(Modifier.fillMaxWidth(if (i % 2 == 0) 0.35f else 0.5f))
+                    SkeletonBlock(Modifier.fillMaxWidth(), height = 52.dp, shape = RoundedCornerShape(10.dp))
+                }
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            repeat(2) {
+                SkeletonBlock(Modifier.weight(1f), height = 48.dp, shape = RoundedCornerShape(24.dp))
+            }
+        }
+    }
+}
+
+/** A map still loading: the whole area shimmering, a card at its foot. */
+@Composable
+fun SkeletonMap(modifier: Modifier = Modifier) {
+    Box(modifier.fillMaxSize().shimmer().semantics { contentDescription = "Đang tải" }) {
+        Card(
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(16.dp),
+        ) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                SkeletonBlock(Modifier.fillMaxWidth(0.6f), height = 18.dp)
+                SkeletonBlock(Modifier.fillMaxWidth(0.85f))
             }
         }
     }

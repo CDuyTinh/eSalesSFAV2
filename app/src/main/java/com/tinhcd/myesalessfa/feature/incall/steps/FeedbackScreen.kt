@@ -52,7 +52,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.tinhcd.myesalessfa.core.ui.ButtonPair
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
+import com.tinhcd.myesalessfa.core.ui.SkeletonForm
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.domain.model.FeedbackRecording
 
@@ -93,7 +93,7 @@ fun FeedbackScreen(
     ) { padding ->
         Box(Modifier.padding(padding)) {
             if (state.loading) {
-                LoadingBox()
+                SkeletonForm(fields = 3)
                 return@Box
             }
 

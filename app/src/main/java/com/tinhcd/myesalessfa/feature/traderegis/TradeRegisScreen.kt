@@ -54,7 +54,6 @@ import com.tinhcd.myesalessfa.core.ui.HeaderShape
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
 import com.tinhcd.myesalessfa.core.ui.Kpi
 import com.tinhcd.myesalessfa.core.ui.KpiBar
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.StatTile
 import com.tinhcd.myesalessfa.core.ui.StatusPill
@@ -417,7 +416,7 @@ private fun PickerPage(
             )
 
             if (state.pickerLoading) {
-                LoadingBox()
+                SkeletonList(count = 6, lines = 1)
             } else if (state.visibleCustomers.isEmpty()) {
                 EmptyBox("Không tìm thấy khách hàng nào")
             } else {

@@ -67,7 +67,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.tinhcd.myesalessfa.core.ui.HeaderShape
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.core.ui.theme.brand
@@ -377,7 +376,7 @@ private fun DetailPage(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             if (detail == null) {
-                LoadingBox()
+                SkeletonList(count = 4, lines = 3)
             } else {
                 LazyColumn(
                     contentPadding = PaddingValues(12.dp),
