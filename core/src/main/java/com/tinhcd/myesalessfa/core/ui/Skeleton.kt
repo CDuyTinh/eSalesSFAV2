@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -98,6 +100,33 @@ fun SkeletonList(modifier: Modifier = Modifier, count: Int = 6, lines: Int = 2) 
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         repeat(count) { SkeletonCard(lines = lines) }
+    }
+}
+
+/**
+ * A details card still loading: label on the left, value on the right, a rule
+ * between rows — the shape of a customer's Thông tin card.
+ */
+@Composable
+fun SkeletonDetailCard(modifier: Modifier = Modifier, rows: Int = 10) {
+    Card(
+        modifier.fillMaxWidth().padding(16.dp).semantics { contentDescription = "Đang tải" },
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Column(Modifier.padding(horizontal = 12.dp)) {
+            repeat(rows) { i ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp),
+                ) {
+                    SkeletonBlock(Modifier.fillMaxWidth(0.3f))
+                    Spacer(Modifier.weight(1f))
+                    // Of what the label leaves: values vary in length, so do these.
+                    SkeletonBlock(Modifier.fillMaxWidth(if (i % 3 == 0) 0.6f else 0.4f))
+                }
+                if (i < rows - 1) HorizontalDivider()
+            }
+        }
     }
 }
 
