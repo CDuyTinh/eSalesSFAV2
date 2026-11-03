@@ -136,12 +136,16 @@ fun MainShell(
     val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted && dayState == WorkDayState.OPEN) TrackingService.start(context)
     }
+    // Asked on entering the app, not only once the day opens: pushes (approvals,
+    // plans) arrive on any day, and without this they are received but never shown.
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
     LaunchedEffect(dayState) {
         when (dayState) {
             WorkDayState.OPEN -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }
                 TrackingService.start(context)
             }
             WorkDayState.CLOSED, WorkDayState.NOT_STARTED -> TrackingService.stop(context)
