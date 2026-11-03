@@ -1,5 +1,6 @@
 package com.tinhcd.myesalessfa.navigation
 
+import com.tinhcd.myesalessfa.push.FollowPushRoute
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
@@ -122,6 +123,8 @@ fun AppNavHost(
     startDestination: String,
     navController: NavHostController = rememberNavController(),
 ) {
+    FollowPushRoute(navController, Routes.SHELL, ::pushDestination)
+
     NavHost(navController = navController, startDestination = startDestination) {
 
         composable(Routes.LOGIN) {
@@ -439,4 +442,14 @@ private fun NavHostController.navigateToStop(stop: RouteStop) {
 private fun NavHostController.navigateToCustomer(stop: RouteStop) {
     val openVisit = stop.visitId.takeIf { stop.status == VisitStatus.IN_PROGRESS }
     navigate(Routes.customer(stop.customer.id, openVisit))
+}
+
+/** Where a tapped push opens; the screen names are the ones the edge functions send. */
+private fun pushDestination(screen: String): String? = when (screen) {
+    "leave" -> Routes.LEAVE
+    "new_customer" -> Routes.CUSTOMER_DOSSIER
+    "trade_regis" -> Routes.TRADE_REGIS
+    "work_plan" -> Routes.workPlans("ASSIGNED")
+    // "dashboard": the shell opens on Tổng quan already.
+    else -> null
 }

@@ -28,7 +28,7 @@ Deno.serve(handler(async (req, db) => {
   await pushToSupervisor(await currentSalespersonId(db), (name) => ({
     title: "Đăng ký chương trình chờ duyệt",
     body: `${name} gửi đăng ký POSM`,
-    screen: "approval_trade",
+    screen: "approval_trade_posm",
   }));
 
   return json({ registered });
