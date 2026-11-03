@@ -71,6 +71,10 @@ dependencies {
 
     implementation(libs.androidx.datastore.preferences)
 
+    // The FCM token, registered against whoever signs in (PushTokens).
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 

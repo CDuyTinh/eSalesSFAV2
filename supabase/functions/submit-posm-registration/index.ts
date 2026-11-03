@@ -8,7 +8,8 @@
 // approve its own request by sending a hopeful field.
 // =============================================================================
 
-import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
+import { handler, HttpError, json, unwrap, currentSalespersonId } from "../_shared/client.ts";
+import { pushToSupervisor } from "../_shared/push.ts";
 
 Deno.serve(handler(async (req, db) => {
   if (req.method !== "POST") throw new HttpError(405, "POST only");
@@ -23,6 +24,12 @@ Deno.serve(handler(async (req, db) => {
   const registered = unwrap(
     await db.rpc("submit_posm_registration", { p_payload: body }),
   );
+
+  await pushToSupervisor(await currentSalespersonId(db), (name) => ({
+    title: "Đăng ký chương trình chờ duyệt",
+    body: `${name} gửi đăng ký POSM`,
+    screen: "approval_trade",
+  }));
 
   return json({ registered });
 }));

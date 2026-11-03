@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
+import com.tinhcd.myesalessfa.push.PushNotifications
 import com.tinhcd.myesalessfa.domain.repository.ReferenceDataSync
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -16,6 +17,9 @@ class MyeSalesApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Before any push can arrive: FCM shows background ones on this channel.
+        PushNotifications.createChannel(this)
 
         /*
          * Reference data refreshes when the app comes to the foreground, which covers

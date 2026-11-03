@@ -12,6 +12,7 @@
 // =============================================================================
 
 import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
+import { push, viDate } from "../_shared/push.ts";
 
 function ruled<T>(result: { data: T | null; error: { code?: string; message: string } | null }) {
   if (result.error?.code === "P0001") throw new HttpError(409, result.error.message);
@@ -32,6 +33,11 @@ Deno.serve(handler(async (req, db) => {
     const body = await req.json().catch(() => null);
     if (!body?.salesperson_id || !body?.month) throw new HttpError(400, "salesperson_id and month are required");
     ruled(await db.rpc("mgr_targets_save", { payload: body }));
+    push([body.salesperson_id], "sfa", {
+      title: "Chỉ tiêu đã được cập nhật",
+      body: `Quản lý vừa cập nhật chỉ tiêu tháng ${viDate(body.month).slice(3)} của bạn`,
+      screen: "dashboard",
+    });
     return json({ ok: true });
   }
 

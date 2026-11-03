@@ -1096,3 +1096,10 @@ data class ShipAddressDto(
     @SerialName("tax_code") val taxCode: String? = null,
     @SerialName("is_default") val isDefault: Boolean = false,
 )
+
+@Serializable
+data class DeviceTokenDto(
+    val token: String,
+    /** "sfa": the server sends this app only what is meant for a rep. */
+    val app: String? = null,
+)

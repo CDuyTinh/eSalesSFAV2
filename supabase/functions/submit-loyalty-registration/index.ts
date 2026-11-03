@@ -8,7 +8,8 @@
 // nothing in this body can approve anything.
 // =============================================================================
 
-import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
+import { handler, HttpError, json, unwrap, currentSalespersonId } from "../_shared/client.ts";
+import { pushToSupervisor } from "../_shared/push.ts";
 
 Deno.serve(handler(async (req, db) => {
   if (req.method !== "POST") throw new HttpError(405, "POST only");
@@ -22,6 +23,12 @@ Deno.serve(handler(async (req, db) => {
   const registrationId = unwrap(
     await db.rpc("submit_loyalty_registration", { p_payload: body }),
   );
+
+  await pushToSupervisor(await currentSalespersonId(db), (name) => ({
+    title: "Đăng ký chương trình chờ duyệt",
+    body: `${name} gửi đăng ký tích luỹ`,
+    screen: "approval_trade",
+  }));
 
   return json({ loyalty_registration_id: registrationId });
 }));
