@@ -61,7 +61,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.SubcomposeAsyncImage
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
+import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.formatDong
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.core.ui.theme.brand
@@ -442,7 +442,7 @@ private fun ProgramsTab(
     onRegisterLoyalty: (programId: String, levelId: String) -> Unit,
 ) {
     when {
-        state.loading -> LoadingBox()
+        state.loading -> SkeletonList(count = 3, lines = 3)
 
         state.error != null && state.open.isEmpty() && state.joined.isEmpty() ->
             ErrorBox(state.error, onRetry = onRetry)

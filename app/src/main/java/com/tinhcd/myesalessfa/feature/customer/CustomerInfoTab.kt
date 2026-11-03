@@ -24,7 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
+import com.tinhcd.myesalessfa.core.ui.SkeletonDetailCard
 import com.tinhcd.myesalessfa.core.ui.formatDong
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.domain.model.CustomerInfo
@@ -47,7 +47,7 @@ fun CustomerInfoTab(
     val info = state.info
     Box(modifier.fillMaxSize()) {
         when {
-            state.loading -> LoadingBox()
+            state.loading -> SkeletonDetailCard()
             state.error != null -> ErrorBox(state.error, onRetry = onRetry)
             info == null -> ErrorBox("Không tìm thấy khách hàng này", onRetry = onRetry)
             else -> Column(
