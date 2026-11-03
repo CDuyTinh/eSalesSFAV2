@@ -1,5 +1,7 @@
 package com.tinhcd.myesalessfa
 
+import android.content.Intent
+import com.tinhcd.myesalessfa.push.PushRoute
 import android.os.Bundle
 import android.os.SystemClock
 import androidx.activity.ComponentActivity
@@ -56,6 +58,14 @@ private const val SPLASH_MAX_MS = 8_000L
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+    // singleTop: a notification tapped while the app is open arrives here
+    // instead of starting a second copy of the activity.
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        PushRoute.from(intent)
+    }
+
     /**
      * Owned by the activity rather than created inside setContent, because the splash
      * has to read its state from outside the composition — the keep-on-screen condition
@@ -66,6 +76,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
+        PushRoute.from(intent)
 
         val launchedAt = SystemClock.elapsedRealtime()
         splash.setKeepOnScreenCondition {
