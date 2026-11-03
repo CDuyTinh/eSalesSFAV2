@@ -69,7 +69,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
+import com.tinhcd.myesalessfa.core.ui.SkeletonDetailCard
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.core.ui.theme.brand
@@ -130,7 +130,7 @@ fun CheckInScreen(
         CheckInHeader(customer = state.customer, onClose = onDone)
 
         when {
-            state.loading -> LoadingBox()
+            state.loading -> SkeletonDetailCard(rows = 4)
             state.customer == null -> ErrorBox(
                 state.error ?: "Không tìm thấy khách hàng trong tuyến hôm nay",
             )

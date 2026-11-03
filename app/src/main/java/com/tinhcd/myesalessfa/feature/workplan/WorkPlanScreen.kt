@@ -68,7 +68,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.HeaderShape
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.core.ui.theme.brand
@@ -519,7 +518,7 @@ private fun DetailPage(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             if (detail == null) {
-                LoadingBox()
+                SkeletonList(count = 4, lines = 3)
             } else {
                 LazyColumn(
                     contentPadding = PaddingValues(12.dp),
@@ -1033,7 +1032,7 @@ private fun PickerPage(
             )
 
             if (state.pickerLoading) {
-                LoadingBox()
+                SkeletonList(count = 6, lines = 1)
             } else {
                 val chosen = state.draft.objects.map { it.targetId }.toSet()
                 LazyColumn(

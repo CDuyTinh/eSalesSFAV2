@@ -50,7 +50,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.HeaderShape
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
@@ -333,7 +332,7 @@ private fun CustomerDetail(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             if (open.loading) {
-                LoadingBox()
+                SkeletonList(count = 4)
             } else {
                 LazyColumn(
                     contentPadding = PaddingValues(16.dp),

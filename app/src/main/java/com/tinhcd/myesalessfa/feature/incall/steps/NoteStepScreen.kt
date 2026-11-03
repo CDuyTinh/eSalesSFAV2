@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.ButtonPair
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
+import com.tinhcd.myesalessfa.core.ui.SkeletonForm
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 
 @Composable
@@ -46,7 +46,7 @@ fun NoteStepScreen(
         if (state.loading) {
             // The step's own rules decide whether the note is mandatory, so the
             // form cannot be shown before they are known.
-            LoadingBox(Modifier.padding(padding))
+            SkeletonForm(Modifier.padding(padding), fields = 1)
         } else {
             NoteForm(
                 state = state,

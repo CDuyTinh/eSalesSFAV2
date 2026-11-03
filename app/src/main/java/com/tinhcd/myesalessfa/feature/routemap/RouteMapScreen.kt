@@ -53,7 +53,7 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.tinhcd.myesalessfa.core.ui.HeaderShape
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
+import com.tinhcd.myesalessfa.core.ui.SkeletonMap
 import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.RouteStop
 import com.tinhcd.myesalessfa.domain.model.VisitStatus
@@ -148,7 +148,7 @@ private fun RouteMapContent(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when {
-                state.loading -> LoadingBox()
+                state.loading -> SkeletonMap()
                 state.error != null -> ErrorBox(state.error, onRetry = onRetry)
                 state.stops.isEmpty() -> ErrorBox(
                     if (state.unmapped > 0) {

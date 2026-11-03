@@ -46,7 +46,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.ButtonPair
 import com.tinhcd.myesalessfa.core.ui.HeaderShape
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
+import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.core.ui.theme.brand
@@ -118,7 +118,7 @@ private fun WorkDayContent(
         val day = state.day
         Box(Modifier.fillMaxSize().padding(padding)) {
             when {
-                state.loading -> LoadingBox()
+                state.loading -> SkeletonList(count = 2, lines = 3)
                 day == null -> ErrorBox(
                     state.error ?: "Không tải được thông tin chấm công",
                     onRetry = onRetry,

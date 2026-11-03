@@ -36,7 +36,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.ButtonPair
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
-import com.tinhcd.myesalessfa.core.ui.LoadingBox
+import com.tinhcd.myesalessfa.core.ui.SkeletonForm
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.domain.model.AnswerType
 import com.tinhcd.myesalessfa.domain.model.DraftSurvey
@@ -87,7 +87,7 @@ fun SurveyScreen(
     ) { padding ->
         Box(Modifier.padding(padding)) {
             when {
-                state.loading -> LoadingBox()
+                state.loading -> SkeletonForm(fields = 4)
                 survey == null -> ErrorBox(
                     state.error ?: "Không có bộ câu hỏi",
                     onRetry = viewModel::load,
