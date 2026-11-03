@@ -145,6 +145,8 @@ data class VisitStepResultDto(
 /** Payload for creating a visit row. Field names match the table columns. */
 @Serializable
 data class NewVisitDto(
+    /** Chosen on the phone, so the check-in photo can be filed under it before the row exists. */
+    val id: String? = null,
     @SerialName("customer_id") val customerId: String,
     @SerialName("salesperson_id") val salespersonId: String,
     @SerialName("branch_id") val branchId: String,
@@ -156,5 +158,6 @@ data class NewVisitDto(
     @SerialName("check_in_accuracy_m") val checkInAccuracyM: Double? = null,
     @SerialName("check_in_distance_m") val checkInDistanceM: Double? = null,
     @SerialName("check_in_photo_path") val checkInPhotoPath: String? = null,
+    @SerialName("check_in_reason_id") val checkInReasonId: String? = null,
     val note: String? = null,
 )

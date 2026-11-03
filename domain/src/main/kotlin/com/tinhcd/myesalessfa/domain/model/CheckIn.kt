@@ -54,6 +54,12 @@ data class CheckInPolicy(
     val defaultRadiusM: Int,
     val maxAccuracyM: Int,
     val allowReasonWhenFar: Boolean,
+    /**
+     * A photograph of the shop front before the visit can start
+     * (`checkin_photo_required`). Off when unset: a rep stuck at the door for
+     * want of a setting is worse than a visit without its picture.
+     */
+    val photoRequired: Boolean = false,
 ) {
     companion object {
         /**

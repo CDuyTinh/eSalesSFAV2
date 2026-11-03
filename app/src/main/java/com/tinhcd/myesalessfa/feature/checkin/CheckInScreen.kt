@@ -1,5 +1,12 @@
 package com.tinhcd.myesalessfa.feature.checkin
 
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import java.io.File
+import coil3.compose.AsyncImage
 import android.Manifest
 import android.content.Intent
 import android.net.Uri
@@ -104,6 +111,13 @@ fun CheckInScreen(
         )
     }
 
+    val takePicture = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture(),
+    ) { saved -> viewModel.onPhotoTaken(saved) }
+    val cameraPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted -> if (granted) takePicture.launch(viewModel.newPhotoTarget().uri) }
+
     LaunchedEffect(state.finished) {
         if (state.finished) onDone()
     }
@@ -152,6 +166,15 @@ fun CheckInScreen(
                                     onSelect = viewModel::selectReason,
                                 )
                             }
+
+                            HorizontalDivider()
+                            PhotoBlock(
+                                path = state.photoLocalPath,
+                                required = state.photoRequired,
+                                busy = state.capturing,
+                                onCapture = { cameraPermission.launch(Manifest.permission.CAMERA) },
+                                onRemove = viewModel::removePhoto,
+                            )
 
                             HorizontalDivider()
                             NoteBlock(
@@ -592,6 +615,45 @@ private fun CheckInPreview() {
                         HorizontalDivider()
                         NoteBlock(value = "", onValueChange = {})
                     }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The shop front, taken at the door. Required when head office says so, and
+ * then the visit cannot start without it; otherwise there to be taken.
+ */
+@Composable
+private fun PhotoBlock(
+    path: String?,
+    required: Boolean,
+    busy: Boolean,
+    onCapture: () -> Unit,
+    onRemove: () -> Unit,
+) {
+    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(
+            if (required) "Ảnh mặt tiền cửa hàng (bắt buộc)" else "Ảnh mặt tiền cửa hàng",
+            style = MaterialTheme.typography.titleSmall,
+        )
+        if (path == null) {
+            OutlinedButton(onClick = onCapture, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Default.PhotoCamera, contentDescription = null)
+                Text(if (busy) "  Đang lưu ảnh…" else "  Chụp ảnh")
+            }
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                AsyncImage(
+                    model = File(path),
+                    contentDescription = "Ảnh mặt tiền",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(84.dp).clip(RoundedCornerShape(10.dp)),
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    TextButton(onClick = onCapture, enabled = !busy) { Text("Chụp lại") }
+                    TextButton(onClick = onRemove, enabled = !busy) { Text("Xoá ảnh") }
                 }
             }
         }
