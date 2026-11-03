@@ -8,7 +8,8 @@
 // spends comes out of the rep's own allocation.
 // =============================================================================
 
-import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
+import { handler, HttpError, json, unwrap, currentSalespersonId } from "../_shared/client.ts";
+import { pushToSupervisor } from "../_shared/push.ts";
 
 Deno.serve(handler(async (req, db) => {
   if (req.method !== "POST") throw new HttpError(405, "POST only");
@@ -22,6 +23,12 @@ Deno.serve(handler(async (req, db) => {
   const registrationId = unwrap(
     await db.rpc("submit_display_registration", { p_payload: body }),
   );
+
+  await pushToSupervisor(await currentSalespersonId(db), (name) => ({
+    title: "Đăng ký chương trình chờ duyệt",
+    body: `${name} gửi đăng ký trưng bày`,
+    screen: "approval_trade",
+  }));
 
   return json({ display_registration_id: registrationId });
 }));

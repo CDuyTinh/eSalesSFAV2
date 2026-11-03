@@ -4,6 +4,7 @@ import android.util.Log
 
 import com.tinhcd.myesalessfa.data.di.ApplicationScope
 import com.tinhcd.myesalessfa.data.remote.dto.SalespersonDto
+import com.tinhcd.myesalessfa.data.push.PushTokens
 import com.tinhcd.myesalessfa.data.session.SessionStore
 import com.tinhcd.myesalessfa.domain.AppError
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
@@ -58,6 +59,7 @@ class AuthRepositoryImpl @Inject constructor(
     private val client: SupabaseClient,
     private val service: BootstrapService,
     private val session: SessionStore,
+    private val pushTokens: PushTokens,
     // `@param:` keeps the qualifier on the constructor parameter, which is where
     // Dagger looks, now that the scope is also held as a property.
     @param:ApplicationScope private val scope: CoroutineScope,
@@ -228,6 +230,9 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun signOut(): DataResult<Unit> = try {
+        // While the session still exists: the server files the removal by its JWT.
+        runCatching { pushTokens.unregister() }
+        registeredFor = null
         client.auth.signOut()
         publish(SessionState.SignedOut)
         DataResult.Success(Unit)
@@ -242,8 +247,19 @@ class AuthRepositoryImpl @Inject constructor(
      */
     private fun publish(next: SessionState) {
         resolved.value = next
-        session.current.value = (next as? SessionState.SignedIn)?.rep
+        val rep = (next as? SessionState.SignedIn)?.rep
+        session.current.value = rep
+
+        // This phone receives the rep's notifications from here on. Once per
+        // rep: a profile refresh publishes again and needs no second call.
+        if (rep != null && registeredFor != rep.id) {
+            registeredFor = rep.id
+            scope.launch { runCatching { pushTokens.register() } }
+        }
     }
+
+    @Volatile
+    private var registeredFor: String? = null
 }
 
 private fun SalespersonDto.toDomain() = Salesperson(

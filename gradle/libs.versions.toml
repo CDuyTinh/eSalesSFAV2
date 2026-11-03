@@ -1,4 +1,6 @@
 [versions]
+firebaseBom = "34.0.0"
+googleServices = "4.4.3"
 agp = "9.2.1"
 kotlin = "2.2.10"
 # Highest stdlib whose metadata AGP 9.2.1's Kotlin 2.2.0 compiler can read
@@ -61,6 +63,8 @@ turbine = "1.2.1"
 mockk = "1.14.7"
 
 [libraries]
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 # --- AndroidX / Compose ---
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
@@ -131,6 +135,7 @@ turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 
 [plugins]
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 # Note: no kotlin-android entry. AGP 9 provides Kotlin for Android modules

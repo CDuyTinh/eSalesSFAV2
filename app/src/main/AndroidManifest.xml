@@ -62,6 +62,23 @@
             android:exported="false"
             android:foregroundServiceType="location" />
 
+        <!-- FCM: a rotated token, and pushes that arrive while the app is open. -->
+        <service
+            android:name=".push.SfaMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- Background pushes: shown by FCM itself, with this icon and channel. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="general" />
+
         <!--
           Lets the camera app write a photo into our own private storage. The
           camera is a separate process, so it cannot be handed a path; taking a

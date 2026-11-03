@@ -23,6 +23,7 @@
 // =============================================================================
 
 import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
+import { push } from "../_shared/push.ts";
 import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
 
 const STATUSES = ["draft", "submitted", "approved", "rejected", "completed", "cancelled"];
@@ -109,13 +110,22 @@ Deno.serve(handler(async (req, db) => {
 
     if (body.action === "assign") {
       if (!body.plan) throw new HttpError(400, "plan is required");
+      // The rep is told once, however many repeats the assignment made.
+      const assigned = (repeated: boolean) =>
+        push([body.plan!.salesperson_id as string | undefined], "sfa", {
+          title: "Kế hoạch làm việc mới",
+          body: repeated ? "Quản lý vừa giao cho bạn một kế hoạch lặp lại" : "Quản lý vừa giao cho bạn một kế hoạch",
+          screen: "work_plan",
+        });
       if (body.repeat) {
         const count = ruled(await db.rpc("mgr_assign_work_plan_repeat", {
           payload: body.plan, p_every: body.repeat.every, p_until: date(body.repeat.until) ?? null,
         }));
+        assigned(true);
         return json({ count });
       }
       const id = ruled(await db.rpc("mgr_assign_work_plan", { payload: body.plan }));
+      assigned(false);
       return json({ id });
     }
 

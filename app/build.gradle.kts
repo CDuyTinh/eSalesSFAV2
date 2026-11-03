@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    // Reads app/google-services.json (Firebase project esalesv2) for FCM.
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -51,6 +53,8 @@ android {
 }
 
 dependencies {
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
     implementation(project(":domain"))
     implementation(project(":core"))
     // :data is present only so Hilt can see the bindings in di/. Screens must

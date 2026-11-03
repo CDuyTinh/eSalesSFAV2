@@ -10,6 +10,7 @@
 // =============================================================================
 
 import { handler, HttpError, json, unwrap, currentSalespersonId } from "../_shared/client.ts";
+import { pushToSupervisor, viDate } from "../_shared/push.ts";
 
 interface CreateBody {
   leave_type_id?: string;
@@ -60,6 +61,12 @@ Deno.serve(handler(async (req, db) => {
       throw new HttpError(409, "bạn đã có đơn nghỉ trùng khoảng thời gian này");
     }
     unwrap(inserted);
+
+    await pushToSupervisor(me.id, (name) => ({
+      title: "Đơn xin nghỉ chờ duyệt",
+      body: `${name} xin nghỉ ${viDate(body.from_date!)} – ${viDate(body.to_date!)}`,
+      screen: "approval_leave",
+    }));
 
     return json({ ok: true });
   }

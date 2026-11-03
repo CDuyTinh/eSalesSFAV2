@@ -27,3 +27,7 @@ local.properties
 # Evidence for one session, not for the repo — the commit message says what they
 # showed.
 /.run/
+
+# Firebase config (project esalesv2): kept out of git like the other keys;
+# download it from the Firebase console into app/ to build.
+app/google-services.json

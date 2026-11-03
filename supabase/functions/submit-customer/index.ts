@@ -15,6 +15,7 @@
 // =============================================================================
 
 import { handler, HttpError, json, unwrap, currentSalespersonId } from "../_shared/client.ts";
+import { pushToSupervisor } from "../_shared/push.ts";
 
 interface Body {
   name?: string;
@@ -68,6 +69,12 @@ Deno.serve(handler(async (req, db) => {
       registration_note: body.note?.trim() || null,
     }).select("id,code,name"),
   ) as { id: string; code: string; name: string }[];
+
+  await pushToSupervisor(me.id, (name) => ({
+    title: "Khách hàng mới chờ duyệt",
+    body: `${name} đăng ký ${inserted[0].name}`,
+    screen: "approval_customer",
+  }));
 
   return json({ ok: true, customer: inserted[0] });
 }));

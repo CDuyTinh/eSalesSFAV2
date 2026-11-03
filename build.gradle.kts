@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.hilt) apply false
+    alias(libs.plugins.google.services) apply false
 }
 
 // AGP 9.2.1 compiles with Kotlin 2.2.0, which refuses to read class metadata

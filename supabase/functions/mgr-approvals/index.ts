@@ -17,10 +17,27 @@
 // =============================================================================
 
 import { handler, HttpError, json, unwrap } from "../_shared/client.ts";
+import { approvalOwner, push } from "../_shared/push.ts";
 import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
 
 const STATUSES = ["pending", "approved", "rejected"];
 const TRADE_KINDS = ["display", "loyalty", "posm"];
+
+/** How a decided item is named to the rep, and the SFA screen it lives on. */
+const DECIDED_LABELS: Record<string, string> = {
+  leave: "đơn xin nghỉ",
+  customer: "khách hàng mới",
+  display: "đăng ký trưng bày",
+  loyalty: "đăng ký tích luỹ",
+  posm: "đăng ký POSM",
+};
+const DECIDED_SCREENS: Record<string, string> = {
+  leave: "leave",
+  customer: "new_customer",
+  display: "trade_regis",
+  loyalty: "trade_regis",
+  posm: "trade_regis",
+};
 
 function list(value: string | null, allowed: string[]): string[] | null {
   if (!value) return null;
@@ -97,27 +114,35 @@ Deno.serve(handler(async (req, db) => {
     if (!body.id) throw new HttpError(400, "id is required");
     if (typeof body.approve !== "boolean") throw new HttpError(400, "approve is required");
 
+    let result: unknown;
     if (body.kind === "leave") {
-      return json(decided(await db.rpc("mgr_decide_leave", {
+      result = decided(await db.rpc("mgr_decide_leave", {
         p_id: body.id, p_approve: body.approve, p_note: body.note ?? null,
-      })));
-    }
-
-    if (body.kind === "customer") {
-      return json(decided(await db.rpc("mgr_decide_customer", {
+      }));
+    } else if (body.kind === "customer") {
+      result = decided(await db.rpc("mgr_decide_customer", {
         p_id: body.id, p_approve: body.approve, p_note: body.note ?? null,
         p_route_id: body.routeId ?? null,
-      })));
-    }
-
-    if (body.kind && TRADE_KINDS.includes(body.kind)) {
-      return json(decided(await db.rpc("mgr_decide_trade", {
+      }));
+    } else if (body.kind && TRADE_KINDS.includes(body.kind)) {
+      result = decided(await db.rpc("mgr_decide_trade", {
         p_kind: body.kind, p_id: body.id, p_approve: body.approve,
         p_note: body.note ?? null, p_approved_qty: body.approvedQty ?? null,
-      })));
+      }));
+    } else {
+      throw new HttpError(400, `unknown kind: ${body.kind}`);
     }
 
-    throw new HttpError(400, `unknown kind: ${body.kind}`);
+    // The rep hears the answer on their phone, with the reason when refused.
+    const kind = body.kind!;
+    const what = DECIDED_LABELS[kind];
+    push([await approvalOwner(kind, body.id)], "sfa", {
+      title: body.approve ? `Đã duyệt ${what}` : `Bị từ chối ${what}`,
+      body: body.note?.trim() || (body.approve ? `Quản lý đã duyệt ${what} của bạn` : `Quản lý đã từ chối ${what} của bạn`),
+      screen: DECIDED_SCREENS[kind],
+    });
+
+    return json(result);
   }
 
   throw new HttpError(405, "GET or POST only");
