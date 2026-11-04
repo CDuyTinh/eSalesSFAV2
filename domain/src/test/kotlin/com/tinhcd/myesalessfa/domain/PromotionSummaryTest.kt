@@ -2,6 +2,8 @@ package com.tinhcd.myesalessfa.domain
 
 import com.tinhcd.myesalessfa.domain.model.AppliedManualPromotion
 import com.tinhcd.myesalessfa.domain.model.EarnedPromotion
+import com.tinhcd.myesalessfa.domain.model.DisplayRewardDue
+import com.tinhcd.myesalessfa.domain.model.DisplayRewardType
 import com.tinhcd.myesalessfa.domain.model.LevelCapCut
 import com.tinhcd.myesalessfa.domain.model.ManualPromotion
 import com.tinhcd.myesalessfa.domain.model.ManualPromotionItem
@@ -295,5 +297,26 @@ class PromotionSummaryTest {
         val picked = PromotionSummary(earned = listOf(groupPct, groupGift)).withProposalPick("g1", "gift")
         assertEquals(mapOf("g1" to "gift"), picked.prunedTo(listOf(groupPct, groupGift)).proposalPicks)
         assertTrue(picked.prunedTo(listOf(groupPct)).proposalPicks.isEmpty())
+    }
+
+    private val money = DisplayRewardDue("r1", "TB2609", "M2", DisplayRewardType.AMOUNT, amountLeft = 700_000)
+    private val pct = DisplayRewardDue("r2", "TB2610", "M1", DisplayRewardType.PERCENT, percent = 2.0)
+    private val goods = DisplayRewardDue("r3", "TBQ", "CB", DisplayRewardType.GOODS, qtyLeft = 2)
+
+    @Test
+    fun `display rewards take off only what is paid on this order`() {
+        val summary = PromotionSummary(displayRewards = listOf(money, pct, goods))
+        assertEquals(0L, summary.displayRewardDiscountOn(5_000_000))
+        val paid = summary.withDisplayReward("r1", true).withDisplayReward("r2", true).withDisplayReward("r3", true)
+        // The money still due, 2 % of the goods sold, and nothing for goods.
+        assertEquals(800_000L, paid.displayRewardDiscountOn(5_000_000))
+        assertEquals(100_000L, paid.withDisplayReward("r1", false).displayRewardDiscountOn(5_000_000))
+    }
+
+    @Test
+    fun `a paid display reward is dropped once it is no longer due`() {
+        val paid = PromotionSummary(displayRewards = listOf(money, pct)).withDisplayReward("r1", true)
+        assertEquals(setOf("r1"), paid.prunedTo(emptyList()).paidDisplayRewards)
+        assertTrue(paid.prunedTo(emptyList(), freshDisplayRewards = listOf(pct)).paidDisplayRewards.isEmpty())
     }
 }

@@ -644,6 +644,7 @@ class TakeOrderViewModel @Inject constructor(
                                 r.data.suggestions,
                                 r.data.outOfBudget,
                                 r.data.levelCaps,
+                                r.data.displayRewards,
                             ),
                         ),
                     )
@@ -674,6 +675,11 @@ class TakeOrderViewModel @Inject constructor(
                 ),
             ),
         )
+    }
+
+    /** Pays a display reward on this order, or takes it back off. */
+    fun onDisplayReward(rewardId: String, paid: Boolean) = _state.update {
+        it.copy(order = it.order.copy(promotions = it.order.promotions.withDisplayReward(rewardId, paid)))
     }
 
     fun onRemoveManualPromotion(promotionId: String) = _state.update {

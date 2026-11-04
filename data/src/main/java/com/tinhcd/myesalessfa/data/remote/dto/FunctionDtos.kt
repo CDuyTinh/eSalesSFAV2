@@ -757,6 +757,9 @@ data class PromotionsDto(
     /** Levels paid less than they earned (OM10100LevelCap). */
     @SerialName("level_caps")
     val levelCaps: List<LevelCapDto> = emptyList(),
+    /** Trả thưởng trưng bày still due to the outlet (display_rewards_due). */
+    @SerialName("display_rewards")
+    val displayRewards: List<DisplayRewardDueDto> = emptyList(),
 )
 
 @Serializable
@@ -766,6 +769,19 @@ data class OutOfBudgetDto(
     @SerialName("sequence_name") val sequenceName: String = "",
     @SerialName("break_name") val breakName: String = "",
     @SerialName("budget_name") val budgetName: String = "",
+)
+
+@Serializable
+data class DisplayRewardDueDto(
+    @SerialName("reward_id") val rewardId: String,
+    @SerialName("program_name") val programName: String = "",
+    @SerialName("level_name") val levelName: String = "",
+    @SerialName("reward_type") val rewardType: String = "amount",
+    @SerialName("amount_left") val amountLeft: Long = 0,
+    val percent: Double = 0.0,
+    @SerialName("product_name") val productName: String? = null,
+    @SerialName("uom_name") val uomName: String? = null,
+    @SerialName("qty_left") val qtyLeft: Int = 0,
 )
 
 @Serializable

@@ -191,7 +191,8 @@ data class DraftOrder(
 
     /** Money off, as the rep has chosen it. See [PromotionSummary.totalDiscount]. */
     val discountAmount: Long
-        get() = promotions.totalDiscount + promotions.manualDiscountOn(subTotal)
+        get() = promotions.totalDiscount + promotions.manualDiscountOn(subTotal) +
+            promotions.displayRewardDiscountOn(subTotal)
 
     /**
      * What the customer owes. The discount comes off the total rather than the

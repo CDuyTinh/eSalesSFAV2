@@ -30,6 +30,7 @@ const DECIDED_LABELS: Record<string, string> = {
   display: "đăng ký trưng bày",
   loyalty: "đăng ký tích luỹ",
   posm: "đăng ký POSM",
+  display_result: "thưởng trưng bày",
 };
 const DECIDED_SCREENS: Record<string, string> = {
   leave: "leave",
@@ -37,6 +38,7 @@ const DECIDED_SCREENS: Record<string, string> = {
   display: "trade_regis",
   loyalty: "trade_regis",
   posm: "trade_regis",
+  display_result: "trade_regis",
 };
 
 function list(value: string | null, allowed: string[]): string[] | null {
@@ -106,6 +108,14 @@ Deno.serve(handler(async (req, db) => {
       })));
     }
 
+    // Kết quả trưng bày: approved registrations awaiting (decided=false) or
+    // past (decided=true) the reward decision.
+    if (kind === "display_result") {
+      return json(unwrap(await db.rpc("mgr_display_results", {
+        p_decided: params.get("decided") === "true",
+      })));
+    }
+
     throw new HttpError(400, `unknown kind: ${kind}`);
   }
 
@@ -123,6 +133,10 @@ Deno.serve(handler(async (req, db) => {
       result = decided(await db.rpc("mgr_decide_customer", {
         p_id: body.id, p_approve: body.approve, p_note: body.note ?? null,
         p_route_id: body.routeId ?? null,
+      }));
+    } else if (body.kind === "display_result") {
+      result = decided(await db.rpc("mgr_decide_display_reward", {
+        p_registration_id: body.id, p_approve: body.approve, p_note: body.note ?? null,
       }));
     } else if (body.kind && TRADE_KINDS.includes(body.kind)) {
       result = decided(await db.rpc("mgr_decide_trade", {

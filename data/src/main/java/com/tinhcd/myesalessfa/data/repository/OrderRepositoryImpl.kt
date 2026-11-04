@@ -6,6 +6,7 @@ import com.tinhcd.myesalessfa.data.remote.dto.OrderLinePayload
 import com.tinhcd.myesalessfa.data.remote.dto.OrderManualPromotionPayload
 import com.tinhcd.myesalessfa.data.remote.dto.OrderPayload
 import com.tinhcd.myesalessfa.data.remote.dto.OrderPromotionChoicePayload
+import com.tinhcd.myesalessfa.data.remote.dto.OrderDisplayRewardPayload
 import com.tinhcd.myesalessfa.data.remote.dto.PromotionsLineDto
 import com.tinhcd.myesalessfa.data.remote.dto.PromotionsRequest
 import com.tinhcd.myesalessfa.data.remote.http.orThrow
@@ -19,6 +20,8 @@ import com.tinhcd.myesalessfa.domain.model.ManualPromotionItem
 import com.tinhcd.myesalessfa.domain.model.ManualPromotionType
 import com.tinhcd.myesalessfa.domain.model.OutOfBudgetPromotion
 import com.tinhcd.myesalessfa.domain.model.LevelCapCut
+import com.tinhcd.myesalessfa.domain.model.DisplayRewardDue
+import com.tinhcd.myesalessfa.domain.model.DisplayRewardType
 import com.tinhcd.myesalessfa.domain.model.PromotionGift
 import com.tinhcd.myesalessfa.domain.model.PromotionReward
 import com.tinhcd.myesalessfa.domain.model.PromotionScope
@@ -100,6 +103,7 @@ class OrderRepositoryImpl @Inject constructor(
                 // CTKM lựa chọn: the rule taken in each group, so the server runs
                 // that one alone and books it.
                 proposalPicks = order.promotions.takenInGroups,
+                displayRewards = order.promotions.paidDisplayRewards.map { OrderDisplayRewardPayload(it) },
                 // What the rep gave by hand. The server reads each entry's own
                 // value from the catalogue; only an editable one honours a number.
                 manualPromotions = order.promotions.appliedManual.values.map { applied ->
@@ -191,6 +195,19 @@ class OrderRepositoryImpl @Inject constructor(
                         sequenceName = o.sequenceName,
                         budgetName = o.budgetName,
                         breakName = o.breakName,
+                    )
+                },
+                displayRewards = body.displayRewards.map { d ->
+                    DisplayRewardDue(
+                        rewardId = d.rewardId,
+                        programName = d.programName,
+                        levelName = d.levelName,
+                        type = DisplayRewardType.fromWire(d.rewardType),
+                        amountLeft = d.amountLeft,
+                        percent = d.percent,
+                        productName = d.productName,
+                        uomName = d.uomName,
+                        qtyLeft = d.qtyLeft,
                     )
                 },
                 levelCaps = body.levelCaps.map { c ->

@@ -141,6 +141,9 @@ data class PromotionSummary(
     val choices: Map<String, PromotionChoice> = emptyMap(),
     /** "CTKM lựa chọn": the rule the rep took, by group. */
     val proposalPicks: Map<String, String> = emptyMap(),
+    /** Trả thưởng trưng bày due to the outlet, and the ones paid on this order. */
+    val displayRewards: List<DisplayRewardDue> = emptyList(),
+    val paidDisplayRewards: Set<String> = emptySet(),
 ) {
     val isEmpty: Boolean get() = earned.isEmpty()
 
@@ -163,6 +166,23 @@ data class PromotionSummary(
 
     fun withProposalPick(proposalId: String, sequenceId: String): PromotionSummary =
         copy(proposalPicks = proposalPicks + (proposalId to sequenceId))
+
+    fun withDisplayReward(rewardId: String, paid: Boolean): PromotionSummary =
+        copy(paidDisplayRewards = if (paid) paidDisplayRewards + rewardId else paidDisplayRewards - rewardId)
+
+    /**
+     * What the display rewards being paid take off, against the goods sold:
+     * the money still due, or the percentage of [gross]. Goods take nothing.
+     */
+    fun displayRewardDiscountOn(gross: Long): Long = displayRewards
+        .filter { it.rewardId in paidDisplayRewards }
+        .sumOf {
+            when (it.type) {
+                DisplayRewardType.AMOUNT -> it.amountLeft
+                DisplayRewardType.PERCENT -> Math.round(gross * it.percent / 100)
+                DisplayRewardType.GOODS -> 0L
+            }
+        }
 
     /** Rules still waiting on the rep. The order can be sent without answering. */
     val undecided: List<EarnedPromotion>
@@ -239,6 +259,7 @@ data class PromotionSummary(
         freshSuggestions: List<PromotionSuggestion> = emptyList(),
         freshOutOfBudget: List<OutOfBudgetPromotion> = emptyList(),
         freshLevelCaps: List<LevelCapCut> = emptyList(),
+        freshDisplayRewards: List<DisplayRewardDue> = displayRewards,
     ): PromotionSummary {
         val live = fresh.map { it.sequenceId }.toSet()
         return copy(
@@ -246,6 +267,8 @@ data class PromotionSummary(
             suggestions = freshSuggestions,
             outOfBudget = freshOutOfBudget,
             levelCaps = freshLevelCaps,
+            displayRewards = freshDisplayRewards,
+            paidDisplayRewards = paidDisplayRewards.filter { id -> freshDisplayRewards.any { it.rewardId == id } }.toSet(),
             choices = choices.filterKeys { it in live },
             // A pick stands while its rule is still on offer in that group.
             proposalPicks = proposalPicks.filter { (group, seq) ->
@@ -392,3 +415,27 @@ data class LevelCapCut(
     val fullyCut: Boolean
         get() = (grantedLots ?: 1) == 0 || grantedAmount == 0L
 }
+
+enum class DisplayRewardType(val wireValue: String) {
+    AMOUNT("amount"), PERCENT("percent"), GOODS("goods");
+
+    companion object {
+        fun fromWire(value: String): DisplayRewardType = entries.firstOrNull { it.wireValue == value } ?: AMOUNT
+    }
+}
+
+/**
+ * A display programme's reward still due to the outlet (Trả thưởng trưng bày):
+ * money left to pay, a percentage of one order, or goods left to give.
+ */
+data class DisplayRewardDue(
+    val rewardId: String,
+    val programName: String,
+    val levelName: String,
+    val type: DisplayRewardType,
+    val amountLeft: Long = 0,
+    val percent: Double = 0.0,
+    val productName: String? = null,
+    val uomName: String? = null,
+    val qtyLeft: Int = 0,
+)

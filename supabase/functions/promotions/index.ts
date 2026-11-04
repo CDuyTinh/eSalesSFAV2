@@ -48,7 +48,7 @@ Deno.serve(handler(async (req, db) => {
 
   // Two questions about one basket, asked together because the screen asks them
   // together: what has this earned, and what would one more case earn.
-  const [earned, suggestions] = await Promise.all([
+  const [earned, suggestions, rewards] = await Promise.all([
     db.rpc("calculate_promotions", {
       p_customer_id: customerId,
       p_lines: clean,
@@ -57,10 +57,14 @@ Deno.serve(handler(async (req, db) => {
       p_customer_id: customerId,
       p_lines: clean,
     }),
+    // Trả thưởng trưng bày still due to this outlet, which the rep may pay
+    // on this order.
+    db.rpc("display_rewards_due", { p_customer_id: customerId }),
   ]);
 
   return json({
     ...(unwrap(earned) as Record<string, unknown>),
     suggestions: unwrap(suggestions),
+    display_rewards: unwrap(rewards),
   });
 }));

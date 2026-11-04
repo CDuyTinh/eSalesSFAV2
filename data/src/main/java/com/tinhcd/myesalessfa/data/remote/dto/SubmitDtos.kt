@@ -28,6 +28,9 @@ data class OrderPayload(
      * really offers and nothing more.
      */
     val promotions: List<OrderPromotionChoicePayload> = emptyList(),
+    /** Trả thưởng trưng bày paid on this order, valued by the server. */
+    @SerialName("display_rewards")
+    val displayRewards: List<OrderDisplayRewardPayload> = emptyList(),
     /** "CTKM lựa chọn": the sequence taken in each group. */
     @SerialName("proposal_picks")
     val proposalPicks: List<String> = emptyList(),
@@ -45,6 +48,11 @@ data class OrderPromotionChoicePayload(
     @SerialName("take_amount") val takeAmount: Boolean = true,
     @SerialName("free_product_id") val freeProductId: String? = null,
     @SerialName("free_uom_code") val freeUomCode: String? = null,
+)
+
+@Serializable
+data class OrderDisplayRewardPayload(
+    @SerialName("reward_id") val rewardId: String,
 )
 
 @Serializable
