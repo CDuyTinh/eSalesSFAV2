@@ -148,4 +148,19 @@ class OrderMoneyTest {
         assertEquals(0, order.quantityOf("coca", "CASE"))
         assertEquals(1, order.quantityOf("aqua", "CASE"))
     }
+
+    @Test
+    fun `cases count every unit in cases, a product with no case unit as its own`() {
+        // 6 pieces of a 24-piece case and 1 case of another product: 1.25 cases;
+        // 3 of a product with no case unit count as 3.
+        val order = DraftOrder(visitId = "v1", customerId = "c1", id = "o1").copy(
+            lines = listOf(
+                line(qty = 6, unitPrice = 10_000, conversionRate = 1, productId = "p1", uomCode = "PCS"),
+                line(qty = 1, unitPrice = 10_000, conversionRate = 24, productId = "p2"),
+                line(qty = 3, unitPrice = 10_000, conversionRate = 1, productId = "p3", uomCode = "PCS"),
+            ),
+        )
+        val caseRate = mapOf("p1" to 24, "p2" to 24)
+        assertEquals(4.25, order.cartons { caseRate[it] }, 1e-9)
+    }
 }

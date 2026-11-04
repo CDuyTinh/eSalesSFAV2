@@ -35,6 +35,9 @@ interface ConfigRepository {
      */
     suspend fun stepPrerequisites(): Map<String, String>
 
+    /** The fewest cases an order may sell (`min_order_carton_qty`, 0.5 unless set). */
+    suspend fun minOrderCartons(): Double
+
     /** Pulls settings, reason codes, workflow steps and translations locally. */
     suspend fun refresh(): DataResult<Unit>
 }

@@ -145,6 +145,9 @@ class ConfigRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun minOrderCartons(): Double =
+        dao.setting(KEY_MIN_ORDER_CARTONS)?.trim()?.toDoubleOrNull()?.takeIf { it > 0 } ?: 0.5
+
     override suspend fun updatePolicy(): AppUpdatePolicy = AppUpdatePolicy(
         latestCode = dao.setting(KEY_VERSION_LATEST)?.trim()?.toIntOrNull(),
         minCode = dao.setting(KEY_VERSION_MIN)?.trim()?.toIntOrNull(),
@@ -228,6 +231,7 @@ class ConfigRepositoryImpl @Inject constructor(
         const val KEY_LATE_AFTER = "checkin_late_after"
         const val KEY_CHECKIN_PHOTO = "checkin_photo_required"
         const val KEY_CHECKOUT_PHOTO = "checkout_photo_required"
+        const val KEY_MIN_ORDER_CARTONS = "min_order_carton_qty"
         const val KEY_TIMEKEEPING_PHOTO = "timekeeping_photo_required"
         const val KEY_VERSION_LATEST = "sfa_version_latest"
         const val KEY_VERSION_MIN = "sfa_version_min"
