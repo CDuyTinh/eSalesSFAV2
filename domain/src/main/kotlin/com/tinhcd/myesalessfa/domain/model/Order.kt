@@ -212,6 +212,16 @@ data class DraftOrder(
     val canSubmit: Boolean get() = lines.isNotEmpty()
 
     /**
+     * What the order sells counted in cases (OM10100 BUG-2026-74458), given
+     * each product's case size in base units. A product with no case unit
+     * counts its base unit as the case, as the BA ruled.
+     */
+    fun cartons(caseRate: (productId: String) -> Int?): Double =
+        lines.sumOf { line ->
+            line.baseQty.toDouble() / (caseRate(line.productId)?.takeIf { it > 0 } ?: 1)
+        }
+
+    /**
      * Base units of one product across every unit it was ordered in.
      *
      * A product can hold two lines — a case and a few loose pieces — so a caller

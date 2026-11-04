@@ -19,6 +19,7 @@ import com.tinhcd.myesalessfa.domain.model.browse
 import com.tinhcd.myesalessfa.domain.model.categoryNames
 import com.tinhcd.myesalessfa.domain.model.toCartLines
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository
+import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
 import com.tinhcd.myesalessfa.domain.repository.SiteStockRepository
 import com.tinhcd.myesalessfa.domain.usecase.GetOrderSuggestionsUseCase
 import com.tinhcd.myesalessfa.domain.usecase.GetVisitCatalogueUseCase
@@ -191,7 +192,15 @@ class TakeOrderViewModel @Inject constructor(
     private val getOrderSuggestions: GetOrderSuggestionsUseCase,
     private val siteStockRepository: SiteStockRepository,
     private val orderRepository: OrderRepository,
+    private val configRepository: ConfigRepository,
 ) : ViewModel() {
+
+    /** min_order_carton_qty; the server holds the same line in submit_order. */
+    private var minCartons = 0.5
+
+    init {
+        viewModelScope.launch { minCartons = configRepository.minOrderCartons() }
+    }
 
     private val visitId: String = checkNotNull(savedStateHandle["visitId"])
     private val customerId: String = checkNotNull(savedStateHandle["customerId"])
@@ -351,6 +360,20 @@ class TakeOrderViewModel @Inject constructor(
                 it.copy(
                     error = "Sản phẩm chưa có giá, bỏ khỏi giỏ hàng trước khi gửi: " +
                         unpriced.joinToString { line -> line.productName },
+                )
+            }
+            return
+        }
+
+        // Đơn tối thiểu theo thùng (OM10100 BUG-2026-74458): said before the
+        // confirmation page, while the rep can still add to the basket.
+        val cartons = current.order.cartons { id ->
+            current.product(id)?.units?.firstOrNull { it.unit.uomCode == "CASE" }?.unit?.conversionRate
+        }
+        if (cartons < minCartons - 1e-9) {
+            _state.update {
+                it.copy(
+                    error = "Đơn hàng phải đạt tối thiểu ${cases(minCartons)} thùng (hiện có ${cases(cartons)} thùng)",
                 )
             }
             return
@@ -688,3 +711,7 @@ class TakeOrderViewModel @Inject constructor(
         vatBasisPoints = product.product.vatBasisPoints,
     )
 }
+
+/** 0.5 -> "0,5", 2.0 -> "2": a case count as the rep reads it. */
+private fun cases(value: Double): String =
+    java.text.DecimalFormat("#,##0.##", java.text.DecimalFormatSymbols(java.util.Locale("vi", "VN"))).format(value)
