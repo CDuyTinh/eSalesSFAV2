@@ -2,6 +2,7 @@ package com.tinhcd.myesalessfa.domain
 
 import com.tinhcd.myesalessfa.domain.model.AppliedManualPromotion
 import com.tinhcd.myesalessfa.domain.model.EarnedPromotion
+import com.tinhcd.myesalessfa.domain.model.LevelCapCut
 import com.tinhcd.myesalessfa.domain.model.ManualPromotion
 import com.tinhcd.myesalessfa.domain.model.ManualPromotionItem
 import com.tinhcd.myesalessfa.domain.model.ManualPromotionType
@@ -239,5 +240,33 @@ class PromotionSummaryTest {
         assertTrue(oreo.copy(qty = 50).isShort)
         // Exactly enough is enough.
         assertFalse(oreo.copy(qty = 20).isShort)
+    }
+
+    private val cut = LevelCapCut(
+        sequenceId = "s1", breakId = "b10", programName = "Mua NGK", breakName = "Mua 10 thùng",
+        requestedLots = 2, grantedLots = 1, outOfQuota = true, outOfStock = true,
+    )
+
+    @Test
+    fun `a cut level names every limit that cut it`() {
+        assertEquals("hết suất của khách hàng, không đủ hàng tặng", cut.reasons)
+        assertEquals("hết ngân sách", cut.copy(outOfQuota = false, outOfStock = false, outOfBudget = true).reasons)
+    }
+
+    @Test
+    fun `a level is fully cut only when nothing was paid`() {
+        assertFalse(cut.fullyCut)
+        assertTrue(cut.copy(grantedLots = 0).fullyCut)
+        // A percentage paid down to part of its amount still pays.
+        val pct = LevelCapCut("s2", "b1", "CK", "Từ 2tr", requestedAmount = 60_000, grantedAmount = 25_000, outOfBudget = true)
+        assertFalse(pct.fullyCut)
+        assertTrue(pct.copy(grantedAmount = 0).fullyCut)
+    }
+
+    @Test
+    fun `a fresh answer replaces the cut levels`() {
+        val before = PromotionSummary(levelCaps = listOf(cut))
+        assertEquals(emptyList<LevelCapCut>(), before.prunedTo(fresh = emptyList()).levelCaps)
+        assertEquals(listOf(cut), PromotionSummary().prunedTo(fresh = emptyList(), freshLevelCaps = listOf(cut)).levelCaps)
     }
 }

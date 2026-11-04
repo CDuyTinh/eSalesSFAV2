@@ -784,31 +784,28 @@ private fun ConfirmPage(
                 }
             }
 
-            if (state.order.promotions.outOfBudget.isNotEmpty()) {
+            // Levels the cap cut. A level cut to nothing by its budget is also an
+            // out-of-budget entry; it is said once, here, with the reason.
+            val caps = state.order.promotions.levelCaps
+            items(caps, key = { "cap-" + it.sequenceId + it.breakId }) { cap ->
+                PromotionNote(
+                    if (cap.requestedAmount != null) {
+                        "${cap.programName} – ${cap.breakName}: giảm ${formatDong(cap.grantedAmount ?: 0)} thay vì ${formatDong(cap.requestedAmount ?: 0)} (${cap.reasons})"
+                    } else {
+                        "${cap.programName} – ${cap.breakName}: được ${cap.grantedLots ?: 0}/${cap.requestedLots ?: 0} suất (${cap.reasons})"
+                    },
+                )
+            }
+
+            val overs = state.order.promotions.outOfBudget.filter { over ->
+                caps.none { it.sequenceId == over.sequenceId && it.breakName == over.breakName && it.outOfBudget }
+            }
+            if (overs.isNotEmpty()) {
                 items(
-                    state.order.promotions.outOfBudget,
-                    key = { "budget-" + it.sequenceId },
+                    overs,
+                    key = { "budget-" + it.sequenceId + it.breakName },
                 ) { over ->
-                    // Not a card: this is the absence of a promotion, and giving
-                    // it the same weight as one the customer has actually won
-                    // would read as though they had won it.
-                    Row(
-                        verticalAlignment = Alignment.Top,
-                        modifier = Modifier.padding(horizontal = 2.dp),
-                    ) {
-                        Icon(
-                            Icons.Default.Info,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.outline,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "${over.programName} không áp dụng được: đã hết ngân sách",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+                    PromotionNote("${over.programName} không áp dụng được: đã hết ngân sách")
                 }
             }
 
@@ -1652,5 +1649,31 @@ private fun ShipAddressRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+/**
+ * A line under the promotions about one that is not paid in full. Not a card:
+ * this is the absence of a promotion, and giving it the same weight as one the
+ * customer has actually won would read as though they had won it.
+ */
+@Composable
+private fun PromotionNote(text: String) {
+    Row(
+        verticalAlignment = Alignment.Top,
+        modifier = Modifier.padding(horizontal = 2.dp),
+    ) {
+        Icon(
+            Icons.Default.Info,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.outline,
+            modifier = Modifier.size(16.dp),
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }

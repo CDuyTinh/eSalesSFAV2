@@ -620,6 +620,7 @@ class TakeOrderViewModel @Inject constructor(
                                 r.data.earned,
                                 r.data.suggestions,
                                 r.data.outOfBudget,
+                                r.data.levelCaps,
                             ),
                         ),
                     )

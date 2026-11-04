@@ -18,6 +18,7 @@ import com.tinhcd.myesalessfa.domain.model.ManualPromotion
 import com.tinhcd.myesalessfa.domain.model.ManualPromotionItem
 import com.tinhcd.myesalessfa.domain.model.ManualPromotionType
 import com.tinhcd.myesalessfa.domain.model.OutOfBudgetPromotion
+import com.tinhcd.myesalessfa.domain.model.LevelCapCut
 import com.tinhcd.myesalessfa.domain.model.PromotionGift
 import com.tinhcd.myesalessfa.domain.model.PromotionReward
 import com.tinhcd.myesalessfa.domain.model.PromotionScope
@@ -182,6 +183,22 @@ class OrderRepositoryImpl @Inject constructor(
                         programName = o.programName,
                         sequenceName = o.sequenceName,
                         budgetName = o.budgetName,
+                        breakName = o.breakName,
+                    )
+                },
+                levelCaps = body.levelCaps.map { c ->
+                    LevelCapCut(
+                        sequenceId = c.sequenceId,
+                        breakId = c.breakId,
+                        programName = c.programName,
+                        breakName = c.breakName,
+                        requestedLots = c.requestedLots,
+                        grantedLots = c.grantedLots,
+                        requestedAmount = c.requestedAmount?.toLong(),
+                        grantedAmount = c.grantedAmount?.toLong(),
+                        outOfQuota = c.outOfQuota,
+                        outOfBudget = c.outOfBudget,
+                        outOfStock = c.outOfStock,
                     )
                 },
                 suggestions = body.suggestions.map { s ->

@@ -754,6 +754,9 @@ data class PromotionsDto(
     val suggestions: List<PromotionSuggestionDto> = emptyList(),
     @SerialName("out_of_budget")
     val outOfBudget: List<OutOfBudgetDto> = emptyList(),
+    /** Levels paid less than they earned (OM10100LevelCap). */
+    @SerialName("level_caps")
+    val levelCaps: List<LevelCapDto> = emptyList(),
 )
 
 @Serializable
@@ -761,7 +764,24 @@ data class OutOfBudgetDto(
     @SerialName("sequence_id") val sequenceId: String,
     @SerialName("program_name") val programName: String = "",
     @SerialName("sequence_name") val sequenceName: String = "",
+    @SerialName("break_name") val breakName: String = "",
     @SerialName("budget_name") val budgetName: String = "",
+)
+
+@Serializable
+data class LevelCapDto(
+    @SerialName("sequence_id") val sequenceId: String,
+    @SerialName("program_name") val programName: String = "",
+    @SerialName("break_id") val breakId: String = "",
+    @SerialName("break_name") val breakName: String = "",
+    @SerialName("requested_lots") val requestedLots: Int? = null,
+    @SerialName("granted_lots") val grantedLots: Int? = null,
+    /** A percentage the budget paid down: money rather than lots. */
+    @SerialName("requested_amount") val requestedAmount: Double? = null,
+    @SerialName("granted_amount") val grantedAmount: Double? = null,
+    @SerialName("out_of_quota") val outOfQuota: Boolean = false,
+    @SerialName("out_of_budget") val outOfBudget: Boolean = false,
+    @SerialName("out_of_stock") val outOfStock: Boolean = false,
 )
 
 @Serializable
