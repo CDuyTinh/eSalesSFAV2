@@ -123,6 +123,8 @@ data class PromotionSummary(
     val suggestions: List<PromotionSuggestion> = emptyList(),
     /** Rules a budget could not pay for. Advice about why, not money. */
     val outOfBudget: List<OutOfBudgetPromotion> = emptyList(),
+    /** Levels paid less than they earned, and why (OM10100LevelCap). */
+    val levelCaps: List<LevelCapCut> = emptyList(),
     /** Discounts the rep may apply by hand here. Loaded once, not per keystroke. */
     val manualCatalogue: List<ManualPromotion> = emptyList(),
     /** The ones they have applied, by catalogue id. */
@@ -205,12 +207,14 @@ data class PromotionSummary(
         fresh: List<EarnedPromotion>,
         freshSuggestions: List<PromotionSuggestion> = emptyList(),
         freshOutOfBudget: List<OutOfBudgetPromotion> = emptyList(),
+        freshLevelCaps: List<LevelCapCut> = emptyList(),
     ): PromotionSummary {
         val live = fresh.map { it.sequenceId }.toSet()
         return copy(
             earned = fresh,
             suggestions = freshSuggestions,
             outOfBudget = freshOutOfBudget,
+            levelCaps = freshLevelCaps,
             choices = choices.filterKeys { it in live },
         )
     }
@@ -317,4 +321,39 @@ data class OutOfBudgetPromotion(
     val programName: String,
     val sequenceName: String,
     val budgetName: String,
+    val breakName: String = "",
 )
+
+/**
+ * A level that paid less than the basket earned (OM10100LevelCap): the outlet
+ * has used up its lots at that level, the budget cannot pay more, or the depot
+ * has not got the gifts. What the level did not use of the basket has already
+ * gone to the levels below it, which is why this is a note and not an error.
+ */
+data class LevelCapCut(
+    val sequenceId: String,
+    val breakId: String,
+    val programName: String,
+    val breakName: String,
+    /** Lots, for a level counted in lots. */
+    val requestedLots: Int? = null,
+    val grantedLots: Int? = null,
+    /** Money, for a percentage an amount budget paid down. */
+    val requestedAmount: Long? = null,
+    val grantedAmount: Long? = null,
+    val outOfQuota: Boolean = false,
+    val outOfBudget: Boolean = false,
+    val outOfStock: Boolean = false,
+) {
+    /** "hết suất của khách hàng, hết ngân sách" — which limits did the cutting. */
+    val reasons: String
+        get() = listOfNotNull(
+            "hết suất của khách hàng".takeIf { outOfQuota },
+            "hết ngân sách".takeIf { outOfBudget },
+            "không đủ hàng tặng".takeIf { outOfStock },
+        ).joinToString(", ")
+
+    /** Nothing at all was paid at this level. */
+    val fullyCut: Boolean
+        get() = (grantedLots ?: 1) == 0 || grantedAmount == 0L
+}
