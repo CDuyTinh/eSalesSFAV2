@@ -85,6 +85,15 @@ data class EarnedPromotion(
     /** True when the rep still has something to decide. */
     val needsChoice: Boolean,
     val gifts: List<PromotionGift>,
+    /**
+     * The "CTKM lựa chọn" group this rule belongs to: an order takes one rule
+     * of each group. Null for a rule that stands alone.
+     */
+    val proposalId: String? = null,
+    val proposalName: String? = null,
+    val proposalDescr: String? = null,
+    /** The server's pick in its group, when the rep has not made one. */
+    val isDefault: Boolean = true,
 ) {
     val isGoods: Boolean
         get() = reward == PromotionReward.FREE_ITEM ||
@@ -130,12 +139,34 @@ data class PromotionSummary(
     /** The ones they have applied, by catalogue id. */
     val appliedManual: Map<String, AppliedManualPromotion> = emptyMap(),
     val choices: Map<String, PromotionChoice> = emptyMap(),
+    /** "CTKM lựa chọn": the rule the rep took, by group. */
+    val proposalPicks: Map<String, String> = emptyMap(),
 ) {
     val isEmpty: Boolean get() = earned.isEmpty()
 
+    /**
+     * Whether the order takes this rule: always for one standing alone; in a
+     * group, the rep's pick or, until they make one, the server's.
+     */
+    fun isTaken(promo: EarnedPromotion): Boolean {
+        val group = promo.proposalId ?: return true
+        val pick = proposalPicks[group] ?: return promo.isDefault
+        return pick == promo.sequenceId
+    }
+
+    /** The rules the order takes — the alternatives not taken left out. */
+    val taken: List<EarnedPromotion> get() = earned.filter(::isTaken)
+
+    /** The rule taken in each group, as submit_order is told it. */
+    val takenInGroups: List<String>
+        get() = taken.filter { it.proposalId != null }.map { it.sequenceId }.distinct()
+
+    fun withProposalPick(proposalId: String, sequenceId: String): PromotionSummary =
+        copy(proposalPicks = proposalPicks + (proposalId to sequenceId))
+
     /** Rules still waiting on the rep. The order can be sent without answering. */
     val undecided: List<EarnedPromotion>
-        get() = earned.filter { it.needsChoice && !choices.containsKey(it.sequenceId) }
+        get() = taken.filter { it.needsChoice && !choices.containsKey(it.sequenceId) }
 
     /**
      * Money off, as the server will compute it once the choices are applied.
@@ -145,7 +176,7 @@ data class PromotionSummary(
      * the total moves under them when the order is confirmed.
      */
     val totalDiscount: Long
-        get() = earned.sumOf { promo ->
+        get() = taken.sumOf { promo ->
             if (promo.offersEither && choices[promo.sequenceId]?.takeAmount == false) {
                 0L
             } else {
@@ -155,7 +186,7 @@ data class PromotionSummary(
 
     /** What is actually being given away, once the choices are applied. */
     fun giftsOf(promo: EarnedPromotion): List<PromotionGift> {
-        if (!promo.isGoods) return emptyList()
+        if (!promo.isGoods || !isTaken(promo)) return emptyList()
 
         val choice = choices[promo.sequenceId]
         if (promo.offersEither && choice?.takeAmount != false) return emptyList()
@@ -216,6 +247,10 @@ data class PromotionSummary(
             outOfBudget = freshOutOfBudget,
             levelCaps = freshLevelCaps,
             choices = choices.filterKeys { it in live },
+            // A pick stands while its rule is still on offer in that group.
+            proposalPicks = proposalPicks.filter { (group, seq) ->
+                fresh.any { it.proposalId == group && it.sequenceId == seq }
+            },
         )
     }
 }

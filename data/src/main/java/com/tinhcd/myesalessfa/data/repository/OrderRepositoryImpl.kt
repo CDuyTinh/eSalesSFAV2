@@ -97,6 +97,9 @@ class OrderRepositoryImpl @Inject constructor(
                         freeUomCode = choice.freeUomCode,
                     )
                 },
+                // CTKM lựa chọn: the rule taken in each group, so the server runs
+                // that one alone and books it.
+                proposalPicks = order.promotions.takenInGroups,
                 // What the rep gave by hand. The server reads each entry's own
                 // value from the catalogue; only an editable one honours a number.
                 manualPromotions = order.promotions.appliedManual.values.map { applied ->
@@ -163,6 +166,10 @@ class OrderRepositoryImpl @Inject constructor(
                     discountAmount = e.discountAmount,
                     percent = e.percent,
                     needsChoice = e.needsChoice,
+                    proposalId = e.proposalId,
+                    proposalName = e.proposalName,
+                    proposalDescr = e.proposalDescr,
+                    isDefault = e.isDefault,
                     gifts = e.freeItems.map { g ->
                         PromotionGift(
                             productId = g.productId,

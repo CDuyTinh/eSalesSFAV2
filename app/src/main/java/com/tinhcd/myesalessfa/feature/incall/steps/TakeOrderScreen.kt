@@ -62,6 +62,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -772,16 +773,57 @@ private fun ConfirmPage(
                     )
                 }
 
+                val promos = state.order.promotions
+
+                // Rules that stand alone first, then each "CTKM lựa chọn" group as
+                // one question: a radio per rule, the ones not taken dimmed but
+                // still readable, because comparing them is the point.
                 items(
-                    state.order.promotions.earned,
+                    promos.earned.filter { it.proposalId == null },
                     key = { it.sequenceId + it.breakId },
                 ) { promo ->
                     PromotionCard(
                         promo = promo,
-                        summary = state.order.promotions,
+                        summary = promos,
                         onChoice = viewModel::onPromotionChoice,
                     )
                 }
+
+                promos.earned.filter { it.proposalId != null }
+                    .groupBy { it.proposalId!! }
+                    .forEach { (group, members) ->
+                        item(key = "proposal-$group") { ProposalHeader(members.first()) }
+                        items(
+                            members.groupBy { it.sequenceId }.values.toList(),
+                            key = { "proposal-$group-" + it.first().sequenceId },
+                        ) { levels ->
+                            val rule = levels.first()
+                            val taken = promos.isTaken(rule)
+                            Row(
+                                verticalAlignment = Alignment.Top,
+                                modifier = Modifier.clickable {
+                                    viewModel.onProposalPick(group, rule.sequenceId)
+                                },
+                            ) {
+                                RadioButton(
+                                    selected = taken,
+                                    onClick = { viewModel.onProposalPick(group, rule.sequenceId) },
+                                )
+                                Column(
+                                    Modifier.weight(1f).alpha(if (taken) 1f else 0.55f),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    levels.forEach { promo ->
+                                        PromotionCard(
+                                            promo = promo,
+                                            summary = promos,
+                                            onChoice = viewModel::onPromotionChoice,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
             }
 
             // Levels the cap cut. A level cut to nothing by its budget is also an
@@ -1672,6 +1714,23 @@ private fun PromotionNote(text: String) {
         Spacer(Modifier.width(8.dp))
         Text(
             text,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/** The title of a "CTKM lựa chọn" group: what it is, and that only one is taken. */
+@Composable
+private fun ProposalHeader(first: EarnedPromotion) {
+    Column(Modifier.padding(top = 4.dp)) {
+        Text(
+            first.proposalName ?: "Chọn 1 chương trình",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Medium,
+        )
+        Text(
+            first.proposalDescr?.takeIf { it.isNotBlank() } ?: "Đơn hàng chỉ được hưởng 1 chương trình trong nhóm",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
