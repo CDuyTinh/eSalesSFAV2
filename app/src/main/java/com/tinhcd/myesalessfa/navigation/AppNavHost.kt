@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.navigation
 
 import com.tinhcd.myesalessfa.push.FollowPushRoute
+import com.tinhcd.myesalessfa.feature.promotion.PromotionCatalogueScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
@@ -73,6 +74,7 @@ object Routes {
     const val ACCOUNT = "account"
     const val DAILY_TARGET = "dailytarget"
     const val FOCUS_PRODUCTS = "focusproducts"
+    const val PROMOTIONS = "promotions"
     const val SITE_STOCK = "sitestock"
     const val WORK_NOTES = "worknotes"
     const val NOTIFICATIONS = "notifications"
@@ -163,6 +165,7 @@ fun AppNavHost(
                             navController.navigate(Routes.DAILY_TARGET)
 
                         SupportedMenu.SALES_FOCUS -> navController.navigate(Routes.FOCUS_PRODUCTS)
+                        SupportedMenu.TRADE_PROMOTION -> navController.navigate(Routes.PROMOTIONS)
                         SupportedMenu.SITE -> navController.navigate(Routes.SITE_STOCK)
                         SupportedMenu.WORKING_NOTE -> navController.navigate(Routes.WORK_NOTES)
                         SupportedMenu.MY_TASK ->
@@ -227,6 +230,10 @@ fun AppNavHost(
 
         composable(Routes.SITE_STOCK) {
             SiteStockScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Routes.PROMOTIONS) {
+            PromotionCatalogueScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Routes.FOCUS_PRODUCTS) {
