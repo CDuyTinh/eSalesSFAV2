@@ -269,4 +269,31 @@ class PromotionSummaryTest {
         assertEquals(emptyList<LevelCapCut>(), before.prunedTo(fresh = emptyList()).levelCaps)
         assertEquals(listOf(cut), PromotionSummary().prunedTo(fresh = emptyList(), freshLevelCaps = listOf(cut)).levelCaps)
     }
+
+    // CTKM lựa chọn: a percentage taken by default over a gift in group g1.
+    private val groupPct = promo(id = "pct", amount = 60_000).copy(proposalId = "g1", isDefault = true)
+    private val groupGift = promo(id = "gift", reward = PromotionReward.FREE_ITEM, amount = 0, gifts = listOf(oreo))
+        .copy(proposalId = "g1", isDefault = false)
+    private val alone = promo(id = "alone", amount = 10_000)
+
+    @Test
+    fun `a group counts only the rule taken, the server's until the rep picks`() {
+        val summary = PromotionSummary(earned = listOf(groupPct, groupGift, alone))
+        assertEquals(70_000, summary.totalDiscount)
+        assertTrue(summary.giftsOf(groupGift).isEmpty())
+        assertEquals(listOf("pct"), summary.takenInGroups)
+
+        val picked = summary.withProposalPick("g1", "gift")
+        assertEquals(10_000, picked.totalDiscount)
+        assertEquals(listOf(oreo), picked.giftsOf(groupGift))
+        assertFalse(picked.isTaken(groupPct))
+        assertEquals(listOf("gift"), picked.takenInGroups)
+    }
+
+    @Test
+    fun `a pick is dropped once its rule is no longer on offer`() {
+        val picked = PromotionSummary(earned = listOf(groupPct, groupGift)).withProposalPick("g1", "gift")
+        assertEquals(mapOf("g1" to "gift"), picked.prunedTo(listOf(groupPct, groupGift)).proposalPicks)
+        assertTrue(picked.prunedTo(listOf(groupPct)).proposalPicks.isEmpty())
+    }
 }

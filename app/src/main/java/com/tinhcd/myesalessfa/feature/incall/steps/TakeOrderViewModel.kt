@@ -666,6 +666,11 @@ class TakeOrderViewModel @Inject constructor(
         it.copy(order = it.order.copy(shipAddressId = addressId))
     }
 
+    /** CTKM lựa chọn: the rep takes [sequenceId] for this group instead of the default. */
+    fun onProposalPick(proposalId: String, sequenceId: String) = _state.update {
+        it.copy(order = it.order.copy(promotions = it.order.promotions.withProposalPick(proposalId, sequenceId)))
+    }
+
     fun onPromotionChoice(choice: PromotionChoice) = _state.update {
 
         it.copy(order = it.order.copy(promotions = it.order.promotions.withChoice(choice)))

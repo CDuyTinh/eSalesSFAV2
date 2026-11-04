@@ -28,6 +28,9 @@ data class OrderPayload(
      * really offers and nothing more.
      */
     val promotions: List<OrderPromotionChoicePayload> = emptyList(),
+    /** "CTKM lựa chọn": the sequence taken in each group. */
+    @SerialName("proposal_picks")
+    val proposalPicks: List<String> = emptyList(),
     /** Discounts the rep applied by hand, named rather than valued. */
     @SerialName("manual_promotions")
     val manualPromotions: List<OrderManualPromotionPayload> = emptyList(),

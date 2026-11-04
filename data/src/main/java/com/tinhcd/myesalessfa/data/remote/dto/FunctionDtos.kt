@@ -823,6 +823,11 @@ data class EarnedPromotionDto(
     val percent: Double? = null,
     @SerialName("needs_choice") val needsChoice: Boolean = false,
     @SerialName("free_items") val freeItems: List<PromotionGiftDto> = emptyList(),
+    /** "CTKM lựa chọn": the group, and whether this is the one taken. */
+    @SerialName("proposal_id") val proposalId: String? = null,
+    @SerialName("proposal_name") val proposalName: String? = null,
+    @SerialName("proposal_descr") val proposalDescr: String? = null,
+    @SerialName("is_default") val isDefault: Boolean = true,
 )
 
 @Serializable
