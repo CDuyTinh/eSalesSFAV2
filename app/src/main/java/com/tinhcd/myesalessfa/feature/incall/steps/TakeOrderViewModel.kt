@@ -20,6 +20,8 @@ import com.tinhcd.myesalessfa.domain.model.categoryNames
 import com.tinhcd.myesalessfa.domain.model.toCartLines
 import com.tinhcd.myesalessfa.domain.repository.OrderRepository
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
+import com.tinhcd.myesalessfa.domain.repository.CustomerRepository
+import com.tinhcd.myesalessfa.domain.model.CustomerInfo
 import com.tinhcd.myesalessfa.domain.repository.SiteStockRepository
 import com.tinhcd.myesalessfa.domain.usecase.GetOrderSuggestionsUseCase
 import com.tinhcd.myesalessfa.domain.usecase.GetVisitCatalogueUseCase
@@ -49,6 +51,9 @@ enum class TakeOrderPage {
 
     /** Xác nhận đơn hàng — the totals and the note, before anything is sent. */
     CONFIRM,
+
+    /** Thông tin đơn hàng — the order as it was sent. Only closing leaves it. */
+    DONE,
 }
 
 /** The line the edit sheet is open on. Null when the sheet is closed. */
@@ -64,6 +69,9 @@ data class TakeOrderUiState(
     val loading: Boolean = true,
     val page: TakeOrderPage = TakeOrderPage.BASKET,
     val customerName: String = "",
+    /** From the visit, so the contact block has something before customer-info answers. */
+    val customerPhone: String? = null,
+    val customerAddress: String? = null,
     val query: String = "",
     val sort: ProductSort = ProductSort.DEFAULT,
     /** Empty means every category, which is how the legacy filter starts. */
@@ -115,6 +123,8 @@ data class TakeOrderUiState(
     val submitting: Boolean = false,
     val error: String? = null,
     val finished: Boolean = false,
+    /** Thông tin liên hệ on the confirmation page; null until loaded or if unreadable. */
+    val contact: CustomerInfo? = null,
 ) {
     fun suggestionFor(productId: String): OrderSuggestion? =
         suggestions.firstOrNull { it.productId == productId }
@@ -193,6 +203,7 @@ class TakeOrderViewModel @Inject constructor(
     private val siteStockRepository: SiteStockRepository,
     private val orderRepository: OrderRepository,
     private val configRepository: ConfigRepository,
+    private val customerRepository: CustomerRepository,
 ) : ViewModel() {
 
     /** min_order_carton_qty; the server holds the same line in submit_order. */
@@ -219,6 +230,14 @@ class TakeOrderViewModel @Inject constructor(
     }
 
     fun load() {
+        // Who to call about the delivery, for the confirmation page. Here rather
+        // than in init: customerId is declared after that block, and read there
+        // it is still null.
+        viewModelScope.launch {
+            (customerRepository.info(customerId) as? DataResult.Success)?.let { r ->
+                _state.update { it.copy(contact = r.data) }
+            }
+        }
         _state.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             // The customer's class decides the price list that applies, so it is
@@ -260,6 +279,8 @@ class TakeOrderViewModel @Inject constructor(
                         it.copy(
                             loading = false,
                             customerName = visit.data.customer?.name.orEmpty(),
+                            customerPhone = visit.data.customer?.phone,
+                            customerAddress = visit.data.customer?.address,
                             catalogue = visit.data.catalogue,
                             available = available,
                             suggestions = suggestions,
@@ -571,6 +592,9 @@ class TakeOrderViewModel @Inject constructor(
         it.copy(order = it.order.copy(note = value))
     }
 
+    /** Leaves the step from Thông tin đơn hàng. */
+    fun close() = _state.update { it.copy(finished = true) }
+
     fun submit() {
         val current = _state.value
         if (current.submitting || !current.order.canSubmit) return
@@ -580,8 +604,9 @@ class TakeOrderViewModel @Inject constructor(
             // QUEUED is not surfaced here. The order is recorded either way, and
             // the in-call and route screens both show how much is still waiting.
             when (orderRepository.submit(current.order)) {
+                // On to Thông tin đơn hàng: the rep reads back what was sent before leaving.
                 is DataResult.Success -> _state.update {
-                    it.copy(submitting = false, finished = true)
+                    it.copy(submitting = false, page = TakeOrderPage.DONE, error = null)
                 }
 
                 is DataResult.Failure -> _state.update {
