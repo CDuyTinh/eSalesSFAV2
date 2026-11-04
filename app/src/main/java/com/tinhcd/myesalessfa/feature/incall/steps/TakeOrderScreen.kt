@@ -80,6 +80,8 @@ import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.formatDong
 import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.EarnedPromotion
+import com.tinhcd.myesalessfa.domain.model.DisplayRewardDue
+import com.tinhcd.myesalessfa.domain.model.DisplayRewardType
 import com.tinhcd.myesalessfa.domain.model.OrderLine
 import com.tinhcd.myesalessfa.domain.model.PromotionChoice
 import com.tinhcd.myesalessfa.domain.model.PromotionGift
@@ -848,6 +850,30 @@ private fun ConfirmPage(
                     key = { "budget-" + it.sequenceId + it.breakName },
                 ) { over ->
                     PromotionNote("${over.programName} không áp dụng được: đã hết ngân sách")
+                }
+            }
+
+            // Trả thưởng trưng bày: what a display programme still owes this
+            // outlet, paid on this order if the rep switches it on.
+            if (state.order.promotions.displayRewards.isNotEmpty()) {
+                item {
+                    Text(
+                        "Trả thưởng trưng bày",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+
+                items(
+                    state.order.promotions.displayRewards,
+                    key = { "reward-" + it.rewardId },
+                ) { reward ->
+                    DisplayRewardCard(
+                        reward = reward,
+                        paid = reward.rewardId in state.order.promotions.paidDisplayRewards,
+                        gross = state.order.subTotal,
+                        onToggle = { paid -> viewModel.onDisplayReward(reward.rewardId, paid) },
+                    )
                 }
             }
 
@@ -1734,5 +1760,39 @@ private fun ProposalHeader(first: EarnedPromotion) {
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+/** One display reward still due: what it pays, and a switch to pay it on this order. */
+@Composable
+private fun DisplayRewardCard(
+    reward: DisplayRewardDue,
+    paid: Boolean,
+    gross: Long,
+    onToggle: (Boolean) -> Unit,
+) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(reward.programName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                Text(
+                    reward.levelName + " | " + when (reward.type) {
+                        DisplayRewardType.AMOUNT -> "còn ${formatDong(reward.amountLeft)}"
+                        DisplayRewardType.PERCENT ->
+                            "giảm ${reward.percent.toBigDecimal().stripTrailingZeros().toPlainString()}% " +
+                                "(${formatDong(Math.round(gross * reward.percent / 100))})"
+                        DisplayRewardType.GOODS -> "tặng ${reward.qtyLeft} ${reward.uomName.orEmpty()} ${reward.productName.orEmpty()}"
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(checked = paid, onCheckedChange = onToggle)
+        }
     }
 }
