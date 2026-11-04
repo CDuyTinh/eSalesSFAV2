@@ -48,6 +48,10 @@ coil = "3.5.0"
 # without applying it produces a sideways shelf photo, which is worse than useless
 # for a display audit.
 exifinterface = "1.4.1"
+# The check-in photo is two shots in a row, shop front on the back camera and
+# the rep on the front one, which a camera app reached by intent cannot be told
+# to do. CameraX runs both inside the app.
+camerax = "1.4.2"
 playServicesLocation = "21.4.0"
 # The route map. maps-compose wraps the same MapView the legacy app used through
 # google_maps_flutter, so the tiles, the key and the restrictions are all the
@@ -122,6 +126,9 @@ coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref 
 coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
 coil-svg = { group = "io.coil-kt.coil3", name = "coil-svg", version.ref = "coil" }
 androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
+androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
+androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }

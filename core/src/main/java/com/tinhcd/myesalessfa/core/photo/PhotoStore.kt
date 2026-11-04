@@ -3,7 +3,11 @@ package com.tinhcd.myesalessfa.core.photo
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Matrix
+import android.graphics.Paint
+import android.graphics.RectF
 import android.net.Uri
 import androidx.core.content.FileProvider
 import androidx.exifinterface.media.ExifInterface
@@ -47,6 +51,64 @@ class PhotoStore @Inject constructor(
         )
         return PhotoTarget(path = file.absolutePath, uri = uri)
     }
+
+    /** A fresh file path for a camera running inside the app, which needs no uri. */
+    fun newFile(): String = File(dir, "${UUID.randomUUID()}.jpg").absolutePath
+
+    /**
+     * The check-in photo as the legacy builds it: the shop front, with the rep's
+     * selfie set into its bottom-left corner at a quarter of the width, and the
+     * [stamp] lines written across the top. One file, so the record carries both
+     * faces of the visit and the facts it was taken under, and no viewer can show
+     * one without the other.
+     *
+     * Both inputs are expected already [compress]ed, so their pixels are upright.
+     * Returns the new file's path, or null when the shop photo cannot be read.
+     */
+    suspend fun composeCheckIn(shopPath: String, selfiePath: String?, stamp: List<String>): String? =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val shop = BitmapFactory.decodeFile(shopPath) ?: return@runCatching null
+                val out = shop.copy(Bitmap.Config.ARGB_8888, true)
+                shop.recycle()
+                val canvas = Canvas(out)
+                val unit = out.width / 100f
+
+                selfiePath?.let(BitmapFactory::decodeFile)?.let { selfie ->
+                    val w = out.width / 4f
+                    val h = w * selfie.height / selfie.width
+                    val margin = unit * 2
+                    val frame = RectF(margin, out.height - margin - h, margin + w, out.height - margin)
+                    val border = unit * 0.6f
+                    canvas.drawRect(
+                        RectF(frame.left - border, frame.top - border, frame.right + border, frame.bottom + border),
+                        Paint().apply { color = Color.WHITE },
+                    )
+                    canvas.drawBitmap(selfie, null, frame, Paint(Paint.FILTER_BITMAP_FLAG))
+                    selfie.recycle()
+                }
+
+                if (stamp.isNotEmpty()) {
+                    val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                        color = Color.WHITE
+                        textSize = unit * 2.8f
+                    }
+                    val line = text.fontSpacing
+                    val pad = unit * 1.5f
+                    val width = stamp.maxOf(text::measureText) + pad * 2
+                    canvas.drawRect(
+                        0f, 0f, minOf(width, out.width.toFloat()), line * stamp.size + pad * 2,
+                        Paint().apply { color = Color.argb(120, 0, 0, 0) },
+                    )
+                    stamp.forEachIndexed { i, s -> canvas.drawText(s, pad, pad + line * (i + 1) - text.descent(), text) }
+                }
+
+                val file = File(newFile())
+                FileOutputStream(file).use { out.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it) }
+                out.recycle()
+                file.absolutePath
+            }.getOrNull()
+        }
 
     fun exists(path: String): Boolean = File(path).exists()
 
