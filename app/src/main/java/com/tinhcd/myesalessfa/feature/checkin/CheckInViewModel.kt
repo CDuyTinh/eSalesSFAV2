@@ -1,6 +1,5 @@
 package com.tinhcd.myesalessfa.feature.checkin
 
-import com.tinhcd.myesalessfa.core.photo.PhotoTarget
 import com.tinhcd.myesalessfa.core.photo.PhotoStore
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -26,6 +25,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.inject.Inject
 
 data class CheckInUiState(
@@ -43,8 +45,16 @@ data class CheckInUiState(
      * never asked for it.
      */
     val note: String = "",
-    /** The shop-front photo, on the device until the check-in takes it up. */
+    /**
+     * The photo the check-in sends: the shop front with the rep's selfie set
+     * into it and the stamp on top, on the device until the check-in takes it up.
+     */
     val photoLocalPath: String? = null,
+    /** The two shots it was made from, kept to show on the screen. */
+    val shopPhotoPath: String? = null,
+    val selfiePhotoPath: String? = null,
+    /** The two-lens camera is open. */
+    val cameraOpen: Boolean = false,
     val capturing: Boolean = false,
     /** Head office wants the shop front before the visit starts. */
     val photoRequired: Boolean = false,
@@ -76,8 +86,6 @@ class CheckInViewModel @Inject constructor(
     private val locationProvider: LocationProvider,
     private val photoStore: PhotoStore,
 ) : ViewModel() {
-
-    private var pendingPhoto: PhotoTarget? = null
 
     private val customerId: String = checkNotNull(savedStateHandle["customerId"])
 
@@ -141,34 +149,65 @@ class CheckInViewModel @Inject constructor(
 
     fun onNoteChange(value: String) = _state.update { it.copy(note = value) }
 
-    fun newPhotoTarget(): PhotoTarget = photoStore.newTarget().also {
-        pendingPhoto = it
-        _state.update { state -> state.copy(capturing = true, error = null) }
-    }
+    fun openCamera() = _state.update { it.copy(cameraOpen = true, error = null) }
 
-    /** A retake replaces the photo; the one it replaces is deleted from the phone. */
-    fun onPhotoTaken(saved: Boolean) {
-        val target = pendingPhoto
-        pendingPhoto = null
-        if (!saved || target == null) {
-            target?.let { photoStore.delete(it.path) }
-            _state.update { it.copy(capturing = false) }
-            return
-        }
+    fun closeCamera() = _state.update { it.copy(cameraOpen = false) }
+
+    fun newPhotoFile(): String = photoStore.newFile()
+
+    /**
+     * Both shots are in: they are shrunk, the selfie is set into the shop front
+     * with the stamp, and that one file becomes the check-in photo. A retake
+     * replaces all three; the ones it replaces are deleted from the phone.
+     */
+    fun onPhotosTaken(shopPath: String, selfiePath: String?) {
+        _state.update { it.copy(cameraOpen = false, capturing = true, error = null) }
         viewModelScope.launch {
-            if (photoStore.compress(target.path) <= 0L) {
-                photoStore.delete(target.path)
+            val shots = listOfNotNull(shopPath, selfiePath)
+            val merged = if (shots.all { photoStore.compress(it) > 0L }) {
+                photoStore.composeCheckIn(shopPath, selfiePath, stamp())
+            } else {
+                null
+            }
+            if (merged == null) {
+                shots.forEach(photoStore::delete)
                 _state.update { it.copy(capturing = false, error = "Không lưu được ảnh, thử lại") }
                 return@launch
             }
-            _state.value.photoLocalPath?.let(photoStore::delete)
-            _state.update { it.copy(capturing = false, photoLocalPath = target.path) }
+            discardPhotos()
+            _state.update {
+                it.copy(
+                    capturing = false,
+                    photoLocalPath = merged,
+                    shopPhotoPath = shopPath,
+                    selfiePhotoPath = selfiePath,
+                )
+            }
         }
     }
 
     fun removePhoto() {
-        _state.value.photoLocalPath?.let(photoStore::delete)
-        _state.update { it.copy(photoLocalPath = null) }
+        discardPhotos()
+        _state.update { it.copy(photoLocalPath = null, shopPhotoPath = null, selfiePhotoPath = null) }
+    }
+
+    private fun discardPhotos() = _state.value.run {
+        listOfNotNull(photoLocalPath, shopPhotoPath, selfiePhotoPath).forEach(photoStore::delete)
+    }
+
+    /** What the legacy writes on the check-in photo, in its words. */
+    private fun stamp(): List<String> {
+        val s = _state.value
+        val c = s.customer
+        fun coords(lat: Double?, lng: Double?) =
+            if (lat == null || lng == null) "không có" else "%.6f, %.6f".format(Locale.US, lat, lng)
+        return listOfNotNull(
+            c?.let { " -KH: ${it.code} - ${it.name}" },
+            " -Check in: ${LocalDateTime.now().format(stampTime)}",
+            " -Toạ độ KH: ${coords(c?.lat, c?.lng)}",
+            " -Toạ độ hiện tại: ${coords(s.location?.lat, s.location?.lng)}",
+            c?.address?.takeIf { it.isNotBlank() }?.let { " -Địa chỉ KH: $it" },
+        )
     }
 
     fun submit() {
@@ -197,10 +236,14 @@ class CheckInViewModel @Inject constructor(
             )
 
             when (val result = checkInRepository.checkIn(request)) {
-                is DataResult.Success ->
+                is DataResult.Success -> {
+                    // The check-in now owns the merged photo; the two shots it
+                    // was made from have nothing left to do.
+                    listOfNotNull(current.shopPhotoPath, current.selfiePhotoPath).forEach(photoStore::delete)
                     _state.update {
                         it.copy(submitting = false, finished = true)
                     }
+                }
 
                 is DataResult.Failure ->
                     _state.update {
@@ -224,3 +267,5 @@ internal fun ReasonKind.prompt(): String = when (this) {
     // unreachable branch is not worth crashing a rep's check-in over.
     ReasonKind.FEEDBACK_TOPIC -> "Chọn lý do:"
 }
+
+private val stampTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")

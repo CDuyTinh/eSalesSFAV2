@@ -5,13 +5,14 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import com.tinhcd.myesalessfa.feature.photo.PhotoBlock
-import com.tinhcd.myesalessfa.feature.photo.rememberCameraCapture
+import com.tinhcd.myesalessfa.feature.photo.DualCameraCapture
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,10 +29,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -54,7 +57,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -72,6 +77,8 @@ import com.tinhcd.myesalessfa.domain.model.CheckInGate
 import com.tinhcd.myesalessfa.domain.model.Customer
 import com.tinhcd.myesalessfa.domain.model.ReasonCode
 import com.tinhcd.myesalessfa.domain.model.ReasonKind
+import coil3.compose.AsyncImage
+import java.io.File
 import kotlin.math.roundToInt
 
 /**
@@ -106,10 +113,18 @@ fun CheckInScreen(
         )
     }
 
-    val capturePhoto = rememberCameraCapture(
-        newTarget = { viewModel.newPhotoTarget().uri },
-        onTaken = viewModel::onPhotoTaken,
-    )
+    val cameraPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted -> if (granted) viewModel.openCamera() }
+    val capturePhoto = { cameraPermission.launch(Manifest.permission.CAMERA) }
+
+    if (state.cameraOpen) {
+        DualCameraCapture(
+            newFile = viewModel::newPhotoFile,
+            onDone = viewModel::onPhotosTaken,
+            onCancel = viewModel::closeCamera,
+        )
+    }
 
     LaunchedEffect(state.finished) {
         if (state.finished) onDone()
@@ -161,13 +176,12 @@ fun CheckInScreen(
                             }
 
                             HorizontalDivider()
-                            PhotoBlock(
-                                title = "Ảnh mặt tiền cửa hàng",
-                                path = state.photoLocalPath,
+                            CheckInPhotoArea(
+                                shopPath = state.shopPhotoPath,
+                                selfiePath = state.selfiePhotoPath,
                                 required = state.photoRequired,
                                 busy = state.capturing,
                                 onCapture = capturePhoto,
-                                onRemove = viewModel::removePhoto,
                             )
 
                             HorizontalDivider()
@@ -485,6 +499,121 @@ private fun ReasonSheet(
     }
 }
 
+/**
+ * Hình check-in, drawn the legacy's way: before the shots, a tile with the
+ * capture mark the rep taps to open the camera; after, the shop front across
+ * the card with the rep's selfie pinned to its top-left corner and "Chụp lại"
+ * at the top right. What is sent is those two merged into one picture.
+ */
+@Composable
+private fun CheckInPhotoArea(
+    shopPath: String?,
+    selfiePath: String?,
+    required: Boolean,
+    busy: Boolean,
+    onCapture: () -> Unit,
+) {
+    val primary = MaterialTheme.colorScheme.primary
+    Column(Modifier.padding(16.dp)) {
+        Text(
+            text = if (required) "Hình check-in (bắt buộc)" else "Hình check-in",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(8.dp))
+
+        when {
+            busy -> Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(4f / 3f)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(28.dp))
+                    Spacer(Modifier.height(8.dp))
+                    Text("Đang ghép ảnh…", style = MaterialTheme.typography.labelMedium)
+                }
+            }
+
+            shopPath == null -> Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .border(1.dp, primary.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                    .background(primary.copy(alpha = 0.05f))
+                    .clickable(onClick = onCapture)
+                    .padding(vertical = 28.dp, horizontal = 16.dp),
+            ) {
+                Icon(
+                    Icons.Default.AddAPhoto,
+                    contentDescription = null,
+                    tint = primary,
+                    modifier = Modifier.size(44.dp),
+                )
+                Spacer(Modifier.height(8.dp))
+                Text("Chụp hình", style = MaterialTheme.typography.bodyLarge, color = primary)
+                Text(
+                    "Camera sau chụp cửa hàng, camera trước chụp nhân viên",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
+
+            else -> Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))) {
+                AsyncImage(
+                    model = File(shopPath),
+                    contentDescription = "Ảnh cửa hàng",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxWidth().aspectRatio(3f / 4f),
+                )
+                selfiePath?.let {
+                    AsyncImage(
+                        model = File(it),
+                        contentDescription = "Ảnh nhân viên",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .fillMaxWidth(0.25f)
+                            .aspectRatio(3f / 4f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .border(2.dp, SelfieBorder, RoundedCornerShape(10.dp)),
+                    )
+                }
+                Surface(
+                    onClick = onCapture,
+                    shape = RoundedCornerShape(20.dp),
+                    color = primary,
+                    modifier = Modifier.align(Alignment.TopEnd).padding(10.dp),
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    ) {
+                        Icon(
+                            Icons.Default.PhotoCamera,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            "Chụp lại",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 /** Ghi chú: label above, bordered box below, as the legacy draws it. */
 @Composable
 private fun NoteBlock(value: String, onValueChange: (String) -> Unit) {
@@ -561,6 +690,9 @@ private fun ReasonKind.label(): String = when (this) {
  */
 private fun groupDigits(value: Int): String =
     value.toString().reversed().chunked(3).joinToString(".").reversed()
+
+/** The legacy's light blue behind the selfie. */
+private val SelfieBorder = Color(0xFF4FC3F7)
 
 /** The legacy's amber for a fix too rough to judge a distance by. */
 private val LowAccuracyAmber = Color(0xFFE0A800)
