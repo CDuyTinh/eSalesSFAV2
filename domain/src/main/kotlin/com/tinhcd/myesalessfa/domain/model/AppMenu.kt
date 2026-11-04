@@ -100,6 +100,9 @@ object SupportedMenu {
     const val TRADE_REGIS = "TRADE_REGIS"
     const val LEAVE_APPLICATION = "LEAVE_APPLICATION"
 
+    /** Chương trình khuyến mãi: the promotions running, read before the round. */
+    const val TRADE_PROMOTION = "TRADE_PROMOTION"
+
     /** Tabs that swap the content area. Everything else opens a sheet. */
     val pages: Set<String> = setOf(DASH_BOARD, CHECK_IN)
 
@@ -126,5 +129,6 @@ object SupportedMenu {
         WORKING_PLAN,
         TRADE_REGIS,
         LEAVE_APPLICATION,
+        TRADE_PROMOTION,
     )
 }

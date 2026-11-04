@@ -23,6 +23,7 @@ import com.tinhcd.myesalessfa.data.repository.SurveyRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.CustomerRegistrationRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.DailyTargetRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.FocusProductRepositoryImpl
+import com.tinhcd.myesalessfa.data.repository.PromotionCatalogueRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.SiteStockRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.LeaveRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.WorkNoteRepositoryImpl
@@ -48,6 +49,7 @@ import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
 import com.tinhcd.myesalessfa.domain.repository.CustomerRegistrationRepository
 import com.tinhcd.myesalessfa.domain.repository.DailyTargetRepository
 import com.tinhcd.myesalessfa.domain.repository.FocusProductRepository
+import com.tinhcd.myesalessfa.domain.repository.PromotionCatalogueRepository
 import com.tinhcd.myesalessfa.domain.repository.SiteStockRepository
 import com.tinhcd.myesalessfa.domain.repository.LeaveRepository
 import com.tinhcd.myesalessfa.domain.repository.WorkNoteRepository
@@ -147,6 +149,12 @@ abstract class RepositoryModule {
     abstract fun bindFocusProductRepository(
         impl: FocusProductRepositoryImpl,
     ): FocusProductRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPromotionCatalogueRepository(
+        impl: PromotionCatalogueRepositoryImpl,
+    ): PromotionCatalogueRepository
 
     @Binds
     @Singleton

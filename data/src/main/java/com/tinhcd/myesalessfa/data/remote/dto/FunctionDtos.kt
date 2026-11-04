@@ -1144,3 +1144,56 @@ data class DeviceTokenDto(
     /** "sfa": the server sends this app only what is meant for a rep. */
     val app: String? = null,
 )
+
+@Serializable
+data class CataloguePromotionDto(
+    @SerialName("sequence_id") val sequenceId: String,
+    @SerialName("program_code") val programCode: String = "",
+    @SerialName("program_name") val programName: String = "",
+    val name: String = "",
+    val scope: String = "line",
+    @SerialName("break_by") val breakBy: String = "qty",
+    val reward: String = "amount",
+    @SerialName("from_date") val fromDate: String? = null,
+    @SerialName("to_date") val toDate: String? = null,
+    @SerialName("is_bundle") val isBundle: Boolean = false,
+    @SerialName("proposal_name") val proposalName: String? = null,
+    val targeted: Boolean = false,
+    val items: List<CatalogueItemDto> = emptyList(),
+    val levels: List<CatalogueLevelDto> = emptyList(),
+    val gifts: List<CatalogueGiftDto> = emptyList(),
+    val budget: CatalogueBudgetDto? = null,
+)
+
+@Serializable
+data class CatalogueItemDto(
+    @SerialName("product_code") val productCode: String = "",
+    @SerialName("product_name") val productName: String = "",
+    @SerialName("uom_name") val uomName: String = "",
+)
+
+@Serializable
+data class CatalogueLevelDto(
+    val name: String = "",
+    @SerialName("break_qty") val breakQty: Double = 0.0,
+    @SerialName("break_amt") val breakAmt: Double = 0.0,
+    @SerialName("disc_amt") val discAmt: Double = 0.0,
+    @SerialName("max_lot") val maxLot: Int = 0,
+    @SerialName("customer_max_lot") val customerMaxLot: Int? = null,
+)
+
+@Serializable
+data class CatalogueGiftDto(
+    @SerialName("product_name") val productName: String = "",
+    @SerialName("uom_name") val uomName: String = "",
+    val qty: Int = 0,
+)
+
+@Serializable
+data class CatalogueBudgetDto(
+    val name: String = "",
+    val counts: String = "amount",
+    val allocated: Double? = null,
+    val spent: Double? = null,
+    val remaining: Double? = null,
+)
