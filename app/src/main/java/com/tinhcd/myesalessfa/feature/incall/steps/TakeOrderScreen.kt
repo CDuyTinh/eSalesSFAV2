@@ -26,6 +26,12 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.CardGiftcard
+import androidx.compose.material.icons.filled.Sell
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.LocalOffer
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
@@ -122,7 +128,10 @@ fun TakeOrderScreen(
 
     // Back inside the step walks back a page. Leaving from the basket is the only
     // way out, so a rep cannot drop out of ordering from the middle of it.
-    BackHandler(enabled = state.page != TakeOrderPage.BASKET) { viewModel.openBasket() }
+    BackHandler(enabled = state.page != TakeOrderPage.BASKET) {
+        // The order has gone: back from Thông tin đơn hàng leaves the step.
+        if (state.page == TakeOrderPage.DONE) viewModel.close() else viewModel.openBasket()
+    }
 
     Scaffold(
         topBar = {
@@ -134,6 +143,7 @@ fun TakeOrderScreen(
                         state.order.lines.size.takeIf { it > 0 }?.let { "$it mặt hàng" },
                     ).joinToString(" - "),
                     onBack = onDone,
+                    below = { OrderSteps(current = 0) },
                 )
 
                 TakeOrderPage.PRODUCTS -> ProductsHeader(state, viewModel)
@@ -142,6 +152,14 @@ fun TakeOrderScreen(
                     title = "Xác nhận đơn hàng",
                     subtitle = state.customerName,
                     onBack = viewModel::openBasket,
+                    below = { OrderSteps(current = 1) },
+                )
+
+                TakeOrderPage.DONE -> StepHeader(
+                    title = "Thông tin đơn hàng",
+                    subtitle = state.customerName,
+                    onBack = viewModel::close,
+                    below = { OrderSteps(current = 2) },
                 )
             }
         },
@@ -159,6 +177,7 @@ fun TakeOrderScreen(
                     TakeOrderPage.BASKET -> BasketPage(state, viewModel)
                     TakeOrderPage.PRODUCTS -> ProductsPage(state, viewModel)
                     TakeOrderPage.CONFIRM -> ConfirmPage(state, viewModel, onDone)
+                    TakeOrderPage.DONE -> DonePage(state, viewModel::close)
                 }
             }
         }
@@ -757,23 +776,20 @@ private fun ConfirmPage(
             contentPadding = PaddingValues(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item { OrderSummaryCard(state, viewModel) }
+            // The legacy's order: where it goes and who to call, what is being
+            // sold, what it earns, and the totals last — the figure the rep
+            // reads back to the customer is the one the page ends on.
+            item { SectionHeader("Địa chỉ giao hàng", Icons.Default.LocalShipping) }
+            item { ShipAddressCard(state, viewModel::onShipAddress) }
 
-            // Only when there is a choice to make. An outlet with no ship-to
-            // rows receives its own goods, and a card saying so would be a card
-            // that never changes anything.
-            if (state.shipAddresses.isNotEmpty()) {
-                item { ShipAddressCard(state, viewModel::onShipAddress) }
-            }
+            item { SectionHeader("Thông tin liên hệ", Icons.Default.Person) }
+            item { ContactCard(state) }
+
+            item { SectionHeader("Sản phẩm đặt hàng", Icons.Default.ShoppingCart) }
+            item { LinesCard(state.basketLines) }
 
             if (!state.order.promotions.isEmpty) {
-                item {
-                    Text(
-                        "Khuyến mãi",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
+                item { SectionHeader("Khuyến mãi", Icons.Default.LocalOffer) }
 
                 val promos = state.order.promotions
 
@@ -856,13 +872,7 @@ private fun ConfirmPage(
             // Trả thưởng trưng bày: what a display programme still owes this
             // outlet, paid on this order if the rep switches it on.
             if (state.order.promotions.displayRewards.isNotEmpty()) {
-                item {
-                    Text(
-                        "Trả thưởng trưng bày",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
+                item { SectionHeader("Trả thưởng trưng bày", Icons.Default.EmojiEvents) }
 
                 items(
                     state.order.promotions.displayRewards,
@@ -878,13 +888,7 @@ private fun ConfirmPage(
             }
 
             if (state.order.promotions.manualCatalogue.isNotEmpty()) {
-                item {
-                    Text(
-                        "Khuyến mãi tay",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
+                item { SectionHeader("Khuyến mãi tay", Icons.Default.Sell) }
 
                 items(
                     state.order.promotions.manualCatalogue,
@@ -900,17 +904,14 @@ private fun ConfirmPage(
                 }
             }
 
-            item {
-                Text(
-                    "Sản phẩm",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                )
+            val gifts = giftLines(state)
+            if (gifts.isNotEmpty()) {
+                item { SectionHeader("Sản phẩm khuyến mãi", Icons.Default.CardGiftcard) }
+                item { GiftLinesCard(gifts) }
             }
 
-            items(state.basketLines, key = { it.productId + it.uomCode }) { line ->
-                ConfirmLineRow(line)
-            }
+            item { SectionHeader("Tổng kết đơn hàng", Icons.Default.Receipt) }
+            item { OrderSummaryCard(state, viewModel::onNoteChange) }
         }
 
         Surface(shadowElevation = 8.dp) {
@@ -938,7 +939,7 @@ private fun ConfirmPage(
 }
 
 @Composable
-private fun OrderSummaryCard(state: TakeOrderUiState, viewModel: TakeOrderViewModel) {
+private fun OrderSummaryCard(state: TakeOrderUiState, onNoteChange: ((String) -> Unit)?) {
     Card(
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
@@ -965,9 +966,20 @@ private fun OrderSummaryCard(state: TakeOrderUiState, viewModel: TakeOrderViewMo
                 emphasise = true,
             )
 
+            if (onNoteChange == null) {
+                if (state.order.note.isNotBlank()) {
+                    Text(
+                        "Ghi chú: " + state.order.note,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 12.dp),
+                    )
+                }
+                return@Column
+            }
             OutlinedTextField(
                 value = state.order.note,
-                onValueChange = viewModel::onNoteChange,
+                onValueChange = onNoteChange,
                 placeholder = { Text("Ghi chú đơn hàng") },
                 shape = RoundedCornerShape(12.dp),
                 minLines = 2,
@@ -1648,27 +1660,10 @@ private fun ShipAddressCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    Icons.Default.LocalShipping,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-                Text(
-                    "Địa chỉ giao hàng",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Medium,
-                )
-            }
-
             ShipAddressRow(
                 selected = chosen == null,
                 title = state.customerName.ifBlank { "Cửa hàng" },
-                subtitle = "Giao tại cửa hàng",
+                subtitle = listOfNotNull("Giao tại cửa hàng", state.contact?.address ?: state.customerAddress).joinToString(" · "),
                 onClick = { onShipAddress(null) },
             )
 
@@ -1793,6 +1788,183 @@ private fun DisplayRewardCard(
                 )
             }
             Switch(checked = paid, onCheckedChange = onToggle)
+        }
+    }
+}
+
+// =============================================================================
+// Xác nhận / Thông tin đơn hàng — the sections, as the legacy's headerGroup
+// =============================================================================
+
+/** A section's title with a rule under it, so one block of the order ends where the next begins. */
+@Composable
+private fun SectionHeader(title: String, icon: ImageVector) {
+    Column(Modifier.padding(top = 8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+            Text(
+                title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        HorizontalDivider(
+            Modifier.padding(top = 6.dp),
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+        )
+    }
+}
+
+@Composable
+private fun SectionCard(content: @Composable () -> Unit) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { content() }
+    }
+}
+
+@Composable
+private fun InfoLine(label: String, value: String?) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.width(110.dp),
+        )
+        Text(
+            value?.takeIf { it.isNotBlank() } ?: "—",
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+/** Thông tin liên hệ: who the delivery is for, and how to reach them. */
+@Composable
+private fun ContactCard(state: TakeOrderUiState) {
+    val contact = state.contact
+    val shipTo = state.shipAddresses.firstOrNull { it.id == state.order.shipAddressId }
+    SectionCard {
+        InfoLine("Khách hàng", contact?.let { "${it.name} (${it.code})" } ?: state.customerName)
+        InfoLine("Người liên hệ", shipTo?.recipient ?: contact?.contactName)
+        InfoLine("Điện thoại", shipTo?.phone ?: contact?.phone ?: state.customerPhone)
+        InfoLine("Địa chỉ", shipTo?.address ?: contact?.address ?: state.customerAddress)
+    }
+}
+
+@Composable
+private fun LinesCard(lines: List<OrderLine>) {
+    SectionCard {
+        lines.forEach { ConfirmLineRow(it) }
+    }
+}
+
+/** One thing given away: from an automatic rule, a manual entry or a display reward. */
+private data class GiftLine(val name: String, val qty: Int, val uom: String, val source: String)
+
+/** Every gift the order carries, as the choices stand: what "Sản phẩm khuyến mãi" lists. */
+private fun giftLines(state: TakeOrderUiState): List<GiftLine> {
+    val p = state.order.promotions
+    val auto = p.taken.flatMap { promo ->
+        p.giftsOf(promo).map { GiftLine(it.productName, it.qty, it.uomName, promo.programName) }
+    }
+    val manual = p.appliedManual.keys
+        .mapNotNull { id -> p.manualCatalogue.firstOrNull { it.id == id } }
+        .filter { it.isGoods }
+        .flatMap { m -> m.items.map { GiftLine(it.productName, it.qty, it.uomName, m.name) } }
+    val display = p.displayRewards
+        .filter { it.rewardId in p.paidDisplayRewards && it.type == DisplayRewardType.GOODS }
+        .map { GiftLine(it.productName.orEmpty(), it.qtyLeft, it.uomName.orEmpty(), it.programName) }
+    return auto + manual + display
+}
+
+@Composable
+private fun GiftLinesCard(gifts: List<GiftLine>) {
+    SectionCard {
+        gifts.forEach { g ->
+            Row(verticalAlignment = Alignment.Top) {
+                Column(Modifier.weight(1f)) {
+                    Text(g.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                    Text(g.source, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Text("${g.qty} ${g.uom}", style = MaterialTheme.typography.bodyMedium, color = MoneyGreen, fontWeight = FontWeight.Medium)
+            }
+        }
+    }
+}
+
+/**
+ * Thông tin đơn hàng: the order as it was sent — where it goes, what is in it,
+ * what it earned, what the customer pays. Read-only; closing leaves the step.
+ */
+@Composable
+private fun DonePage(state: TakeOrderUiState, onClose: () -> Unit) {
+    val shipTo = state.shipAddresses.firstOrNull { it.id == state.order.shipAddressId }
+    Column(Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                SectionCard {
+                    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = MoneyGreen,
+                            modifier = Modifier.size(56.dp),
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "Đặt hàng thành công",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MoneyGreen,
+                        )
+                        Text(
+                            "${state.order.lines.size} mặt hàng · ${formatDong(state.order.totalAmount)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+
+            item { SectionHeader("Địa chỉ giao hàng", Icons.Default.LocalShipping) }
+            item {
+                SectionCard {
+                    InfoLine("Giao đến", shipTo?.recipient ?: state.customerName)
+                    InfoLine("Địa chỉ", shipTo?.address ?: state.contact?.address ?: state.customerAddress)
+                    InfoLine("Điện thoại", shipTo?.phone ?: state.contact?.phone ?: state.customerPhone)
+                    if (shipTo == null) InfoLine("Hình thức", "Giao tại cửa hàng")
+                }
+            }
+
+            item { SectionHeader("Sản phẩm đặt hàng", Icons.Default.ShoppingCart) }
+            item { LinesCard(state.order.lines) }
+
+            val gifts = giftLines(state)
+            if (gifts.isNotEmpty()) {
+                item { SectionHeader("Sản phẩm khuyến mãi", Icons.Default.CardGiftcard) }
+                item { GiftLinesCard(gifts) }
+            }
+
+            item { SectionHeader("Tổng kết đơn hàng", Icons.Default.Receipt) }
+            item { OrderSummaryCard(state, onNoteChange = null) }
+        }
+
+        Surface(shadowElevation = 8.dp) {
+            Box(Modifier.padding(16.dp)) {
+                PrimaryButton(text = "Đóng", onClick = onClose, height = 44.dp)
+            }
         }
     }
 }
