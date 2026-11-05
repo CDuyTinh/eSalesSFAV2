@@ -1,0 +1,69 @@
+<resources>
+    <!-- Shared -->
+    <string name="action_back">Back</string>
+    <string name="action_open_menu">Open menu</string>
+    <string name="action_reload">Reload</string>
+    <string name="action_notifications">Notifications</string>
+    <string name="action_got_it">Got it</string>
+
+    <!-- Login -->
+    <string name="login_tagline">Sign in to start today\'s route</string>
+    <string name="login_username">Username</string>
+    <string name="login_password">Password</string>
+    <string name="login_hide_password">Hide password</string>
+    <string name="login_show_password">Show password</string>
+    <string name="login_submit">Sign in</string>
+    <string name="login_version">Version %1$s (%2$d)</string>
+
+    <!-- Shell -->
+    <string name="shell_empty_tab">Nothing here yet</string>
+    <string name="shell_visiting">Visiting</string>
+    <string name="shell_account">Account</string>
+    <string name="shell_end_day">End the sales day</string>
+    <string name="shell_sign_out">Sign out</string>
+    <string name="shell_visit_tab">Visits</string>
+    <string name="shell_day_not_started">The sales day has not started</string>
+    <string name="shell_punch_at">Clock in at %1$s to open today\'s route.</string>
+    <string name="shell_punch_at_branch">Clock in at the branch to open today\'s route.</string>
+    <string name="shell_start_day">Start the sales day</string>
+    <string name="shell_unsupported_title">Not in this version yet</string>
+    <string name="shell_unsupported_body">This feature is switched on for your company, but this version of the app has no screen for it yet.</string>
+
+    <!-- Account -->
+    <string name="account_title">Account</string>
+    <string name="account_appearance">Appearance</string>
+    <string name="account_language">Language</string>
+    <string name="account_change_password">Change password</string>
+    <string name="account_code">Employee code</string>
+    <string name="account_branch">Branch</string>
+    <string name="account_phone">Phone</string>
+    <string name="password_current">Current password</string>
+    <string name="password_new">New password</string>
+    <string name="password_same_as_current">The new password is the same as the current one</string>
+    <string name="password_confirm">Repeat the new password</string>
+    <string name="password_mismatch">The two passwords do not match</string>
+    <string name="password_changed">Password changed.</string>
+
+    <!-- Appearance -->
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Overview</string>
+    <string name="dashboard_no_data">No figures yet</string>
+    <string name="dashboard_month_kpi">This month\'s KPIs</string>
+    <string name="dashboard_sales">Sales</string>
+    <string name="dashboard_today">Today</string>
+    <string name="dashboard_revenue_vnd">Revenue (VND)</string>
+    <string name="dashboard_visits">Visits</string>
+    <string name="dashboard_orders">Orders</string>
+    <string name="dashboard_sku_per_order">SKUs/order</string>
+    <string name="dashboard_order_count">%1$d orders</string>
+    <string name="dashboard_no_target">No target set for this month</string>
+    <string name="dashboard_target_left">Target %1$s · %2$s to go</string>
+    <string name="dashboard_target_over">Target %1$s · %2$s over</string>
+    <string name="range_this_week">This week</string>
+    <string name="range_last_week">Last week</string>
+    <string name="range_this_month">This month</string>
+</resources>

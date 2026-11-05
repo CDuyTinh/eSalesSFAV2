@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.shell
 
 import com.tinhcd.myesalessfa.core.ui.UpdateDialog
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.BuildConfig
 import android.Manifest
 import android.os.Build
@@ -382,7 +384,7 @@ private fun SheetMenu(
 
         if (tab.children.isEmpty()) {
             Text(
-                text = "Chưa có mục nào",
+                text = stringResource(R.string.shell_empty_tab),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(20.dp),
@@ -408,13 +410,13 @@ private fun SheetMenu(
         if (openVisit != null) {
             HorizontalDivider()
 
-            // "Đang viếng thăm" rather than the legacy's "Công việc". This sheet
+            // stringResource(R.string.shell_visiting) rather than the legacy's "Công việc". This sheet
             // carries the tab's own title at the top, which the legacy's does
             // not, so repeating the word here read as a heading that had lost
             // track of itself. It also says more: these tiles are here because
             // the rep is inside a call, which is the thing worth stating.
             Text(
-                text = "Đang viếng thăm",
+                text = stringResource(R.string.shell_visiting),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(start = 20.dp, top = 16.dp),
@@ -549,7 +551,7 @@ private fun ShellDrawer(
         }
 
         NavigationDrawerItem(
-            label = { Text("Thông tin tài khoản") },
+            label = { Text(stringResource(R.string.shell_account)) },
             icon = { Icon(Icons.Default.Person, contentDescription = null) },
             selected = false,
             onClick = onOpenAccount,
@@ -562,7 +564,7 @@ private fun ShellDrawer(
         // never offered as if they were interchangeable.
         if (workDay?.isOpen == true) {
             NavigationDrawerItem(
-                label = { Text("Kết thúc ngày bán hàng") },
+                label = { Text(stringResource(R.string.shell_end_day)) },
                 icon = { Icon(Icons.Default.EventAvailable, contentDescription = null) },
                 selected = false,
                 onClick = onOpenWorkDay,
@@ -572,7 +574,7 @@ private fun ShellDrawer(
         }
 
         NavigationDrawerItem(
-            label = { Text("Đăng xuất") },
+            label = { Text(stringResource(R.string.shell_sign_out)) },
             icon = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null) },
             selected = false,
             onClick = onSignOut,
@@ -605,10 +607,10 @@ private fun DayNotStartedPanel(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 androidx.compose.material3.IconButton(onClick = onOpenDrawer) {
-                    Icon(Icons.Default.Menu, contentDescription = "Mở menu")
+                    Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.action_open_menu))
                 }
                 Text(
-                    text = "Viếng thăm",
+                    text = stringResource(R.string.shell_visit_tab),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(start = 8.dp),
                 )
@@ -629,19 +631,19 @@ private fun DayNotStartedPanel(
                 tint = MaterialTheme.colorScheme.primary,
             )
             Text(
-                text = "Chưa bắt đầu ngày bán hàng",
+                text = stringResource(R.string.shell_day_not_started),
                 style = MaterialTheme.typography.titleLarge,
                 textAlign = TextAlign.Center,
             )
             Text(
                 text = branchName
-                    ?.let { "Chấm công tại $it để mở tuyến hôm nay." }
-                    ?: "Chấm công tại chi nhánh để mở tuyến hôm nay.",
+                    ?.let { stringResource(R.string.shell_punch_at, it) }
+                    ?: stringResource(R.string.shell_punch_at_branch),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
-            PrimaryButton(text = "Bắt đầu ngày bán hàng", onClick = onOpenWorkDay)
+            PrimaryButton(text = stringResource(R.string.shell_start_day), onClick = onOpenWorkDay)
         }
     }
 }
@@ -654,7 +656,7 @@ private fun DayNotStartedPanel(
 private fun UnknownTab() {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Text(
-            text = "Mục này chưa có trong bản này",
+            text = stringResource(R.string.shell_unsupported_title),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -666,14 +668,13 @@ private fun NotBuiltDialog(label: String, onDismiss: () -> Unit) {
     androidx.compose.material3.AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            androidx.compose.material3.TextButton(onClick = onDismiss) { Text("Đã hiểu") }
+            androidx.compose.material3.TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_got_it)) }
         },
         icon = { Icon(Icons.Default.Lock, contentDescription = null) },
         title = { Text(label) },
         text = {
             Text(
-                "Chức năng này đã được bật trên hệ thống nhưng bản ứng dụng hiện tại " +
-                    "chưa có màn hình cho nó.",
+                stringResource(R.string.shell_unsupported_body),
             )
         },
     )
