@@ -106,12 +106,84 @@ val MaterialTheme.brand: BrandColors
     @ReadOnlyComposable
     get() = LocalBrandColors.current
 
+/**
+ * What a status means, as a colour: done, waiting, wrong, informational, the
+ * odd one out, and switched off. Screens used to pick their own hex for each,
+ * which drifted (three greens, four reds) and, being tuned for white paper, fell
+ * to near-invisible on the dark surface. One set, one tone per theme.
+ *
+ * The strong tones are for text, icons, bars and the dots on a map. A filled
+ * badge puts [onStatus] on top of one. The containers are the pale chip
+ * backgrounds, paired with their own ink.
+ */
+@Immutable
+data class StatusColors(
+    val success: Color,
+    val warning: Color,
+    val danger: Color,
+    val info: Color,
+    val accent: Color,
+    val neutral: Color,
+    val onStatus: Color,
+    val successContainer: Color,
+    val onSuccessContainer: Color,
+    val warningContainer: Color,
+    val onWarningContainer: Color,
+    val infoContainer: Color,
+    val onInfoContainer: Color,
+)
+
+private val LightStatus = StatusColors(
+    success = Color(0xFF04A489),
+    warning = Color(0xFFF5A202),
+    danger = Color(0xFFD5262B),
+    info = Color(0xFF2D2DFE),
+    accent = Color(0xFF5C00D4),
+    neutral = Color(0xFF8A8A93),
+    onStatus = Color.White,
+    successContainer = Color(0xFFE6F4EA),
+    onSuccessContainer = Color(0xFF1E7B34),
+    warningContainer = Color(0xFFFFF3E0),
+    onWarningContainer = Color(0xFFB45309),
+    infoContainer = Color(0xFFE3F2FD),
+    onInfoContainer = Color(0xFF0B57A4),
+)
+
+// Lifted until each clears 4.5:1 on the dark surface; badges then carry dark
+// ink, since white on a light tone is the same contrast problem reversed.
+private val DarkStatus = StatusColors(
+    success = Color(0xFF3CC9A8),
+    warning = Color(0xFFFFB74D),
+    danger = Color(0xFFFF7A7A),
+    info = Color(0xFF9AA5FF),
+    accent = Color(0xFFBB93FF),
+    neutral = Color(0xFFA6A6B0),
+    onStatus = Color(0xFF111316),
+    successContainer = Color(0xFF173A2C),
+    onSuccessContainer = Color(0xFF9EE6C4),
+    warningContainer = Color(0xFF45300F),
+    onWarningContainer = Color(0xFFFFD49A),
+    infoContainer = Color(0xFF16304D),
+    onInfoContainer = Color(0xFFB5D4FF),
+)
+
+val LocalStatusColors = staticCompositionLocalOf { LightStatus }
+
+/** `MaterialTheme.status.success`, beside `colorScheme` and `brand`. */
+val MaterialTheme.status: StatusColors
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalStatusColors.current
+
 @Composable
 fun MyeSalesTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    CompositionLocalProvider(LocalBrandColors provides if (darkTheme) DarkBrand else LightBrand) {
+    CompositionLocalProvider(
+        LocalBrandColors provides if (darkTheme) DarkBrand else LightBrand,
+        LocalStatusColors provides if (darkTheme) DarkStatus else LightStatus,
+    ) {
         MaterialTheme(
             colorScheme = if (darkTheme) DarkColors else LightColors,
             typography = AppTypography,

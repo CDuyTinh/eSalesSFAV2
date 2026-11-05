@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import android.Manifest
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -860,7 +861,7 @@ private fun ConditionRow(
                 condition.label,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
-                color = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (selected) MaterialTheme.status.onStatus else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -956,15 +957,19 @@ private fun StatusChip(text: String, tint: Color) {
 }
 
 /** Fine, fixable, finished — the three conditions, in three readable colours. */
+@Composable
 private fun conditionColour(condition: PosmCondition): Color = when (condition) {
     PosmCondition.USABLE -> Good
     PosmCondition.REPAIRABLE -> Warn
     PosmCondition.UNUSABLE -> Bad
 }
 
-private val Good = Color(0xFF04A489)
-private val Warn = Color(0xFFE08A00)
-private val Bad = Color(0xFFD32F2F)
+private val Good: Color
+    @Composable get() = MaterialTheme.status.success
+private val Warn: Color
+    @Composable get() = MaterialTheme.status.warning
+private val Bad: Color
+    @Composable get() = MaterialTheme.status.danger
 
 // -----------------------------------------------------------------------------
 // Đăng ký POSM

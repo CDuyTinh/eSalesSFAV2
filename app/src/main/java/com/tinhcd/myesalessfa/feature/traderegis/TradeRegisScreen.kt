@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.traderegis
 
 import androidx.compose.foundation.clickable
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -368,7 +369,7 @@ private fun RegistrationCard(row: TradeRegistration) {
                 Text(
                     "Phản hồi: $note",
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (row.status == TradeRegistrationStatus.REJECTED) Color(0xFFC62828) else Color.Unspecified,
+                    color = if (row.status == TradeRegistrationStatus.REJECTED) MaterialTheme.status.danger else Color.Unspecified,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -677,15 +678,17 @@ private fun LevelRow(
 
 // -----------------------------------------------------------------------------
 
+@Composable
 private fun kindColour(kind: TradeKind): Color = when (kind) {
-    TradeKind.DISPLAY -> Color(0xFF5C00D4)
-    TradeKind.LOYALTY -> Color(0xFF04A489)
+    TradeKind.DISPLAY -> MaterialTheme.status.accent
+    TradeKind.LOYALTY -> MaterialTheme.status.success
 }
 
+@Composable
 private fun statusColour(status: TradeRegistrationStatus): Color = when (status) {
-    TradeRegistrationStatus.PENDING -> Color(0xFFF5A202)
-    TradeRegistrationStatus.APPROVED -> Color(0xFF2E7D32)
-    TradeRegistrationStatus.REJECTED -> Color(0xFFC62828)
+    TradeRegistrationStatus.PENDING -> MaterialTheme.status.warning
+    TradeRegistrationStatus.APPROVED -> MaterialTheme.status.success
+    TradeRegistrationStatus.REJECTED -> MaterialTheme.status.danger
 }
 
 private fun windowLabel(from: String?, to: String?): String? = when {

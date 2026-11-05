@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.customer
 
 import android.content.Intent
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -412,7 +413,7 @@ private fun TabPills(
                         lineHeight = 15.sp,
                         fontWeight = if (active) FontWeight.Medium else FontWeight.Normal,
                         color = if (active) {
-                            Color.White
+                            MaterialTheme.brand.onHeader
                         } else {
                             MaterialTheme.colorScheme.onSurfaceVariant
                         },
@@ -568,7 +569,7 @@ private fun JoinedProgramCard(program: DisplayProgram) {
                 if (program.isPending) {
                     ProgramChip("Chờ duyệt", MaterialTheme.colorScheme.tertiary)
                 } else {
-                    ProgramChip("Đã duyệt", Color(0xFF2E7D32))
+                    ProgramChip("Đã duyệt", MaterialTheme.status.success)
                 }
             }
 
@@ -592,7 +593,7 @@ private fun JoinedProgramCard(program: DisplayProgram) {
                         (if (program.achieved == true) "đạt" else "chưa đạt"),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (program.achieved == true) {
-                        Color(0xFF2E7D32)
+                        MaterialTheme.status.success
                     } else {
                         MaterialTheme.colorScheme.error
                     },
@@ -776,7 +777,7 @@ private fun LoyaltyJoinedCard(program: LoyaltyProgram) {
                 if (program.isPending) {
                     ProgramChip("Chờ duyệt", MaterialTheme.colorScheme.tertiary)
                 } else if (program.isMet) {
-                    ProgramChip("Đã đạt", Color(0xFF2E7D32))
+                    ProgramChip("Đã đạt", MaterialTheme.status.success)
                 } else {
                     ProgramChip("Đang tích", MaterialTheme.colorScheme.primary)
                 }
@@ -790,7 +791,7 @@ private fun LoyaltyJoinedCard(program: LoyaltyProgram) {
                     .fillMaxWidth()
                     .height(6.dp)
                     .clip(RoundedCornerShape(3.dp)),
-                color = if (program.isMet) Color(0xFF2E7D32) else MaterialTheme.colorScheme.primary,
+                color = if (program.isMet) MaterialTheme.status.success else MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant,
             )
 
@@ -819,7 +820,7 @@ private fun LoyaltyJoinedCard(program: LoyaltyProgram) {
                 },
                 style = MaterialTheme.typography.labelSmall,
                 color = if (program.isMet) {
-                    Color(0xFF2E7D32)
+                    MaterialTheme.status.success
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 },

@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.route
 
 import android.content.Intent
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -186,7 +187,7 @@ private fun RouteContent(
                 FloatingActionButton(
                     onClick = onOpenMap,
                     containerColor = MapRed,
-                    contentColor = Color.White,
+                    contentColor = MaterialTheme.status.onStatus,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(16.dp)
@@ -617,7 +618,7 @@ private fun StoreAvatar(url: String?, order: Int) {
 
         Surface(
             color = MaterialTheme.colorScheme.primary,
-            contentColor = Color.White,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
             shape = RoundedCornerShape(topEnd = 8.dp, bottomStart = 12.dp),
             modifier = Modifier.align(Alignment.BottomStart),
         ) {
@@ -635,7 +636,7 @@ private fun StoreAvatar(url: String?, order: Int) {
 private fun CodeChip(code: String, color: Color) {
     Surface(
         color = color,
-        contentColor = Color.White,
+        contentColor = MaterialTheme.status.onStatus,
         shape = RoundedCornerShape(12.dp),
     ) {
         Text(
@@ -693,7 +694,7 @@ private fun StopAction(status: VisitStatus, checkInBlocked: Boolean, onOpen: () 
         VisitStatus.PLANNED -> ActionChip(
             text = "Check-in",
             container = if (checkInBlocked) StatusGrey else MaterialTheme.colorScheme.primary,
-            content = Color.White,
+            content = if (checkInBlocked) MaterialTheme.status.onStatus else MaterialTheme.colorScheme.onPrimary,
             enabled = !checkInBlocked,
             onClick = onOpen,
         )
@@ -701,7 +702,7 @@ private fun StopAction(status: VisitStatus, checkInBlocked: Boolean, onOpen: () 
         VisitStatus.IN_PROGRESS -> ActionChip(
             text = "Vào cuộc viếng thăm",
             container = ActionRed,
-            content = Color.White,
+            content = MaterialTheme.status.onStatus,
             icon = Icons.AutoMirrored.Filled.ArrowForward,
             onClick = onOpen,
         )
@@ -717,7 +718,7 @@ private fun StopAction(status: VisitStatus, checkInBlocked: Boolean, onOpen: () 
                 MaterialTheme.colorScheme.secondaryContainer
             },
             content = if (checkInBlocked) {
-                Color.White
+                MaterialTheme.status.onStatus
             } else {
                 MaterialTheme.colorScheme.onSecondaryContainer
             },
@@ -865,26 +866,35 @@ private fun ProfileMissingBanner(retrying: Boolean, onRetry: () -> Unit) {
 // -----------------------------------------------------------------------------
 
 /**
- * Fixed rather than theme-derived, and carried over from the app this replaces.
+ * The hues carried over from the app this replaces, from the theme's status set.
  *
  * These colours are read as a set — green means finished, amber means started,
  * grey means untouched, red means shut — so they have to stay distinguishable from
- * each other rather than from whatever surface they land on, which is what would
- * happen if dark mode pulled them all toward one value.
+ * each other. Dark mode lifts each one's tone to stay readable on the dark surface
+ * but keeps the hues apart, so the set still reads the same.
  */
-private val StatusGreen = Color(0xFF04A489)
-private val StatusAmber = Color(0xFFF5A202)
-private val StatusGrey = Color(0xFF8A8A93)
-private val ActionRed = Color(0xFFD5262B)
-private val CallBlue = Color(0xFF2D2DFE)
+private val StatusGreen: Color
+    @Composable get() = MaterialTheme.status.success
+private val StatusAmber: Color
+    @Composable get() = MaterialTheme.status.warning
+private val StatusGrey: Color
+    @Composable get() = MaterialTheme.status.neutral
+private val ActionRed: Color
+    @Composable get() = MaterialTheme.status.danger
+private val CallBlue: Color
+    @Composable get() = MaterialTheme.status.info
 
 /** Not one of the status colours: being off-MCP is not a stage of a visit. */
-private val UnplannedViolet = Color(0xFF5C00D4)
+private val UnplannedViolet: Color
+    @Composable get() = MaterialTheme.status.accent
 
 /** The map button, in the red the app this replaces used for it. */
-private val MapRed = Color(0xFFD5262B)
-private val FilterActive = Color(0xFFF5A202)
+private val MapRed: Color
+    @Composable get() = MaterialTheme.status.danger
+private val FilterActive: Color
+    @Composable get() = MaterialTheme.status.warning
 
+@Composable
 private fun VisitStatus.chipColor(): Color = when (this) {
     VisitStatus.PLANNED -> StatusGrey
     VisitStatus.IN_PROGRESS -> StatusAmber

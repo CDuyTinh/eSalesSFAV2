@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import android.Manifest
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -637,7 +638,7 @@ private fun VerdictButton(
                 text,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
-                color = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (selected) MaterialTheme.status.onStatus else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -691,8 +692,10 @@ private fun PhotoThumbnail(photo: AuditPhoto, onRemove: () -> Unit) {
 }
 
 /** Pass and fail, the colours the legacy display list marks its rows in. */
-private val Pass = Color(0xFF04A489)
-private val Fail = Color(0xFFD32F2F)
+private val Pass: Color
+    @Composable get() = MaterialTheme.status.success
+private val Fail: Color
+    @Composable get() = MaterialTheme.status.danger
 
 /**
  * What this level asks for: head office's photographs of the shelf, and the

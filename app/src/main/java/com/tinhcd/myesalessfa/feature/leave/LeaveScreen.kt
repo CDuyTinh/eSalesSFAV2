@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.leave
 
 import androidx.compose.foundation.clickable
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -266,7 +267,7 @@ private fun StatusChip(status: LeaveStatus) {
         LeaveStatus.CANCELLED -> "Đã huỷ" to CancelledGrey
     }
 
-    Surface(color = colour, contentColor = Color.White, shape = CircleShape) {
+    Surface(color = colour, contentColor = MaterialTheme.status.onStatus, shape = CircleShape) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
@@ -450,10 +451,14 @@ private fun Notice(message: String) {
     }
 }
 
-private val PendingAmber = Color(0xFFF5A202)
-private val ApprovedGreen = Color(0xFF04A489)
-private val RejectedRed = Color(0xFFD5262B)
-private val CancelledGrey = Color(0xFF8A8A93)
+private val PendingAmber: Color
+    @Composable get() = MaterialTheme.status.warning
+private val ApprovedGreen: Color
+    @Composable get() = MaterialTheme.status.success
+private val RejectedRed: Color
+    @Composable get() = MaterialTheme.status.danger
+private val CancelledGrey: Color
+    @Composable get() = MaterialTheme.status.neutral
 
 private val DateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 

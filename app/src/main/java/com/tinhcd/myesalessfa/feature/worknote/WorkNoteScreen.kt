@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.worknote
 
 import androidx.compose.foundation.clickable
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -460,7 +461,8 @@ private fun Notice(message: String) {
     }
 }
 
-private val OverdueRed = Color(0xFFD5262B)
+private val OverdueRed: Color
+    @Composable get() = MaterialTheme.status.danger
 
 private val DateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 

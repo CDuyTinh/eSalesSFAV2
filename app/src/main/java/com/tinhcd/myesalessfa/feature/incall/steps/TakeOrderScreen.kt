@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.activity.compose.BackHandler
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -1211,7 +1212,8 @@ private fun List<SuggestedPart>.describe(): String =
     joinToString(" + ") { "${it.qty} ${it.uomName}" }
 
 /** The green the legacy screens print money in. */
-private val MoneyGreen = Color(0xFF04A489)
+private val MoneyGreen: Color
+    @Composable get() = MaterialTheme.status.success
 
 /**
  * One rule the basket has earned.
@@ -1370,7 +1372,7 @@ private fun PromotionOption(
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 color = if (selected) {
-                    Color.White
+                    MaterialTheme.status.onStatus
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 },

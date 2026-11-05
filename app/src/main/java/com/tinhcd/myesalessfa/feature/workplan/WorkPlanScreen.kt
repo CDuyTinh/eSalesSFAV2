@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.workplan
 
 import androidx.compose.foundation.background
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -348,7 +349,7 @@ private fun DayCell(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
-    val tint = entry?.status?.let(::statusColour)
+    val tint = entry?.status?.let { statusColour(it) }
 
     Box(
         modifier = Modifier
@@ -1178,13 +1179,14 @@ private fun EmptyList(hasDay: Boolean) {
     }
 }
 
+@Composable
 private fun statusColour(status: WorkPlanStatus): Color = when (status) {
-    WorkPlanStatus.DRAFT -> Color(0xFF9E9E9E)
-    WorkPlanStatus.SUBMITTED -> Color(0xFFF5A202)
-    WorkPlanStatus.APPROVED -> Color(0xFF2E7D32)
-    WorkPlanStatus.REJECTED -> Color(0xFFC62828)
-    WorkPlanStatus.COMPLETED -> Color(0xFF1565C0)
-    WorkPlanStatus.CANCELLED -> Color(0xFF616161)
+    WorkPlanStatus.DRAFT -> MaterialTheme.status.neutral
+    WorkPlanStatus.SUBMITTED -> MaterialTheme.status.warning
+    WorkPlanStatus.APPROVED -> MaterialTheme.status.success
+    WorkPlanStatus.REJECTED -> MaterialTheme.status.danger
+    WorkPlanStatus.COMPLETED -> MaterialTheme.status.info
+    WorkPlanStatus.CANCELLED -> MaterialTheme.status.neutral
 }
 
 /**

@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.dashboard
 
 import androidx.compose.foundation.background
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -292,9 +293,14 @@ private val SkuTile = Kpi.Orange
  * colour down the whole tab. Revenue takes a violet of its own rather than the
  * tiles' blue or orange: it is not the visit count and it is not SKUs per order,
  * and a rep scanning the tab should not have to check the label to know which.
+ *
+ * They lead with the status tone rather than the tile's: the same hue on white
+ * paper, lifted on the dark surface, where the pill's text is drawn in it.
  */
-private val RevenueRamp = Kpi.Violet
-private val OrderRamp = OrderTile
+private val RevenueRamp: List<Color>
+    @Composable get() = listOf(MaterialTheme.status.accent, Kpi.Violet.last())
+private val OrderRamp: List<Color>
+    @Composable get() = listOf(MaterialTheme.status.success, Kpi.Green.last())
 
 @Composable
 private fun MonthCard(month: MonthFigures) {

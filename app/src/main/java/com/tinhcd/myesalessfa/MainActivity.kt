@@ -23,11 +23,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.DisposableEffect
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
+import com.tinhcd.myesalessfa.core.ui.theme.ThemeSettings
+import com.tinhcd.myesalessfa.core.ui.theme.isDark
 import com.tinhcd.myesalessfa.domain.model.SessionState
 import com.tinhcd.myesalessfa.domain.repository.AuthRepository
 import com.tinhcd.myesalessfa.navigation.AppNavHost
@@ -73,6 +76,8 @@ class MainActivity : ComponentActivity() {
      */
     private val rootViewModel: RootViewModel by viewModels()
 
+    @Inject lateinit var themeSettings: ThemeSettings
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -89,7 +94,19 @@ class MainActivity : ComponentActivity() {
         // icons for a light theme and they vanish into the blue.
         enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT))
         setContent {
-            MyeSalesTheme {
+            val mode by themeSettings.mode.collectAsStateWithLifecycle()
+            val dark = mode.isDark()
+            // The navigation bar follows the app's choice, not the phone's: a rep
+            // who picked Tối on a light phone would otherwise get dark buttons on
+            // a dark bar.
+            DisposableEffect(dark) {
+                enableEdgeToEdge(
+                    statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+                    navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark },
+                )
+                onDispose {}
+            }
+            MyeSalesTheme(darkTheme = dark) {
                 val start by rootViewModel.startDestination.collectAsStateWithLifecycle()
 
                 // Null while the stored session is being restored. Showing the

@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.newcustomer
 
 import android.Manifest
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -320,7 +321,7 @@ private fun RegistrationCard(row: CustomerRegistrationRow, onClick: () -> Unit) 
                     Text(
                         text = "Phản hồi: $note",
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (row.status == RegistrationStatus.REJECTED) Color(0xFFC62828) else Color.Unspecified,
+                        color = if (row.status == RegistrationStatus.REJECTED) MaterialTheme.status.danger else Color.Unspecified,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -667,9 +668,9 @@ private fun EditPage(
 @Composable
 private fun StatusPill(status: RegistrationStatus) {
     val colour = when (status) {
-        RegistrationStatus.PENDING -> Color(0xFFF5A202)
-        RegistrationStatus.APPROVED -> Color(0xFF2E7D32)
-        RegistrationStatus.REJECTED -> Color(0xFFC62828)
+        RegistrationStatus.PENDING -> MaterialTheme.status.warning
+        RegistrationStatus.APPROVED -> MaterialTheme.status.success
+        RegistrationStatus.REJECTED -> MaterialTheme.status.danger
     }
 
     Surface(shape = RoundedCornerShape(6.dp), color = colour.copy(alpha = 0.16f)) {

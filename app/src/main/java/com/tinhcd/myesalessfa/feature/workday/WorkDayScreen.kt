@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.workday
 
 import androidx.compose.foundation.background
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -419,7 +420,8 @@ private fun Notice(message: String) {
     }
 }
 
-private val LateAmber = Color(0xFFF5A202)
+private val LateAmber: Color
+    @Composable get() = MaterialTheme.status.warning
 
 private val DateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 

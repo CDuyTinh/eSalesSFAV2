@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.sitestock
 
 import androidx.compose.foundation.clickable
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -337,8 +338,10 @@ private fun Duration.describe(): String = when {
     else -> "${toDays()} ngày trước"
 }
 
-private val OutRed = Color(0xFFD5262B)
-private val StaleAmber = Color(0xFFF5A202)
+private val OutRed: Color
+    @Composable get() = MaterialTheme.status.danger
+private val StaleAmber: Color
+    @Composable get() = MaterialTheme.status.warning
 
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm dd/MM")
 

@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.checkin
 
 import android.Manifest
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -376,7 +377,7 @@ private fun DistanceRow(gate: CheckInGate?, locating: Boolean, onRefresh: () -> 
                     Icon(
                         Icons.Default.LocationOn,
                         contentDescription = "Lấy lại vị trí",
-                        tint = Color.White,
+                        tint = MaterialTheme.status.onStatus,
                         modifier = Modifier.size(16.dp),
                     )
                 }
@@ -695,7 +696,8 @@ private fun groupDigits(value: Int): String =
 private val SelfieBorder = Color(0xFF4FC3F7)
 
 /** The legacy's amber for a fix too rough to judge a distance by. */
-private val LowAccuracyAmber = Color(0xFFE0A800)
+private val LowAccuracyAmber: Color
+    @Composable get() = MaterialTheme.status.warning
 
 @Preview(showBackground = true, heightDp = 700)
 @Composable
