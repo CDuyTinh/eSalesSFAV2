@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.account
 
 import androidx.compose.foundation.background
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,6 +53,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.feature.settings.AppearanceCard
+import com.tinhcd.myesalessfa.feature.settings.LanguageCard
+import com.tinhcd.myesalessfa.core.ui.theme.AppLanguage
 import com.tinhcd.myesalessfa.core.ui.theme.ThemeMode
 import com.tinhcd.myesalessfa.core.ui.HeaderBand
 import com.tinhcd.myesalessfa.core.ui.theme.brand
@@ -93,16 +97,17 @@ private fun AccountContent(
     onSubmit: () -> Unit,
     // A slot, so the previews can draw the screen without a Hilt graph.
     appearance: @Composable () -> Unit = { AppearanceCard() },
+    language: @Composable () -> Unit = { LanguageCard() },
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Thông tin tài khoản") },
+                title = { Text(stringResource(R.string.account_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Quay lại",
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
                 },
@@ -122,9 +127,11 @@ private fun AccountContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 item { ProfileCard(me = state.me) }
-                item { SectionTitle("Giao diện") }
+                item { SectionTitle(stringResource(R.string.account_appearance)) }
                 item { appearance() }
-                item { SectionTitle("Đổi mật khẩu") }
+                item { SectionTitle(stringResource(R.string.account_language)) }
+                item { language() }
+                item { SectionTitle(stringResource(R.string.account_change_password)) }
                 item {
                     PasswordCard(
                         change = state.change,
@@ -181,10 +188,10 @@ private fun ProfileCard(me: Salesperson?) {
 
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
 
-            InfoRow(Icons.Default.Badge, "Mã nhân viên", me?.code ?: "—")
+            InfoRow(Icons.Default.Badge, stringResource(R.string.account_code), me?.code ?: "—")
             InfoRow(
                 icon = Icons.Default.Business,
-                label = "Chi nhánh",
+                label = stringResource(R.string.account_branch),
                 value = listOfNotNull(me?.branchCode, me?.branchName)
                     .joinToString(" · ")
                     .ifBlank { "—" },
@@ -192,7 +199,7 @@ private fun ProfileCard(me: Salesperson?) {
             // Not on the model yet, and shown as absent rather than hidden: a rep
             // checking why the office cannot reach them should see the field is
             // empty rather than wonder where it went.
-            InfoRow(Icons.Default.Phone, "Điện thoại", "—")
+            InfoRow(Icons.Default.Phone, stringResource(R.string.account_phone), "—")
         }
     }
 }
@@ -257,7 +264,7 @@ private fun PasswordCard(
             OutlinedTextField(
                 value = change.current,
                 onValueChange = onCurrent,
-                label = { Text("Mật khẩu hiện tại") },
+                label = { Text(stringResource(R.string.password_current)) },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
@@ -265,11 +272,11 @@ private fun PasswordCard(
             OutlinedTextField(
                 value = change.new,
                 onValueChange = onNew,
-                label = { Text("Mật khẩu mới") },
+                label = { Text(stringResource(R.string.password_new)) },
                 singleLine = true,
                 isError = change.sameAsCurrent,
                 supportingText = {
-                    if (change.sameAsCurrent) Text("Mật khẩu mới trùng mật khẩu hiện tại")
+                    if (change.sameAsCurrent) Text(stringResource(R.string.password_same_as_current))
                 },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
@@ -277,11 +284,11 @@ private fun PasswordCard(
             OutlinedTextField(
                 value = change.confirm,
                 onValueChange = onConfirm,
-                label = { Text("Nhập lại mật khẩu mới") },
+                label = { Text(stringResource(R.string.password_confirm)) },
                 singleLine = true,
                 isError = change.confirmMismatch,
                 supportingText = {
-                    if (change.confirmMismatch) Text("Hai mật khẩu không khớp")
+                    if (change.confirmMismatch) Text(stringResource(R.string.password_mismatch))
                 },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
@@ -290,10 +297,10 @@ private fun PasswordCard(
             RuleList(unmet = change.unmet, typing = change.new.isNotEmpty())
 
             error?.let { Notice(message = it, error = true) }
-            if (changed) Notice(message = "Đã đổi mật khẩu.", error = false)
+            if (changed) Notice(message = stringResource(R.string.password_changed), error = false)
 
             PrimaryButton(
-                text = "Đổi mật khẩu",
+                text = stringResource(R.string.account_change_password),
                 onClick = onSubmit,
                 enabled = change.canSubmit,
                 loading = changing,
@@ -389,6 +396,7 @@ private fun AccountPreview() {
             onConfirm = {},
             onSubmit = {},
             appearance = { AppearanceCard(mode = ThemeMode.SYSTEM, onSelect = {}) },
+            language = { LanguageCard(language = AppLanguage.VI, onSelect = {}) },
         )
     }
 }
@@ -413,6 +421,7 @@ private fun AccountTypingPreview() {
             onConfirm = {},
             onSubmit = {},
             appearance = { AppearanceCard(mode = ThemeMode.SYSTEM, onSelect = {}) },
+            language = { LanguageCard(language = AppLanguage.VI, onSelect = {}) },
         )
     }
 }

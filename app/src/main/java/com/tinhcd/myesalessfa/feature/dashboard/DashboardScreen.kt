@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.dashboard
 
 import androidx.compose.foundation.background
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -111,10 +113,10 @@ private fun DashboardContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Tổng quan") },
+                title = { Text(stringResource(R.string.dashboard_title)) },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = "Mở menu")
+                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.action_open_menu))
                     }
                 },
                 actions = {
@@ -135,13 +137,13 @@ private fun DashboardContent(
                         IconButton(onClick = onOpenNotifications) {
                             Icon(
                                 Icons.Default.NotificationsNone,
-                                contentDescription = "Thông báo",
+                                contentDescription = stringResource(R.string.action_notifications),
                             )
                         }
                     }
 
                     IconButton(onClick = onRefresh, enabled = !state.loading) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Tải lại")
+                        Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_reload))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -176,7 +178,7 @@ private fun DashboardContent(
 
                 overview == null ->
                     EmptyState(
-                        message = state.error ?: "Chưa có số liệu",
+                        message = state.error ?: stringResource(R.string.dashboard_no_data),
                         modifier = Modifier.align(Alignment.Center),
                     )
 
@@ -214,9 +216,9 @@ private fun Figures(
             item { ErrorNotice(error) }
         }
         item { TodayCard(overview.today) }
-        item { SectionTitle("KPI tháng này") }
+        item { SectionTitle(stringResource(R.string.dashboard_month_kpi)) }
         item { MonthCard(overview.month) }
-        item { SectionTitle("Doanh số bán hàng") }
+        item { SectionTitle(stringResource(R.string.dashboard_sales)) }
         item {
             TrendCard(
                 overview = overview,
@@ -240,9 +242,9 @@ private fun TodayCard(today: TodayFigures) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text("Hôm nay", style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.dashboard_today), style = MaterialTheme.typography.titleLarge)
             Text(
-                text = "Doanh thu (VND)",
+                text = stringResource(R.string.dashboard_revenue_vnd),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -257,19 +259,19 @@ private fun TodayCard(today: TodayFigures) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 StatTile(
-                    label = "Viếng thăm",
+                    label = stringResource(R.string.dashboard_visits),
                     value = "${today.visitDone}/${today.visitPlanned}",
                     colors = VisitTile,
                     modifier = Modifier.weight(1f),
                 )
                 StatTile(
-                    label = "Đơn hàng",
+                    label = stringResource(R.string.dashboard_orders),
                     value = today.orderCount.toString(),
                     colors = OrderTile,
                     modifier = Modifier.weight(1f),
                 )
                 StatTile(
-                    label = "SKU/đơn",
+                    label = stringResource(R.string.dashboard_sku_per_order),
                     value = formatDecimal(today.skuPerOrder),
                     colors = SkuTile,
                     modifier = Modifier.weight(1f),
@@ -316,22 +318,22 @@ private fun MonthCard(month: MonthFigures) {
             verticalArrangement = Arrangement.spacedBy(22.dp),
         ) {
             KpiBlock(
-                label = "Doanh thu (VND)",
+                label = stringResource(R.string.dashboard_revenue_vnd),
                 value = formatMoney(month.revenue),
                 percent = month.revenuePercent,
                 progress = month.revenueProgress,
                 footer = month.revenueTarget?.let {
-                    targetLine(month.revenue, it, ::formatMoney)
+                    targetLine(month.revenue, it) { v -> formatMoney(v) }
                 },
                 ramp = RevenueRamp,
             )
             KpiBlock(
-                label = "Đơn hàng",
+                label = stringResource(R.string.dashboard_orders),
                 value = month.orderCount.toString(),
                 percent = month.orderPercent,
                 progress = month.orderProgress,
                 footer = month.orderTarget?.let {
-                    targetLine(month.orderCount.toLong(), it.toLong()) { n -> "$n đơn" }
+                    targetLine(month.orderCount.toLong(), it.toLong()) { n -> orderCount(n) }
                 },
                 ramp = OrderRamp,
             )
@@ -396,7 +398,7 @@ private fun KpiBlock(
             KpiBar(progress = progress, ramp = ramp)
         }
         Text(
-            text = footer ?: "Chưa được giao chỉ tiêu tháng này",
+            text = footer ?: stringResource(R.string.dashboard_no_target),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -414,11 +416,18 @@ private fun KpiBlock(
  * month by its days: a daily share of a monthly target is a number nobody agreed
  * to, and drawing a rep as behind against it would be worse than saying nothing.
  */
-private fun targetLine(actual: Long, target: Long, format: (Long) -> String): String {
+@Composable
+private fun targetLine(actual: Long, target: Long, format: @Composable (Long) -> String): String {
     val gap = target - actual
-    val tail = if (gap > 0) "còn ${format(gap)}" else "vượt ${format(-gap)}"
-    return "Chỉ tiêu ${format(target)} · $tail"
+    return if (gap > 0) {
+        stringResource(R.string.dashboard_target_left, format(target), format(gap))
+    } else {
+        stringResource(R.string.dashboard_target_over, format(target), format(-gap))
+    }
 }
+
+@Composable
+private fun orderCount(n: Long): String = stringResource(R.string.dashboard_order_count, n.toInt())
 
 @Composable
 private fun TrendCard(
@@ -453,9 +462,9 @@ private fun TrendCard(
 }
 
 private val RangeLabels = listOf(
-    ChartRange.THIS_WEEK to "Tuần này",
-    ChartRange.LAST_WEEK to "Tuần trước",
-    ChartRange.THIS_MONTH to "Tháng này",
+    ChartRange.THIS_WEEK to R.string.range_this_week,
+    ChartRange.LAST_WEEK to R.string.range_last_week,
+    ChartRange.THIS_MONTH to R.string.range_this_month,
 )
 
 @Composable
@@ -494,7 +503,7 @@ private fun RangeTabs(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = label,
+                    text = stringResource(label),
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (active) {
                         MaterialTheme.colorScheme.onPrimary

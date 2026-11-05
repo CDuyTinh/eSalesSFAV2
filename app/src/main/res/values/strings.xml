@@ -1,3 +1,73 @@
 <resources>
-    <string name="app_name">MyeSalesSFA</string>
+    <string name="app_name" translatable="false">MyeSalesSFA</string>
+
+    <!-- Shared -->
+    <string name="action_back">Quay lại</string>
+    <string name="action_open_menu">Mở menu</string>
+    <string name="action_reload">Tải lại</string>
+    <string name="action_notifications">Thông báo</string>
+    <string name="action_got_it">Đã hiểu</string>
+    <string name="placeholder_none" translatable="false">—</string>
+
+    <!-- Login -->
+    <string name="login_brand" translatable="false">eSales SFA</string>
+    <string name="login_tagline">Đăng nhập để bắt đầu tuyến hôm nay</string>
+    <string name="login_username">Tên đăng nhập</string>
+    <string name="login_password">Mật khẩu</string>
+    <string name="login_hide_password">Ẩn mật khẩu</string>
+    <string name="login_show_password">Hiện mật khẩu</string>
+    <string name="login_submit">Đăng nhập</string>
+    <string name="login_version">Phiên bản %1$s (%2$d)</string>
+
+    <!-- Shell -->
+    <string name="shell_empty_tab">Chưa có mục nào</string>
+    <string name="shell_visiting">Đang viếng thăm</string>
+    <string name="shell_account">Thông tin tài khoản</string>
+    <string name="shell_end_day">Kết thúc ngày bán hàng</string>
+    <string name="shell_sign_out">Đăng xuất</string>
+    <string name="shell_visit_tab">Viếng thăm</string>
+    <string name="shell_day_not_started">Chưa bắt đầu ngày bán hàng</string>
+    <string name="shell_punch_at">Chấm công tại %1$s để mở tuyến hôm nay.</string>
+    <string name="shell_punch_at_branch">Chấm công tại chi nhánh để mở tuyến hôm nay.</string>
+    <string name="shell_start_day">Bắt đầu ngày bán hàng</string>
+    <string name="shell_unsupported_title">Mục này chưa có trong bản này</string>
+    <string name="shell_unsupported_body">Chức năng này đã được bật trên hệ thống nhưng bản ứng dụng hiện tại chưa có màn hình cho nó.</string>
+
+    <!-- Account -->
+    <string name="account_title">Thông tin tài khoản</string>
+    <string name="account_appearance">Giao diện</string>
+    <string name="account_language">Ngôn ngữ</string>
+    <string name="account_change_password">Đổi mật khẩu</string>
+    <string name="account_code">Mã nhân viên</string>
+    <string name="account_branch">Chi nhánh</string>
+    <string name="account_phone">Điện thoại</string>
+    <string name="password_current">Mật khẩu hiện tại</string>
+    <string name="password_new">Mật khẩu mới</string>
+    <string name="password_same_as_current">Mật khẩu mới trùng mật khẩu hiện tại</string>
+    <string name="password_confirm">Nhập lại mật khẩu mới</string>
+    <string name="password_mismatch">Hai mật khẩu không khớp</string>
+    <string name="password_changed">Đã đổi mật khẩu.</string>
+
+    <!-- Appearance -->
+    <string name="theme_system">Hệ thống</string>
+    <string name="theme_light">Sáng</string>
+    <string name="theme_dark">Tối</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Tổng quan</string>
+    <string name="dashboard_no_data">Chưa có số liệu</string>
+    <string name="dashboard_month_kpi">KPI tháng này</string>
+    <string name="dashboard_sales">Doanh số bán hàng</string>
+    <string name="dashboard_today">Hôm nay</string>
+    <string name="dashboard_revenue_vnd">Doanh thu (VND)</string>
+    <string name="dashboard_visits">Viếng thăm</string>
+    <string name="dashboard_orders">Đơn hàng</string>
+    <string name="dashboard_sku_per_order">SKU/đơn</string>
+    <string name="dashboard_order_count">%1$d đơn</string>
+    <string name="dashboard_no_target">Chưa được giao chỉ tiêu tháng này</string>
+    <string name="dashboard_target_left">Chỉ tiêu %1$s · còn %2$s</string>
+    <string name="dashboard_target_over">Chỉ tiêu %1$s · vượt %2$s</string>
+    <string name="range_this_week">Tuần này</string>
+    <string name="range_last_week">Tuần trước</string>
+    <string name="range_this_month">Tháng này</string>
 </resources>

@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.auth
 
 import android.content.res.Configuration
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -139,7 +141,7 @@ private fun LoginContent(
                 OutlinedTextField(
                     value = state.username,
                     onValueChange = onUsernameChange,
-                    label = { Text("Tên đăng nhập") },
+                    label = { Text(stringResource(R.string.login_username)) },
                     singleLine = true,
                     leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                     // Usernames are lowercase codes; auto-capitalising them is a
@@ -163,7 +165,7 @@ private fun LoginContent(
                 OutlinedTextField(
                     value = state.password,
                     onValueChange = onPasswordChange,
-                    label = { Text("Mật khẩu") },
+                    label = { Text(stringResource(R.string.login_password)) },
                     singleLine = true,
                     leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                     trailingIcon = {
@@ -177,9 +179,9 @@ private fun LoginContent(
                                     Icons.Default.Visibility
                                 },
                                 contentDescription = if (revealed) {
-                                    "Ẩn mật khẩu"
+                                    stringResource(R.string.login_hide_password)
                                 } else {
-                                    "Hiện mật khẩu"
+                                    stringResource(R.string.login_show_password)
                                 },
                             )
                         }
@@ -216,7 +218,7 @@ private fun LoginContent(
                 Spacer(Modifier.height(20.dp))
 
                 PrimaryButton(
-                    text = "Đăng nhập",
+                    text = stringResource(R.string.login_submit),
                     onClick = {
                         focusManager.clearFocus()
                         onSubmit()
@@ -230,7 +232,7 @@ private fun LoginContent(
         // Not decoration: when a rep rings in about something odd, the first
         // question is always which build they are on.
         Text(
-            text = "Phiên bản ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+            text = stringResource(R.string.login_version, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -282,12 +284,12 @@ private fun BrandHeader() {
             Spacer(Modifier.height(16.dp))
 
             Text(
-                text = "eSales SFA",
+                text = stringResource(R.string.login_brand),
                 style = MaterialTheme.typography.headlineSmall,
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                text = "Đăng nhập để bắt đầu tuyến hôm nay",
+                text = stringResource(R.string.login_tagline),
                 style = MaterialTheme.typography.bodyLarge,
                 color = brand.onHeader.copy(alpha = 0.88f),
                 textAlign = TextAlign.Center,

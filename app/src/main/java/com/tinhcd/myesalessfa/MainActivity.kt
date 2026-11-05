@@ -1,5 +1,6 @@
 package com.tinhcd.myesalessfa
 
+import android.content.Context
 import android.content.Intent
 import com.tinhcd.myesalessfa.push.PushRoute
 import android.os.Bundle
@@ -29,6 +30,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
+import com.tinhcd.myesalessfa.core.ui.theme.LanguageSettings
 import com.tinhcd.myesalessfa.core.ui.theme.ThemeSettings
 import com.tinhcd.myesalessfa.core.ui.theme.isDark
 import com.tinhcd.myesalessfa.domain.model.SessionState
@@ -77,6 +79,12 @@ class MainActivity : ComponentActivity() {
     private val rootViewModel: RootViewModel by viewModels()
 
     @Inject lateinit var themeSettings: ThemeSettings
+
+    // Ngôn ngữ: every resource this activity reads comes from a context set to
+    // the app's language, not the phone's.
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LanguageSettings.wrap(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()

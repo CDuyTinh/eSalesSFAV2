@@ -21,6 +21,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.tinhcd.myesalessfa.R
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -77,11 +79,14 @@ fun AppearanceCard(mode: ThemeMode, onSelect: (ThemeMode) -> Unit) {
     }
 }
 
-private fun ThemeMode.label(): String = when (this) {
-    ThemeMode.SYSTEM -> "Hệ thống"
-    ThemeMode.LIGHT -> "Sáng"
-    ThemeMode.DARK -> "Tối"
-}
+@Composable
+private fun ThemeMode.label(): String = stringResource(
+    when (this) {
+        ThemeMode.SYSTEM -> R.string.theme_system
+        ThemeMode.LIGHT -> R.string.theme_light
+        ThemeMode.DARK -> R.string.theme_dark
+    },
+)
 
 private fun ThemeMode.icon(): ImageVector = when (this) {
     ThemeMode.SYSTEM -> Icons.Default.PhoneAndroid
