@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.customer
 
 import androidx.compose.animation.AnimatedVisibility
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -224,7 +225,7 @@ private fun StatusChip(status: String) {
 
     Surface(
         color = color,
-        contentColor = Color.White,
+        contentColor = MaterialTheme.status.onStatus,
         shape = RoundedCornerShape(12.dp),
     ) {
         Text(

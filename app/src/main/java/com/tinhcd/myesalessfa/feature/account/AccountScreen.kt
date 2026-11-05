@@ -50,6 +50,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tinhcd.myesalessfa.core.ui.PrimaryButton
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
+import com.tinhcd.myesalessfa.feature.settings.AppearanceCard
+import com.tinhcd.myesalessfa.core.ui.theme.ThemeMode
 import com.tinhcd.myesalessfa.core.ui.HeaderBand
 import com.tinhcd.myesalessfa.core.ui.theme.brand
 import com.tinhcd.myesalessfa.domain.model.PasswordChange
@@ -89,6 +91,8 @@ private fun AccountContent(
     onNew: (String) -> Unit,
     onConfirm: (String) -> Unit,
     onSubmit: () -> Unit,
+    // A slot, so the previews can draw the screen without a Hilt graph.
+    appearance: @Composable () -> Unit = { AppearanceCard() },
 ) {
     Scaffold(
         topBar = {
@@ -118,6 +122,8 @@ private fun AccountContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 item { ProfileCard(me = state.me) }
+                item { SectionTitle("Giao diện") }
+                item { appearance() }
                 item { SectionTitle("Đổi mật khẩu") }
                 item {
                     PasswordCard(
@@ -382,6 +388,7 @@ private fun AccountPreview() {
             onNew = {},
             onConfirm = {},
             onSubmit = {},
+            appearance = { AppearanceCard(mode = ThemeMode.SYSTEM, onSelect = {}) },
         )
     }
 }
@@ -405,6 +412,7 @@ private fun AccountTypingPreview() {
             onNew = {},
             onConfirm = {},
             onSubmit = {},
+            appearance = { AppearanceCard(mode = ThemeMode.SYSTEM, onSelect = {}) },
         )
     }
 }

@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.reports
 
 import androidx.compose.material.icons.filled.Storefront
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.SubcomposeAsyncImage
@@ -714,11 +715,16 @@ private fun formatMoney(value: Long): String = MoneyFormat.format(value)
 // -----------------------------------------------------------------------------
 
 /** The legacy item colours (`#04A489`, `#F5A202`, `#D92332`, `#A4A4A8`, `#2D2DFE`). */
-private val ReportGreen = Color(0xFF04A489)
-private val ReportOrange = Color(0xFFF5A202)
-private val ReportRed = Color(0xFFD92332)
-private val ReportGrey = Color(0xFFA4A4A8)
-private val ReportBlue = Color(0xFF2D2DFE)
+private val ReportGreen: Color
+    @Composable get() = MaterialTheme.status.success
+private val ReportOrange: Color
+    @Composable get() = MaterialTheme.status.warning
+private val ReportRed: Color
+    @Composable get() = MaterialTheme.status.danger
+private val ReportGrey: Color
+    @Composable get() = MaterialTheme.status.neutral
+private val ReportBlue: Color
+    @Composable get() = MaterialTheme.status.info
 
 /** The legacy item: white, 12dp corners, a soft shadow. */
 @Composable
@@ -732,10 +738,10 @@ private fun ReportItemCard(content: @Composable ColumnScope.() -> Unit) {
     )
 }
 
-/** A filled, rounded tag with white text — the legacy status tag. */
+/** A filled, rounded tag — the legacy status tag, in the ink its fill takes. */
 @Composable
 private fun SolidTag(text: String, colour: Color) {
-    Surface(color = colour, contentColor = Color.White, shape = RoundedCornerShape(12.dp)) {
+    Surface(color = colour, contentColor = MaterialTheme.status.onStatus, shape = RoundedCornerShape(12.dp)) {
         Text(
             text,
             style = MaterialTheme.typography.labelMedium,
@@ -1135,10 +1141,11 @@ private fun OrderReportCard(row: OrderReportRow) {
     }
 }
 
+@Composable
 private fun orderColour(status: OrderReportStatus): Color = when (status) {
-    OrderReportStatus.NEW -> Color(0xFFF5A202)
-    OrderReportStatus.CONFIRMED -> Color(0xFF04A489)
-    OrderReportStatus.CANCELLED -> Color(0xFFC62828)
+    OrderReportStatus.NEW -> MaterialTheme.status.warning
+    OrderReportStatus.CONFIRMED -> MaterialTheme.status.success
+    OrderReportStatus.CANCELLED -> MaterialTheme.status.danger
 }
 
 // -----------------------------------------------------------------------------
@@ -1395,9 +1402,10 @@ private fun TradeReportCard(row: TradeReportRow) {
     }
 }
 
+@Composable
 private fun tradeColour(kind: TradeReportKind): Color = when (kind) {
-    TradeReportKind.DISPLAY -> Color(0xFF5C00D4)
-    TradeReportKind.LOYALTY -> Color(0xFF04A489)
+    TradeReportKind.DISPLAY -> MaterialTheme.status.accent
+    TradeReportKind.LOYALTY -> MaterialTheme.status.success
 }
 
 // -----------------------------------------------------------------------------

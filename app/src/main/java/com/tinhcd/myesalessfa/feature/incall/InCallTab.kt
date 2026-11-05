@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.incall
 
 import androidx.compose.foundation.clickable
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -350,7 +351,7 @@ private fun Badge(icon: ImageVector, background: Color, contentDescription: Stri
             Icon(
                 icon,
                 contentDescription = contentDescription,
-                tint = Color.White,
+                tint = MaterialTheme.status.onStatus,
                 modifier = Modifier.size(12.dp),
             )
         }
@@ -372,7 +373,8 @@ private fun String.stepIcon(): ImageVector = when (this) {
 }
 
 /** Legacy uses #04A489 for the done tick, which reads on both themes. */
-private val DoneGreen = Color(0xFF04A489)
+private val DoneGreen: Color
+    @Composable get() = MaterialTheme.status.success
 
 @Preview(showBackground = true, widthDp = 360)
 @Composable

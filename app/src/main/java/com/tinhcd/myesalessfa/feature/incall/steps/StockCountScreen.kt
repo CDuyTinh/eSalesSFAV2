@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.activity.compose.BackHandler
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -587,9 +588,12 @@ private fun OutOfStockToggle(checked: Boolean, onToggle: () -> Unit) {
 }
 
 /** Legacy's three figure colours: #0D0C22 read, #04A489 written, #2D2DFE owed. */
-private val PreviousInk = Color(0xFF0D0C22)
-private val CountedGreen = Color(0xFF04A489)
-private val ParBlue = Color(0xFF2D2DFE)
+private val PreviousInk: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurface
+private val CountedGreen: Color
+    @Composable get() = MaterialTheme.status.success
+private val ParBlue: Color
+    @Composable get() = MaterialTheme.status.info
 
 /**
  * The bar the count is read off before it is sent.

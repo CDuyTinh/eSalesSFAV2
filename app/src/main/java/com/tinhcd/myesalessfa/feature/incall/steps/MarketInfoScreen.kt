@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.activity.compose.rememberLauncherForActivityResult
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -205,7 +206,7 @@ private fun SurveyCard(survey: MarketInfoSurvey, onClick: () -> Unit) {
                 Icon(
                     Icons.Default.CheckCircle,
                     contentDescription = "Đã làm",
-                    tint = Color(0xFF2E7D32),
+                    tint = MaterialTheme.status.success,
                 )
             }
         }
@@ -359,7 +360,7 @@ private fun PairingCard(
                     Icon(
                         Icons.Default.CheckCircle,
                         contentDescription = "Đã ghi",
-                        tint = Color(0xFF2E7D32),
+                        tint = MaterialTheme.status.success,
                     )
                 }
             }

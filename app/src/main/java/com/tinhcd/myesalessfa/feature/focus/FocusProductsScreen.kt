@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.focus
 
 import androidx.compose.foundation.background
+import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -255,8 +256,10 @@ private fun ProgressBar(progress: Float) {
 }
 
 private val FocusRamp = listOf(Color(0xFF04A489), Color(0xFF36B6A0))
-private val MetGreen = Color(0xFF04A489)
-private val EndingAmber = Color(0xFFF5A202)
+private val MetGreen: Color
+    @Composable get() = MaterialTheme.status.success
+private val EndingAmber: Color
+    @Composable get() = MaterialTheme.status.warning
 
 private val DateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
