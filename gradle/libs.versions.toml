@@ -52,6 +52,8 @@ exifinterface = "1.4.1"
 # the rep on the front one, which a camera app reached by intent cannot be told
 # to do. CameraX runs both inside the app.
 camerax = "1.4.2"
+# Long lists (Báo cáo đơn hàng) load a page at a time as the rep scrolls.
+paging = "3.3.6"
 playServicesLocation = "21.4.0"
 # The route map. maps-compose wraps the same MapView the legacy app used through
 # google_maps_flutter, so the tiles, the key and the restrictions are all the
@@ -128,6 +130,9 @@ coil-svg = { group = "io.coil-kt.coil3", name = "coil-svg", version.ref = "coil"
 androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
 androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+androidx-paging-common = { group = "androidx.paging", name = "paging-common", version.ref = "paging" }
+androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
+androidx-paging-testing = { group = "androidx.paging", name = "paging-testing", version.ref = "paging" }
 androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }

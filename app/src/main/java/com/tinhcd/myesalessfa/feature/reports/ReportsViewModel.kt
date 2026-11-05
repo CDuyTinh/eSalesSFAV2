@@ -1,11 +1,23 @@
 package com.tinhcd.myesalessfa.feature.reports
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import com.tinhcd.myesalessfa.core.paging.OffsetPagingSource
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.ActivityReport
 import com.tinhcd.myesalessfa.domain.model.OrderReport
+import com.tinhcd.myesalessfa.domain.model.OrderReportRow
 import com.tinhcd.myesalessfa.domain.model.OrderReportStatus
 import com.tinhcd.myesalessfa.domain.model.ReportWindow
 import com.tinhcd.myesalessfa.domain.model.SalesReport
@@ -99,6 +111,33 @@ class ReportsViewModel @Inject constructor(
     private val _state = MutableStateFlow(ReportsUiState(kind = kind))
     val state: StateFlow<ReportsUiState> = _state.asStateFlow()
 
+    /** Bumped by [refresh], so the pager starts over on the same window and filter. */
+    private val refreshes = MutableStateFlow(0)
+
+    /**
+     * Báo cáo đơn hàng's rows, a page at a time as the rep scrolls. It used to
+     * be one call that brought back the first fifty and nothing past them, with
+     * the status chips filtering that fifty on the phone; now the chip is a
+     * server filter and the list runs to the window's last order.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val orderRows: Flow<PagingData<OrderReportRow>> =
+        combine(
+            _state.map { it.window to it.orderStatus }.distinctUntilChanged(),
+            refreshes,
+        ) { filter, _ -> filter }
+            .flatMapLatest { (window, status) ->
+                Pager(PagingConfig(pageSize = ORDER_PAGE, initialLoadSize = ORDER_PAGE, enablePlaceholders = false)) {
+                    OffsetPagingSource { offset, limit ->
+                        when (val page = repository.orders(window, listOfNotNull(status), offset = offset, limit = limit)) {
+                            is DataResult.Success -> page.data.items
+                            is DataResult.Failure -> throw IllegalStateException("Không tải được đơn hàng")
+                        }
+                    }
+                }.flow
+            }
+            .cachedIn(viewModelScope)
+
     init {
         load(kind)
     }
@@ -146,7 +185,10 @@ class ReportsViewModel @Inject constructor(
         it.copy(tradeKind = if (it.tradeKind == kind) null else kind)
     }
 
-    fun refresh() = load(kind)
+    fun refresh() {
+        load(kind)
+        if (kind == ReportKind.ORDERS) refreshes.update { it + 1 }
+    }
 
     // -------------------------------------------------------------------------
 
@@ -183,9 +225,10 @@ class ReportsViewModel @Inject constructor(
     private fun loadOrders() {
         _state.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
-            // Unfiltered: the status chips narrow the list that came back, and
-            // the counts beside them have to keep counting the whole window.
-            when (val result = repository.orders(_state.value.window)) {
+            // The header only: totals and per-status counts for the whole window.
+            // One row is the least the endpoint returns; the rows themselves come
+            // through [orderRows].
+            when (val result = repository.orders(_state.value.window, limit = 1)) {
                 is DataResult.Success ->
                     _state.update { it.copy(loading = false, orders = result.data) }
 
@@ -243,3 +286,6 @@ class ReportsViewModel @Inject constructor(
         }
     }
 }
+
+/** Rows per page of Báo cáo đơn hàng: about three screens of cards. */
+private const val ORDER_PAGE = 30

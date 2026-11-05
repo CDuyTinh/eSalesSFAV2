@@ -45,6 +45,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -138,9 +145,11 @@ fun ReportsScreen(
     viewModel: ReportsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val orderRows = viewModel.orderRows.collectAsLazyPagingItems()
 
     ReportsContent(
         state = state,
+        orderRows = orderRows,
         onBack = onBack,
         onCutSelected = viewModel::onCutSelected,
         onDateChanged = viewModel::onDateChanged,
@@ -157,6 +166,8 @@ fun ReportsScreen(
 @Composable
 private fun ReportsContent(
     state: ReportsUiState,
+    /** Báo cáo đơn hàng's rows; null in previews. */
+    orderRows: LazyPagingItems<OrderReportRow>? = null,
     onBack: () -> Unit,
     onCutSelected: (SalesCut) -> Unit,
     onDateChanged: (LocalDate) -> Unit,
@@ -235,6 +246,7 @@ private fun ReportsContent(
 
                     ReportKind.ORDERS -> OrdersTab(
                         state = state,
+                        rows = orderRows,
                         onOrderStatus = onOrderStatus,
                     )
 
@@ -1002,6 +1014,7 @@ private fun DetailLine(label: String, value: String) {
 @Composable
 private fun OrdersTab(
     state: ReportsUiState,
+    rows: LazyPagingItems<OrderReportRow>?,
     onOrderStatus: (OrderReportStatus?) -> Unit,
 ) {
     val report = state.orders
@@ -1012,9 +1025,6 @@ private fun OrdersTab(
             return@Column
         }
 
-        val rows = report.items.filter {
-            state.orderStatus == null || it.status == state.orderStatus
-        }
         val average = if (report.total > 0) report.totalAmount / report.total else 0L
 
         LazyColumn(
@@ -1070,12 +1080,54 @@ private fun OrdersTab(
                 }
             }
 
-            if (rows.isEmpty()) {
-                item { ReportEmpty(Icons.Default.ReceiptLong, "Kỳ này chưa có đơn hàng") }
-            } else {
-                items(rows, key = { it.id }) { row -> OrderReportCard(row) }
+            if (rows != null) orderRows(rows)
+        }
+    }
+}
+
+/**
+ * The paged rows and what goes under them: a skeleton while the first page is
+ * on its way, a spinner while the next one is, and a retry where either failed.
+ */
+private fun LazyListScope.orderRows(rows: LazyPagingItems<OrderReportRow>) {
+    when (val refresh = rows.loadState.refresh) {
+        is LoadState.Loading -> if (rows.itemCount == 0) {
+            item { SkeletonList(count = 3, lines = 3) }
+            return
+        }
+
+        is LoadState.Error -> {
+            item { PageError("Không tải được danh sách đơn hàng", onRetry = rows::retry) }
+            return
+        }
+
+        is LoadState.NotLoading -> if (rows.itemCount == 0) {
+            item { ReportEmpty(Icons.Default.ReceiptLong, "Kỳ này chưa có đơn hàng") }
+            return
+        }
+    }
+
+    items(count = rows.itemCount, key = rows.itemKey { it.id }) { index ->
+        rows[index]?.let { OrderReportCard(it) }
+    }
+
+    when (rows.loadState.append) {
+        is LoadState.Loading -> item {
+            Box(Modifier.fillMaxWidth().padding(12.dp), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
             }
         }
+
+        is LoadState.Error -> item { PageError("Không tải được trang tiếp theo", onRetry = rows::retry) }
+        is LoadState.NotLoading -> Unit
+    }
+}
+
+@Composable
+private fun PageError(message: String, onRetry: () -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+        TextButton(onClick = onRetry) { Text("Thử lại") }
     }
 }
 

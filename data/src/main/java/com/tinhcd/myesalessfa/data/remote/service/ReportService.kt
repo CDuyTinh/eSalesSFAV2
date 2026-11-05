@@ -28,6 +28,8 @@ interface ReportService {
         @Query("toDate") toDate: String,
         @Query("statuses") statuses: String? = null,
         @Query("inRoute") inRoute: Boolean? = null,
+        @Query("offset") offset: Int = 0,
+        @Query("limit") limit: Int = 50,
         @Query("kind") kind: String = "orders",
     ): Response<OrderReportDto>
 
