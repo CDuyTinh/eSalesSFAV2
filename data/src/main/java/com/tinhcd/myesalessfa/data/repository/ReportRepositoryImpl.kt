@@ -62,12 +62,16 @@ class ReportRepositoryImpl @Inject constructor(
         window: ReportWindow,
         statuses: List<OrderReportStatus>,
         inRoute: Boolean?,
+        offset: Int,
+        limit: Int,
     ): DataResult<OrderReport> = try {
         val body = service.orders(
             fromDate = window.fromDate.toString(),
             toDate = window.toDate.toString(),
             statuses = statuses.takeIf { it.isNotEmpty() }?.joinToString(",") { it.wire },
             inRoute = inRoute,
+            offset = offset,
+            limit = limit,
         ).orThrow()
 
         DataResult.Success(

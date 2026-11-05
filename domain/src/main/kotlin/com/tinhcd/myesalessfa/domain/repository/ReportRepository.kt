@@ -19,10 +19,17 @@ interface ReportRepository {
     /** Any day in the month; the server truncates to the period. */
     suspend fun sales(month: LocalDate): DataResult<SalesReport>
 
+    /**
+     * One page of the window's orders, newest first, with the window's
+     * totals. [statuses] narrows the rows and the total; the per-status counts
+     * always cover the whole window, so the chips keep their numbers.
+     */
     suspend fun orders(
         window: ReportWindow,
         statuses: List<OrderReportStatus> = emptyList(),
         inRoute: Boolean? = null,
+        offset: Int = 0,
+        limit: Int = 50,
     ): DataResult<OrderReport>
 
     suspend fun sku(window: ReportWindow, query: String = ""): DataResult<SkuReport>

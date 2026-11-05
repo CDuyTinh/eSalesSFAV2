@@ -77,6 +77,7 @@ dependencies {
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.paging.compose)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     // The report menu's illustrations, kept as the legacy app's SVG files.
