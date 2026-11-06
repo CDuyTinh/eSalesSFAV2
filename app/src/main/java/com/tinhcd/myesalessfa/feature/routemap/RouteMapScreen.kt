@@ -1,6 +1,10 @@
 package com.tinhcd.myesalessfa.feature.routemap
 
 import android.content.Intent
+import com.tinhcd.myesalessfa.core.R as CoreR
+import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
+import androidx.compose.ui.res.stringResource
+import android.Manifest
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -75,6 +79,15 @@ fun RouteMapScreen(
     viewModel: RouteMapViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    // Never asked for here before: the screen relied on an earlier one having
+    // been granted, and on a phone where it was not, the fix was silently missing.
+    val locationPermission = rememberPermissionRequest(
+        listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+        stringResource(CoreR.string.permission_rationale_location),
+        anyOf = true,
+    )
+    LaunchedEffect(Unit) { locationPermission.launch(viewModel::locate) }
 
     RouteMapContent(
         state = state,

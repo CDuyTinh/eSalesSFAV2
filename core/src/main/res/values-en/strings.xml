@@ -1,0 +1,13 @@
+<resources>
+    <!-- Permissions -->
+    <string name="permission_denied_title">Permission needed</string>
+    <string name="permission_blocked_title">Permission turned off</string>
+    <string name="permission_blocked_hint">This permission is turned off for the app. Open Settings → Permissions to turn it back on.</string>
+    <string name="permission_ask_again">Try again</string>
+    <string name="permission_open_settings">Open Settings</string>
+    <string name="permission_later">Not now</string>
+    <string name="permission_rationale_camera">The app needs the camera to photograph the outlet, displays and documents for the visit.</string>
+    <string name="permission_rationale_location">The app needs your location to confirm you are at the right outlet when you check in and clock in.</string>
+    <string name="permission_rationale_microphone">The app needs the microphone to record the customer\'s feedback.</string>
+    <string name="permission_rationale_notifications">The app needs notifications to tell you about approvals and assigned plans, and to keep location tracking running during working hours.</string>
+</resources>

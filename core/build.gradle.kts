@@ -34,6 +34,8 @@ dependencies {
     api(libs.androidx.compose.material.icons.extended)
     api(libs.androidx.lifecycle.runtime.compose)
     api(libs.androidx.lifecycle.viewmodel.compose)
+    // rememberLauncherForActivityResult, for the shared permission request.
+    implementation(libs.androidx.activity.compose)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.exifinterface)

@@ -1,6 +1,9 @@
 package com.tinhcd.myesalessfa.feature.checkin
 
 import android.Manifest
+import androidx.compose.ui.res.stringResource
+import com.tinhcd.myesalessfa.core.R as CoreR
+import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import android.content.Intent
 import android.net.Uri
@@ -99,25 +102,24 @@ fun CheckInScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions(),
-    ) { viewModel.refreshLocation() }
+    // Approximate location is enough to be asked for a reason; refused, the
+    // check-in still goes ahead on the GPS-unavailable path.
+    val locationPermission = rememberPermissionRequest(
+        listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+        stringResource(CoreR.string.permission_rationale_location),
+        anyOf = true,
+        onDenied = viewModel::refreshLocation,
+    )
 
     // Ask once on entry. The check-in rules need a fix before they can say
     // anything useful.
-    LaunchedEffect(Unit) {
-        permissionLauncher.launch(
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-            ),
-        )
-    }
+    LaunchedEffect(Unit) { locationPermission.launch(viewModel::refreshLocation) }
 
-    val cameraPermission = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { granted -> if (granted) viewModel.openCamera() }
-    val capturePhoto = { cameraPermission.launch(Manifest.permission.CAMERA) }
+    val cameraPermission = rememberPermissionRequest(
+        listOf(Manifest.permission.CAMERA),
+        stringResource(CoreR.string.permission_rationale_camera),
+    )
+    val capturePhoto = { cameraPermission.launch(viewModel::openCamera) }
 
     if (state.cameraOpen) {
         DualCameraCapture(

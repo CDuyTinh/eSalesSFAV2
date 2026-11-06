@@ -1,6 +1,9 @@
 package com.tinhcd.myesalessfa.feature.shell
 
 import com.tinhcd.myesalessfa.core.ui.UpdateDialog
+import com.tinhcd.myesalessfa.core.R as CoreR
+import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
+import androidx.compose.runtime.rememberUpdatedState
 import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.BuildConfig
@@ -135,14 +138,17 @@ fun MainShell(
     val dayState = state.workDay?.state
     // The service posts its notification when it starts, which may be before the
     // rep allowed notifications; starting it again re-posts it.
-    val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted && dayState == WorkDayState.OPEN) TrackingService.start(context)
-    }
+    val currentDayState by rememberUpdatedState(dayState)
+    val notifications = rememberPermissionRequest(
+        listOf(Manifest.permission.POST_NOTIFICATIONS),
+        stringResource(CoreR.string.permission_rationale_notifications),
+        quietWhenBlocked = true,
+    )
     // Asked on entering the app, not only once the day opens: pushes (approvals,
     // plans) arrive on any day, and without this they are received but never shown.
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+            notifications.launch { if (currentDayState == WorkDayState.OPEN) TrackingService.start(context) }
         }
     }
     LaunchedEffect(dayState) {

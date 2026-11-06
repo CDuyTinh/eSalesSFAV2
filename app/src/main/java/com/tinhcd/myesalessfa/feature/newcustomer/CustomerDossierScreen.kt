@@ -1,6 +1,9 @@
 package com.tinhcd.myesalessfa.feature.newcustomer
 
 import android.Manifest
+import androidx.compose.ui.res.stringResource
+import com.tinhcd.myesalessfa.core.R as CoreR
+import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -98,11 +101,14 @@ fun CustomerDossierScreen(
         ActivityResultContracts.TakePicture(),
     ) { saved -> viewModel.onPhotoTaken(saved) }
 
-    val cameraPermission = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { }
+    // Asked on entry, as before, and again from the capture button: refused,
+    // the button explains why rather than opening a camera that cannot start.
+    val cameraPermission = rememberPermissionRequest(
+        listOf(Manifest.permission.CAMERA),
+        stringResource(CoreR.string.permission_rationale_camera),
+    )
 
-    LaunchedEffect(Unit) { cameraPermission.launch(Manifest.permission.CAMERA) }
+    LaunchedEffect(Unit) { cameraPermission.launch() }
 
     // Registering a new outlet happens on a route of its own, so coming back
     // from it does not recompose this one -- the list would still be showing
@@ -130,7 +136,7 @@ fun CustomerDossierScreen(
             onBack = viewModel::onBackToList,
             onEdit = viewModel::onEdit,
             onDelete = viewModel::onDelete,
-            onCapture = { type -> takePicture.launch(viewModel.newPhotoTarget(type).uri) },
+            onCapture = { type -> cameraPermission.launch { takePicture.launch(viewModel.newPhotoTarget(type).uri) } },
             onDismissMessage = viewModel::dismissMessage,
         )
 

@@ -1,6 +1,9 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import android.Manifest
+import androidx.compose.ui.res.stringResource
+import com.tinhcd.myesalessfa.core.R as CoreR
+import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -72,12 +75,18 @@ fun FeedbackScreen(
     // most feedback is typed, and a permission dialog in front of a form nobody
     // intends to record into is the kind of prompt people learn to dismiss.
     var micDenied by remember { mutableStateOf(false) }
-    val micPermission = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { granted ->
-        micDenied = !granted
-        if (granted) viewModel.startRecording()
-    }
+    val micPermission = rememberPermissionRequest(
+        listOf(Manifest.permission.RECORD_AUDIO),
+        stringResource(CoreR.string.permission_rationale_microphone),
+        onDenied = { micDenied = true },
+    )
+
+    // The camera was never asked for here: a refused or never-granted camera
+    // made the capture intent throw.
+    val cameraPermission = rememberPermissionRequest(
+        listOf(Manifest.permission.CAMERA),
+        stringResource(CoreR.string.permission_rationale_camera),
+    )
 
     val camera = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture(),
@@ -143,8 +152,10 @@ fun FeedbackScreen(
                 PhotoSection(
                     state = state,
                     onAdd = {
-                        val target = viewModel.newPhotoTarget()
-                        camera.launch(target.uri)
+                        cameraPermission.launch {
+                            val target = viewModel.newPhotoTarget()
+                            camera.launch(target.uri)
+                        }
                     },
                     onRemove = viewModel::onRemovePhoto,
                 )
@@ -153,7 +164,12 @@ fun FeedbackScreen(
                     AudioSection(
                         state = state,
                         micDenied = micDenied,
-                        onRecord = { micPermission.launch(Manifest.permission.RECORD_AUDIO) },
+                        onRecord = {
+                            micPermission.launch {
+                                micDenied = false
+                                viewModel.startRecording()
+                            }
+                        },
                         onStop = viewModel::stopRecording,
                         onPlay = viewModel::playRecording,
                         onStopPlayback = viewModel::stopPlayback,

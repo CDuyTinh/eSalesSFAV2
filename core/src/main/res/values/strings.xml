@@ -1,0 +1,13 @@
+<resources>
+    <!-- Permissions -->
+    <string name="permission_denied_title">Cần cấp quyền</string>
+    <string name="permission_blocked_title">Quyền đang bị tắt</string>
+    <string name="permission_blocked_hint">Quyền này đã bị tắt cho ứng dụng. Mở Cài đặt → Quyền để bật lại.</string>
+    <string name="permission_ask_again">Thử lại</string>
+    <string name="permission_open_settings">Mở Cài đặt</string>
+    <string name="permission_later">Để sau</string>
+    <string name="permission_rationale_camera">Ứng dụng cần quyền camera để chụp ảnh cửa hàng, trưng bày và chứng từ cho lượt ghé.</string>
+    <string name="permission_rationale_location">Ứng dụng cần quyền vị trí để xác nhận bạn đang ở đúng cửa hàng khi check-in và chấm công.</string>
+    <string name="permission_rationale_microphone">Ứng dụng cần quyền micro để ghi âm phản hồi của khách hàng.</string>
+    <string name="permission_rationale_notifications">Ứng dụng cần quyền thông báo để báo kết quả duyệt, kế hoạch được giao và giữ việc ghi nhận vị trí trong giờ làm.</string>
+</resources>
