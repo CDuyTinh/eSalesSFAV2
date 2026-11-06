@@ -13,6 +13,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,7 +24,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
-import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.tinhcd.myesalessfa.core.R
 
 /** Asks for a set of permissions; [launch] runs its callback once they are held. */
@@ -70,6 +73,7 @@ fun rememberPermissionRequest(
     var pending by remember { mutableStateOf<(() -> Unit)?>(null) }
     var dialog by remember { mutableStateOf<PermissionOutcome?>(null) }
     var awaitingSettings by remember { mutableStateOf(false) }
+    val leftForSettings = remember { mutableStateOf(false) }
 
     fun held(): Boolean {
         val states = permissions.map { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
@@ -97,18 +101,26 @@ fun rememberPermissionRequest(
         }
     }
 
-    // Back from the settings page: carry on if the permission is now on.
-    LifecycleResumeEffect(awaitingSettings) {
-        if (awaitingSettings) {
-            awaitingSettings = false
-            if (held()) {
-                pending?.invoke()
-            } else {
-                currentOnDenied()
+    // Back from the settings page: carry on if the permission is now on. Read
+    // off the lifecycle's own events, and only on a resume that follows a real
+    // pause: an effect keyed on the flag would restart, and run, the moment the
+    // flag is set, while the screen is still in front and the permission off.
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> if (awaitingSettings) leftForSettings.value = true
+                Lifecycle.Event.ON_RESUME -> if (awaitingSettings && leftForSettings.value) {
+                    awaitingSettings = false
+                    leftForSettings.value = false
+                    if (held()) pending?.invoke() else currentOnDenied()
+                    pending = null
+                }
+                else -> Unit
             }
-            pending = null
         }
-        onPauseOrDispose { }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
     }
 
     dialog?.let { outcome ->

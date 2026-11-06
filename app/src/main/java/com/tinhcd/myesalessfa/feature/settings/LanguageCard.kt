@@ -64,6 +64,11 @@ class LanguageViewModel @Inject constructor(
             _state.value = _state.value.copy(switching = false, switched = true)
         }
     }
+
+    /** The redraw was asked for. The ViewModel outlives the recreated activity, so without this it would ask again on every one. */
+    fun onSwitched() {
+        _state.value = _state.value.copy(switched = false)
+    }
 }
 
 /** Ngôn ngữ / Language: Vietnamese or English, each written in itself. */
@@ -72,7 +77,10 @@ fun LanguageCard(viewModel: LanguageViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     LaunchedEffect(state.switched) {
-        if (state.switched) context.findActivity()?.recreate()
+        if (state.switched) {
+            viewModel.onSwitched()
+            context.findActivity()?.recreate()
+        }
     }
     LanguageCard(language = state.language, enabled = !state.switching, onSelect = viewModel::select)
 }
