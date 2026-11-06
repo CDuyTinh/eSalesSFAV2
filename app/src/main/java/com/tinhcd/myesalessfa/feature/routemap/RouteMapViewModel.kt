@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.routemap
 
 import androidx.lifecycle.ViewModel
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.core.location.LocationProvider
 import com.tinhcd.myesalessfa.domain.DataResult
@@ -53,6 +55,7 @@ data class RouteMapUiState(
  */
 @HiltViewModel
 class RouteMapViewModel @Inject constructor(
+    private val strings: AppStrings,
     private val getTodayRoute: GetTodayRouteUseCase,
     private val locationProvider: LocationProvider,
 ) : ViewModel() {
@@ -83,7 +86,7 @@ class RouteMapViewModel @Inject constructor(
 
                 is DataResult.Failure ->
                     _state.update {
-                        it.copy(loading = false, error = "Không tải được tuyến hôm nay")
+                        it.copy(loading = false, error = strings(R.string.route_load_failed))
                     }
             }
         }

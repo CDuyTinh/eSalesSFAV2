@@ -271,7 +271,7 @@ private fun MonthFilter(month: LocalDate, today: LocalDate, onMonth: (LocalDate)
             Icon(Icons.Default.ChevronLeft, contentDescription = stringResource(R.string.sfa_129))
         }
         Text(
-            "Năm $year",
+            stringResource(R.string.sft_93, year),
             style = MaterialTheme.typography.titleMedium,
             textAlign = TextAlign.Center,
             modifier = Modifier.weight(1f),

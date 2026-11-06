@@ -110,7 +110,7 @@ private fun NotificationContent(
                         Text(stringResource(R.string.action_notifications))
                         if (state.feed.unread > 0) {
                             Text(
-                                "${state.feed.unread} chưa đọc",
+                                stringResource(R.string.sft_75, state.feed.unread),
                                 style = MaterialTheme.typography.bodySmall,
                             )
                         }

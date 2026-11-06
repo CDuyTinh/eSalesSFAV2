@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.dashboard
 
 import androidx.lifecycle.ViewModel
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.ChartRange
@@ -36,6 +38,7 @@ data class DashboardUiState(
  */
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
+    private val strings: AppStrings,
     private val getOverview: GetDashboardOverviewUseCase,
     private val notifications: NotificationRepository,
 ) : ViewModel() {
@@ -60,7 +63,7 @@ class DashboardViewModel @Inject constructor(
                 // failed has not made yesterday's total untrue, and an empty screen
                 // would read as "you sold nothing".
                 is DataResult.Failure ->
-                    _state.update { it.copy(loading = false, error = "Không tải được số liệu") }
+                    _state.update { it.copy(loading = false, error = strings(R.string.sfv_22)) }
             }
         }
     }

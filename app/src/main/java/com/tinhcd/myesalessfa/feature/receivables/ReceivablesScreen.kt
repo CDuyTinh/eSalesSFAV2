@@ -200,7 +200,7 @@ private fun TotalCard(state: ReceivablesUiState) {
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                text = "${state.customers.size} khách hàng · ${state.overdueCount} quá hạn",
+                text = stringResource(R.string.sft_87, state.customers.size, state.overdueCount),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (state.overdueCount > 0) OverdueRed else MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -232,7 +232,7 @@ private fun DebtorCard(customer: ReceivableCustomer, onClick: () -> Unit) {
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = "${customer.invoices} hoá đơn",
+                    text = stringResource(R.string.sft_88, customer.invoices),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -410,14 +410,14 @@ private fun InvoiceCard(
                         fontWeight = FontWeight.Medium,
                     )
                     Text(
-                        text = "Ngày ${DateFormat.format(invoice.issuedOn)} · " +
-                            "hạn ${DateFormat.format(invoice.dueOn)}",
+                        text = stringResource(R.string.sft_89, DateFormat.format(invoice.issuedOn)) +
+                            stringResource(R.string.sft_90, DateFormat.format(invoice.dueOn)),
                         style = MaterialTheme.typography.bodySmall,
                         color = if (late) OverdueRed else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     if (late) {
                         Text(
-                            text = "Quá hạn ${invoice.daysLate(today)} ngày",
+                            text = stringResource(R.string.sft_91, invoice.daysLate(today)),
                             style = MaterialTheme.typography.labelSmall,
                             color = OverdueRed,
                         )
@@ -431,7 +431,7 @@ private fun InvoiceCard(
                     )
                     if (invoice.paid > 0) {
                         Text(
-                            text = "đã trả ${formatMoney(invoice.paid)}",
+                            text = stringResource(R.string.sft_92, formatMoney(invoice.paid)),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.sitestock
 
 import androidx.lifecycle.ViewModel
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.SiteStockView
@@ -21,6 +23,7 @@ data class SiteStockUiState(
 
 @HiltViewModel
 class SiteStockViewModel @Inject constructor(
+    private val strings: AppStrings,
     private val repository: SiteStockRepository,
 ) : ViewModel() {
 
@@ -43,7 +46,7 @@ class SiteStockViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(loading = false, error = "Không tải được tồn kho")
+                    it.copy(loading = false, error = strings(R.string.sfv_83))
                 }
             }
         }

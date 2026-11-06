@@ -533,13 +533,13 @@ private fun SalesTotalCard(report: SalesReport) {
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                text = "${report.orderCount} đơn hàng",
+                text = stringResource(R.string.sft_95, report.orderCount),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             if (report.pendingRevenue > 0) {
                 Text(
-                    text = "Chờ xử lý: ${formatMoney(report.pendingRevenue)}",
+                    text = stringResource(R.string.sft_96, formatMoney(report.pendingRevenue)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -551,10 +551,10 @@ private fun SalesTotalCard(report: SalesReport) {
                 text = when {
                     target == null -> stringResource(R.string.dashboard_no_target)
                     gap != null && gap > 0 ->
-                        "Chỉ tiêu ${formatMoney(target)} · còn ${formatMoney(gap)}"
+                        stringResource(R.string.dashboard_target_left, formatMoney(target), formatMoney(gap))
 
                     else ->
-                        "Chỉ tiêu ${formatMoney(target)} · vượt ${formatMoney(-(gap ?: 0))}"
+                        stringResource(R.string.dashboard_target_over, formatMoney(target), formatMoney(-(gap ?: 0)))
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -623,7 +623,7 @@ private fun CustomerSalesCard(row: CustomerSales) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 )
-                Text("${row.orders} đơn hàng", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.sft_95, row.orders), style = MaterialTheme.typography.bodyMedium)
             }
             // The legacy "Doanh số chưa giao". Orders here have no delivery
             // status, so it is what still awaits confirmation.
@@ -888,7 +888,7 @@ private fun parseReportInstant(raw: String): LocalDateTime? {
 /** The time in the shop, as the card's lower line says it. */
 @Composable
 private fun ActivityRow.stayLabel(): String = when {
-    minutes != null -> "$minutes phút"
+    minutes != null -> "${minutes} phút"
     checkInAtEpochMs != null && checkOutAtEpochMs == null -> stringResource(R.string.shell_visiting)
     else -> status.label()
 }
@@ -1074,7 +1074,7 @@ private fun OrdersTab(
             if (report.presentStatuses.isNotEmpty()) {
                 item {
                     ChipRow(
-                        allLabel = "Tất cả ${report.total}",
+                        allLabel = stringResource(R.string.sft_72, report.total),
                         values = report.presentStatuses,
                         selected = state.orderStatus,
                         label = { "${it.label} ${report.count(it)}" },
@@ -1396,7 +1396,7 @@ private fun TradeTab(
             if (report.total > 0) {
                 item {
                     ChipRow(
-                        allLabel = "Tất cả ${report.total}",
+                        allLabel = stringResource(R.string.sft_72, report.total),
                         values = TradeReportKind.entries,
                         selected = state.tradeKind,
                         label = { it.label },
@@ -1451,7 +1451,7 @@ private fun TradeReportCard(row: TradeReportRow) {
                         Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                InfoLine(Icons.Default.Event, "Đăng ký ${formatReportDate(row.registeredAt)}", topPadding = 0.dp)
+                InfoLine(Icons.Default.Event, stringResource(R.string.sft_98, formatReportDate(row.registeredAt)), topPadding = 0.dp)
             }
         }
     }
@@ -1562,7 +1562,7 @@ private fun WorkResultCard(row: WorkResultRow) {
             )
             InfoLine(Icons.Default.Schedule, workWhen(row.fromAt, row.toAt))
             InfoLine(Icons.Default.Work, row.categoryName)
-            if (row.objectCount > 0) InfoLine(Icons.Default.Groups, "${row.objectCount} đối tượng")
+            if (row.objectCount > 0) InfoLine(Icons.Default.Groups, stringResource(R.string.sft_99, row.objectCount))
             row.outcome?.takeIf { it.isNotBlank() }?.let { InfoLine(Icons.AutoMirrored.Filled.Notes, it) }
         }
     }

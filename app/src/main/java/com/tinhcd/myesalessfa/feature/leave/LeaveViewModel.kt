@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.leave
 
 import androidx.lifecycle.ViewModel
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.AppError
 import com.tinhcd.myesalessfa.domain.DataResult
@@ -31,6 +33,7 @@ data class LeaveUiState(
 
 @HiltViewModel
 class LeaveViewModel @Inject constructor(
+    private val strings: AppStrings,
     private val repository: LeaveRepository,
 ) : ViewModel() {
 
@@ -54,7 +57,7 @@ class LeaveViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure ->
-                    _state.update { it.copy(loading = false, error = "Không tải được đơn nghỉ") }
+                    _state.update { it.copy(loading = false, error = strings(R.string.sfv_47)) }
             }
         }
     }

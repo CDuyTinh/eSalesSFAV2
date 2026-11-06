@@ -144,7 +144,7 @@ fun FeedbackScreen(
 
                 if (state.draft.charsStillNeeded > 0) {
                     Text(
-                        "Còn thiếu ${state.draft.charsStillNeeded} ký tự",
+                        stringResource(R.string.sft_22, state.draft.charsStillNeeded),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -281,9 +281,9 @@ private fun PhotoSection(
 
             Text(
                 if (draft.photosStillNeeded > 0) {
-                    "Cần thêm ${draft.photosStillNeeded} ảnh"
+                    stringResource(R.string.sft_23, draft.photosStillNeeded)
                 } else {
-                    "${draft.photos.size}/${draft.photoMax} ảnh"
+                    stringResource(R.string.sft_24, draft.photos.size, draft.photoMax)
                 },
                 style = MaterialTheme.typography.labelSmall,
                 color = if (draft.photosStillNeeded > 0) {
@@ -347,7 +347,7 @@ private fun AudioSection(
             when {
                 state.recording -> Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "Đang ghi ${state.recordingSeconds}s",
+                        stringResource(R.string.sft_25, state.recordingSeconds),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.weight(1f),
@@ -390,8 +390,8 @@ private fun AudioSection(
             // Said plainly, because the alternative is a rep recording a long account
             // and discovering the limit only from a truncated file.
             Text(
-                "Mỗi lần tối đa ${draft.audioMaxSeconds / 60} phút, " +
-                    "tổng ${draft.audioTotalSeconds / 60} phút. " +
+                stringResource(R.string.sft_26, draft.audioMaxSeconds / 60) +
+                    stringResource(R.string.sft_27, draft.audioTotalSeconds / 60) +
                     stringResource(R.string.sfb_83),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -412,7 +412,7 @@ private fun RecordingRow(
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
-            "Đoạn $index - ${clip.seconds}s",
+            stringResource(R.string.sft_28, index, clip.seconds),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f),
         )
@@ -427,7 +427,7 @@ private fun RecordingRow(
             Text(if (playing) stringResource(R.string.sfa_27) else "Nghe", Modifier.padding(start = 6.dp))
         }
         TextButton(onClick = onRemove, enabled = enabled) {
-            Icon(Icons.Default.Delete, contentDescription = "Xoá đoạn $index")
+            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.sft_29, index))
         }
     }
 }

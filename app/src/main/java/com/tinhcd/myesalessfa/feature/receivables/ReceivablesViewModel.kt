@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.receivables
 
 import androidx.lifecycle.ViewModel
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.AppError
 import com.tinhcd.myesalessfa.domain.DataResult
@@ -56,6 +58,7 @@ data class OpenCustomer(
 
 @HiltViewModel
 class ReceivablesViewModel @Inject constructor(
+    private val strings: AppStrings,
     private val repository: ReceivableRepository,
 ) : ViewModel() {
 
@@ -74,7 +77,7 @@ class ReceivablesViewModel @Inject constructor(
                     _state.update { it.copy(loading = false, customers = result.data) }
 
                 is DataResult.Failure ->
-                    _state.update { it.copy(loading = false, error = "Không tải được công nợ") }
+                    _state.update { it.copy(loading = false, error = strings(R.string.sfv_60)) }
             }
         }
     }
@@ -153,7 +156,7 @@ class ReceivablesViewModel @Inject constructor(
 
                 is DataResult.Failure ->
                     updateOpen {
-                        it.copy(loading = false, error = "Không tải được danh sách hoá đơn")
+                        it.copy(loading = false, error = strings(R.string.sfv_61))
                     }
             }
         }

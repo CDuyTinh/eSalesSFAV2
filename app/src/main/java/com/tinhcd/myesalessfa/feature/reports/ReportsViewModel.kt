@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.reports
 
 import androidx.lifecycle.SavedStateHandle
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -102,6 +104,7 @@ data class ReportsUiState(
  */
 @HiltViewModel
 class ReportsViewModel @Inject constructor(
+    private val strings: AppStrings,
     savedStateHandle: SavedStateHandle,
     private val repository: ReportRepository,
 ) : ViewModel() {
@@ -131,7 +134,7 @@ class ReportsViewModel @Inject constructor(
                     OffsetPagingSource { offset, limit ->
                         when (val page = repository.orders(window, listOfNotNull(status), offset = offset, limit = limit)) {
                             is DataResult.Success -> page.data.items
-                            is DataResult.Failure -> throw IllegalStateException("Không tải được đơn hàng")
+                            is DataResult.Failure -> throw IllegalStateException(strings(R.string.sfv_76))
                         }
                     }
                 }.flow
@@ -201,7 +204,7 @@ class ReportsViewModel @Inject constructor(
 
                 is DataResult.Failure ->
                     _state.update {
-                        it.copy(loading = false, error = "Không tải được nhật ký hoạt động")
+                        it.copy(loading = false, error = strings(R.string.sfv_77))
                     }
             }
         }
@@ -216,7 +219,7 @@ class ReportsViewModel @Inject constructor(
 
                 is DataResult.Failure ->
                     _state.update {
-                        it.copy(loading = false, error = "Không tải được báo cáo doanh số")
+                        it.copy(loading = false, error = strings(R.string.sfv_78))
                     }
             }
         }
@@ -234,7 +237,7 @@ class ReportsViewModel @Inject constructor(
 
                 is DataResult.Failure ->
                     _state.update {
-                        it.copy(loading = false, error = "Không tải được báo cáo đơn hàng")
+                        it.copy(loading = false, error = strings(R.string.sfv_79))
                     }
             }
         }
@@ -250,7 +253,7 @@ class ReportsViewModel @Inject constructor(
 
                 is DataResult.Failure ->
                     _state.update {
-                        it.copy(loading = false, error = "Không tải được báo cáo SKU")
+                        it.copy(loading = false, error = strings(R.string.sfv_80))
                     }
             }
         }
@@ -265,7 +268,7 @@ class ReportsViewModel @Inject constructor(
 
                 is DataResult.Failure ->
                     _state.update {
-                        it.copy(loading = false, error = "Không tải được báo cáo thương mại")
+                        it.copy(loading = false, error = strings(R.string.sfv_81))
                     }
             }
         }
@@ -280,7 +283,7 @@ class ReportsViewModel @Inject constructor(
 
                 is DataResult.Failure ->
                     _state.update {
-                        it.copy(loading = false, error = "Không tải được báo cáo kết quả công việc")
+                        it.copy(loading = false, error = strings(R.string.sfv_82))
                     }
             }
         }

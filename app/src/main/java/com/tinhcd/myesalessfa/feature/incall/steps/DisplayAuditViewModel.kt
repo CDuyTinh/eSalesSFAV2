@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.lifecycle.SavedStateHandle
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.core.location.LocationProvider
@@ -61,6 +63,7 @@ data class DisplayAuditUiState(
  */
 @HiltViewModel
 class DisplayAuditViewModel @Inject constructor(
+    private val strings: AppStrings,
     savedStateHandle: SavedStateHandle,
     private val workflowRepository: WorkflowRepository,
     private val configRepository: ConfigRepository,
@@ -185,7 +188,7 @@ class DisplayAuditViewModel @Inject constructor(
             if (size <= 0L) {
                 photoStore.delete(target.path)
                 _state.update {
-                    it.copy(capturing = false, error = "Không lưu được ảnh, thử lại")
+                    it.copy(capturing = false, error = strings(R.string.photo_save_failed))
                 }
                 return@launch
             }
@@ -243,7 +246,7 @@ class DisplayAuditViewModel @Inject constructor(
                 is DataResult.Success -> onSubmitted(current)
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(submitting = false, error = "Không lưu được phiếu chấm trưng bày")
+                    it.copy(submitting = false, error = strings(R.string.sfv_24))
                 }
             }
         }

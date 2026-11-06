@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.newcustomer
 
 import androidx.lifecycle.ViewModel
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.core.location.LocationProvider
 import com.tinhcd.myesalessfa.domain.AppError
@@ -43,6 +45,7 @@ data class NewCustomerUiState(
  */
 @HiltViewModel
 class NewCustomerViewModel @Inject constructor(
+    private val strings: AppStrings,
     private val repository: CustomerRegistrationRepository,
     private val locationProvider: LocationProvider,
 ) : ViewModel() {
@@ -64,7 +67,7 @@ class NewCustomerViewModel @Inject constructor(
 
                 is DataResult.Failure ->
                     _state.update {
-                        it.copy(loading = false, error = "Không tải được danh mục")
+                        it.copy(loading = false, error = strings(R.string.sfv_56))
                     }
             }
         }

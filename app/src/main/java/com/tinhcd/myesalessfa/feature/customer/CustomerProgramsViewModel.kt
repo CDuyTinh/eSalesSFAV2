@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.customer
 
 import androidx.lifecycle.SavedStateHandle
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.DataResult
@@ -53,6 +55,7 @@ data class CustomerProgramsUiState(
  */
 @HiltViewModel
 class CustomerProgramsViewModel @Inject constructor(
+    private val strings: AppStrings,
     savedStateHandle: SavedStateHandle,
     private val displayRepository: DisplayAuditRepository,
     private val loyaltyRepository: LoyaltyRepository,
@@ -108,7 +111,7 @@ class CustomerProgramsViewModel @Inject constructor(
                         joined = joined,
                         loyaltyJoined = loyalty?.joined.orEmpty(),
                         loyaltyOpen = loyalty?.open.orEmpty(),
-                        error = "Không tải được danh sách chương trình",
+                        error = strings(R.string.sfv_18),
                     )
                 }
             }
@@ -144,7 +147,7 @@ class CustomerProgramsViewModel @Inject constructor(
                         // The server names the reason — closed window, no slots,
                         // already in it — and those are exactly what the rep needs
                         // to hear, so the message is not flattened to "lỗi".
-                        error = "Không đăng ký được. Kiểm tra hạn đăng ký và số suất còn lại.",
+                        error = strings(R.string.sfv_19),
                     )
                 }
             }
@@ -178,7 +181,7 @@ class CustomerProgramsViewModel @Inject constructor(
                 is DataResult.Failure -> _state.update {
                     it.copy(
                         registering = false,
-                        error = "Không đăng ký được. Kiểm tra hạn đăng ký và số suất còn lại.",
+                        error = strings(R.string.sfv_19),
                     )
                 }
             }

@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.lifecycle.SavedStateHandle
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.core.location.LocationProvider
@@ -76,6 +78,7 @@ data class PosmUiState(
  */
 @HiltViewModel
 class PosmViewModel @Inject constructor(
+    private val strings: AppStrings,
     savedStateHandle: SavedStateHandle,
     private val workflowRepository: WorkflowRepository,
     private val configRepository: ConfigRepository,
@@ -125,7 +128,7 @@ class PosmViewModel @Inject constructor(
             }
 
             is DataResult.Failure -> _state.update {
-                it.copy(loading = false, error = "Không tải được danh sách POSM")
+                it.copy(loading = false, error = strings(R.string.sfv_37))
             }
         }
     }
@@ -200,7 +203,7 @@ class PosmViewModel @Inject constructor(
             if (size <= 0L) {
                 photoStore.delete(target.path)
                 _state.update {
-                    it.copy(capturing = false, error = "Không lưu được ảnh, thử lại")
+                    it.copy(capturing = false, error = strings(R.string.photo_save_failed))
                 }
                 return@launch
             }
@@ -281,7 +284,7 @@ class PosmViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(submitting = false, error = "Không lưu được phiếu kiểm POSM")
+                    it.copy(submitting = false, error = strings(R.string.sfv_38))
                 }
             }
         }
@@ -304,7 +307,7 @@ class PosmViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(submitting = false, error = "Không ghi nhận được bước POSM")
+                    it.copy(submitting = false, error = strings(R.string.sfv_39))
                 }
             }
         }
@@ -369,7 +372,7 @@ class PosmViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(submitting = false, error = "Không gửi được đăng ký POSM")
+                    it.copy(submitting = false, error = strings(R.string.sfv_40))
                 }
             }
         }
@@ -462,9 +465,9 @@ class PosmViewModel @Inject constructor(
                     it.copy(
                         submitting = false,
                         error = if (draft.kind == PosmMovementKind.DELIVERY) {
-                            "Không ghi nhận được lần giao POSM"
+                            strings(R.string.sfv_41)
                         } else {
-                            "Không ghi nhận được lần thu hồi POSM"
+                            strings(R.string.sfv_42)
                         },
                     )
                 }

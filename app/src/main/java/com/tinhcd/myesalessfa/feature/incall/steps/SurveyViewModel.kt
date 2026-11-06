@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.lifecycle.SavedStateHandle
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.DataResult
@@ -33,6 +35,7 @@ data class SurveyUiState(
  */
 @HiltViewModel
 class SurveyViewModel @Inject constructor(
+    private val strings: AppStrings,
     savedStateHandle: SavedStateHandle,
     private val surveyRepository: SurveyRepository,
 ) : ViewModel() {
@@ -74,7 +77,7 @@ class SurveyViewModel @Inject constructor(
                             // no questionnaire behind it cannot be completed, and the
                             // rep needs to know that rather than wonder.
                             error = if (definition == null) {
-                                "Chưa cấu hình bộ câu hỏi cho bước này"
+                                strings(R.string.sfv_44)
                             } else {
                                 null
                             },
@@ -83,7 +86,7 @@ class SurveyViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(loading = false, error = "Không tải được bộ câu hỏi")
+                    it.copy(loading = false, error = strings(R.string.sfv_45))
                 }
             }
         }
@@ -119,7 +122,7 @@ class SurveyViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(submitting = false, error = "Không lưu được phiếu khảo sát")
+                    it.copy(submitting = false, error = strings(R.string.sfv_46))
                 }
             }
         }

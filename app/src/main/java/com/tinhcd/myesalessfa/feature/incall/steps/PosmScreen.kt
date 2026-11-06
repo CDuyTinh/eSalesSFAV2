@@ -157,7 +157,7 @@ fun PosmScreen(
                     state.page == PosmPage.REGISTER -> stringResource(R.string.sfb_100)
                     state.page == PosmPage.MOVE -> stringResource(R.string.sfb_101)
                     state.placed.isEmpty() -> null
-                    else -> "Đã kiểm ${state.checkedCount}/${state.placed.size} vật phẩm"
+                    else -> stringResource(R.string.sft_45, state.checkedCount, state.placed.size)
                 },
             )
         },
@@ -226,7 +226,7 @@ fun PosmScreen(
             title = { Text(stringResource(R.string.sfa_37)) },
             text = {
                 Text(
-                    "Đã chụp ${state.check?.photoCount ?: 0} ảnh nhưng chưa lưu. " +
+                    stringResource(R.string.sft_46, state.check?.photoCount ?: 0) +
                         stringResource(R.string.sfb_63),
                 )
             },
@@ -403,7 +403,7 @@ private fun TabRow(selected: PosmTab, onSelect: (PosmTab) -> Unit, registered: I
             modifier = Modifier.weight(1f),
         )
         TabButton(
-            text = if (registered > 0) "Đã đăng ký ($registered)" else "Đã đăng ký",
+            text = if (registered > 0) stringResource(R.string.sft_47, registered) else "Đã đăng ký",
             selected = selected == PosmTab.REGISTERED,
             onClick = { onSelect(PosmTab.REGISTERED) },
             modifier = Modifier.weight(1f),
@@ -500,7 +500,7 @@ private fun PosmItemCard(item: PosmAtCustomer, onClick: () -> Unit, onRecall: ()
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "Đã cấp ${item.placedQty} ${item.unitName}",
+                    stringResource(R.string.sft_48, item.placedQty, item.unitName),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
@@ -584,7 +584,7 @@ private fun RegistrationCard(registration: PosmRegistration, onDeliver: () -> Un
             if (registration.awaitingDelivery > 0) {
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "Còn ${registration.awaitingDelivery} ${registration.unitName} chưa giao",
+                    stringResource(R.string.sft_50, registration.awaitingDelivery, registration.unitName),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.tertiary,
                 )
@@ -708,7 +708,7 @@ private fun CheckForm(
                     if (counted != null && check.item.isShort(counted)) {
                         Spacer(Modifier.height(6.dp))
                         Text(
-                            "Thiếu ${check.item.placedQty - counted} so với số đã cấp",
+                            stringResource(R.string.sft_51, check.item.placedQty - counted),
                             style = MaterialTheme.typography.labelSmall,
                             color = Bad,
                         )
@@ -749,7 +749,7 @@ private fun CheckForm(
             )
 
             Text(
-                "Ảnh POSM - tối thiểu ${check.photoMin}, tối đa ${check.photoMax}",
+                stringResource(R.string.sft_52, check.photoMin, check.photoMax),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -784,7 +784,7 @@ private fun CheckForm(
                 }
             } else {
                 Text(
-                    "Đã đủ ${check.photoMax} ảnh. Bỏ bớt một ảnh nếu muốn chụp lại.",
+                    stringResource(R.string.sft_17, check.photoMax),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -815,7 +815,7 @@ private fun CheckForm(
                     )
 
                     check.photosStillNeeded > 0 -> Text(
-                        "Còn thiếu ${check.photosStillNeeded} ảnh",
+                        stringResource(R.string.sft_18, check.photosStillNeeded),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -823,7 +823,7 @@ private fun CheckForm(
                     else -> Text(
                         // The size is the honest answer to "why is this slow" on a
                         // connection measured in tens of kilobytes per second.
-                        "${check.photoCount} ảnh - ${check.totalSizeBytes / 1024} KB sẽ được gửi",
+                        stringResource(R.string.sft_19, check.photoCount, check.totalSizeBytes / 1024),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -1092,8 +1092,8 @@ private fun RegisterLineCard(
                     Text(
                         buildString {
                             append(entry.itemCode)
-                            if (ceiling > 0) append(" | tối đa $ceiling ${entry.unitName}")
-                            if (entry.placedQty > 0) append(" | đang có ${entry.placedQty}")
+                            if (ceiling > 0) append(stringResource(R.string.sft_53, ceiling, entry.unitName))
+                            if (entry.placedQty > 0) append(stringResource(R.string.sft_54, entry.placedQty))
                         },
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1188,9 +1188,9 @@ private fun MovementForm(
                         )
                         Text(
                             if (delivering) {
-                                "Được giao tối đa ${line.available} ${line.unitName}"
+                                stringResource(R.string.sft_55, line.available, line.unitName)
                             } else {
-                                "Cửa hàng đang giữ ${line.available} ${line.unitName}"
+                                stringResource(R.string.sft_56, line.available, line.unitName)
                             },
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1215,7 +1215,7 @@ private fun MovementForm(
             }
 
             Text(
-                "Ảnh bàn giao - tối thiểu ${draft.photoMin}, tối đa ${draft.photoMax}",
+                stringResource(R.string.sft_57, draft.photoMin, draft.photoMax),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -1269,7 +1269,7 @@ private fun MovementForm(
 
                 if (draft.photosStillNeeded > 0) {
                     Text(
-                        "Còn thiếu ${draft.photosStillNeeded} ảnh",
+                        stringResource(R.string.sft_18, draft.photosStillNeeded),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                     )

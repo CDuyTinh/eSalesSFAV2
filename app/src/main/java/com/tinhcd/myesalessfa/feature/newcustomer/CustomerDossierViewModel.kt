@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.newcustomer
 
 import androidx.lifecycle.ViewModel
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.core.location.LocationProvider
 import com.tinhcd.myesalessfa.core.photo.PhotoStore
@@ -59,6 +61,7 @@ data class CustomerDossierUiState(
  */
 @HiltViewModel
 class CustomerDossierViewModel @Inject constructor(
+    private val strings: AppStrings,
     private val repository: CustomerRegistrationRepository,
     private val photoStore: PhotoStore,
     private val locationProvider: LocationProvider,
@@ -83,7 +86,7 @@ class CustomerDossierViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(loading = false, error = "Không tải được hồ sơ khách hàng mới")
+                    it.copy(loading = false, error = strings(R.string.sfv_49))
                 }
             }
         }
@@ -114,7 +117,7 @@ class CustomerDossierViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(working = false, page = DossierPage.LIST, error = "Không mở được hồ sơ")
+                    it.copy(working = false, page = DossierPage.LIST, error = strings(R.string.sfv_50))
                 }
             }
         }
@@ -175,14 +178,14 @@ class CustomerDossierViewModel @Inject constructor(
                             page = DossierPage.DETAIL,
                             detail = result.data,
                             draft = CustomerDraft(),
-                            message = "Đã cập nhật hồ sơ",
+                            message = strings(R.string.sfv_51),
                         )
                     }
                     load()
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(working = false, error = "Không cập nhật được hồ sơ")
+                    it.copy(working = false, error = strings(R.string.sfv_52))
                 }
             }
         }
@@ -202,14 +205,14 @@ class CustomerDossierViewModel @Inject constructor(
                             working = false,
                             page = DossierPage.LIST,
                             detail = null,
-                            message = "Đã xóa hồ sơ",
+                            message = strings(R.string.sfv_53),
                         )
                     }
                     load()
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(working = false, error = "Không xóa được hồ sơ")
+                    it.copy(working = false, error = strings(R.string.sfv_54))
                 }
             }
         }
@@ -241,7 +244,7 @@ class CustomerDossierViewModel @Inject constructor(
             if (size <= 0L) {
                 photoStore.delete(target.path)
                 _state.update {
-                    it.copy(capturingFor = null, error = "Không lưu được ảnh, thử lại")
+                    it.copy(capturingFor = null, error = strings(R.string.photo_save_failed))
                 }
                 return@launch
             }
@@ -269,7 +272,7 @@ class CustomerDossierViewModel @Inject constructor(
                 is DataResult.Failure -> {
                     photoStore.delete(target.path)
                     _state.update {
-                        it.copy(capturingFor = null, error = "Không gửi được ảnh")
+                        it.copy(capturingFor = null, error = strings(R.string.sfv_55))
                     }
                 }
             }

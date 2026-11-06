@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.workplan
 
 import androidx.lifecycle.SavedStateHandle
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.AppError
@@ -104,6 +106,7 @@ data class WorkPlanUiState(
  */
 @HiltViewModel
 class WorkPlanViewModel @Inject constructor(
+    private val strings: AppStrings,
     savedStateHandle: SavedStateHandle,
     private val repository: WorkPlanRepository,
 ) : ViewModel() {
@@ -143,7 +146,7 @@ class WorkPlanViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(loading = false, error = "Không tải được kế hoạch làm việc")
+                    it.copy(loading = false, error = strings(R.string.sfv_94))
                 }
             }
         }
@@ -192,7 +195,7 @@ class WorkPlanViewModel @Inject constructor(
                     it.copy(
                         working = false,
                         page = WorkPlanPage.LIST,
-                        error = "Không mở được kế hoạch",
+                        error = strings(R.string.sfv_95),
                     )
                 }
             }
@@ -295,7 +298,7 @@ class WorkPlanViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(pickerLoading = false, error = "Không tải được danh sách khách hàng")
+                    it.copy(pickerLoading = false, error = strings(R.string.sfv_85))
                 }
             }
         }
@@ -334,26 +337,26 @@ class WorkPlanViewModel @Inject constructor(
                             page = WorkPlanPage.DETAIL,
                             detail = result.data,
                             draft = DraftWorkPlan(),
-                            message = "Đã lưu kế hoạch",
+                            message = strings(R.string.sfv_96),
                         )
                     }
                     load()
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(working = false, error = "Không lưu được kế hoạch")
+                    it.copy(working = false, error = strings(R.string.sfv_97))
                 }
             }
         }
     }
 
-    fun onSubmitForApproval() = transition(WorkPlanStatus.SUBMITTED, null, "Đã gửi duyệt")
+    fun onSubmitForApproval() = transition(WorkPlanStatus.SUBMITTED, null, strings(R.string.sfv_98))
 
     fun onComplete(result: String) =
-        transition(WorkPlanStatus.COMPLETED, result, "Đã hoàn thành kế hoạch")
+        transition(WorkPlanStatus.COMPLETED, result, strings(R.string.sfv_99))
 
     fun onCancelPlan(reason: String) =
-        transition(WorkPlanStatus.CANCELLED, reason, "Đã hủy kế hoạch")
+        transition(WorkPlanStatus.CANCELLED, reason, strings(R.string.sfv_100))
 
     private fun transition(status: WorkPlanStatus, reason: String?, done: String) {
         val plan = _state.value.detail?.plan ?: return
@@ -394,14 +397,14 @@ class WorkPlanViewModel @Inject constructor(
                             working = false,
                             page = WorkPlanPage.LIST,
                             detail = null,
-                            message = "Đã xóa kế hoạch nháp",
+                            message = strings(R.string.sfv_101),
                         )
                     }
                     load()
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(working = false, error = "Không xóa được kế hoạch")
+                    it.copy(working = false, error = strings(R.string.sfv_102))
                 }
             }
         }

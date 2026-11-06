@@ -132,7 +132,7 @@ fun NearExpiryScreen(
                 subtitle = when {
                     onPicker -> stringResource(R.string.sfb_90)
                     state.draft.lots.isEmpty() -> stringResource(R.string.sfb_91)
-                    else -> "${state.draft.lots.size} lô · ${state.draft.totalBaseQty} đơn vị"
+                    else -> stringResource(R.string.sft_39, state.draft.lots.size, state.draft.totalBaseQty)
                 },
             )
         },
@@ -179,7 +179,7 @@ fun NearExpiryScreen(
             title = { Text(stringResource(R.string.sfa_31)) },
             text = {
                 Text(
-                    "Đã ghi ${state.draft.lots.size} lô nhưng chưa lưu. " +
+                    stringResource(R.string.sft_40, state.draft.lots.size) +
                         stringResource(R.string.sfb_63),
                 )
             },
@@ -327,21 +327,21 @@ private fun LotRow(lot: NearExpiryLot, onRemove: () -> Unit) {
         ) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    "Lô ${lot.lotNo}",
+                    stringResource(R.string.sft_41, lot.lotNo),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
                     // The date is the point of the row, so it leads the caption.
                     "HSD ${lot.expiryDate} · ${lot.qty} ${lot.uomName}" +
-                        if (lot.baseQty != lot.qty) " (${lot.baseQty} đơn vị)" else "",
+                        if (lot.baseQty != lot.qty) stringResource(R.string.sft_42, lot.baseQty) else "",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
             TextButton(onClick = onRemove) {
-                Icon(Icons.Default.Delete, contentDescription = "Bỏ lô ${lot.lotNo}")
+                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.sft_43, lot.lotNo))
             }
         }
     }
@@ -537,7 +537,7 @@ private fun LotDialog(
                 OutlinedTextField(
                     value = lotNo,
                     onValueChange = { lotNo = it },
-                    label = { Text("Số lô ($lotNoLength ký tự)") },
+                    label = { Text(stringResource(R.string.sft_44, lotNoLength)) },
                     singleLine = true,
                     isError = lotNo.isNotEmpty() && lotNo.trim().length != lotNoLength,
                     modifier = Modifier.fillMaxWidth(),

@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.auth
 
 import androidx.lifecycle.ViewModel
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.AppError
 import com.tinhcd.myesalessfa.domain.DataResult
@@ -26,6 +28,7 @@ data class LoginUiState(
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
+    private val strings: AppStrings,
     private val signIn: SignInUseCase,
     private val referenceDataSync: ReferenceDataSync,
 ) : ViewModel() {

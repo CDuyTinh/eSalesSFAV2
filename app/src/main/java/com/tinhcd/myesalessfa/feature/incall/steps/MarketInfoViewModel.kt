@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.lifecycle.SavedStateHandle
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.core.location.LocationProvider
@@ -57,6 +59,7 @@ data class MarketInfoUiState(
  */
 @HiltViewModel
 class MarketInfoViewModel @Inject constructor(
+    private val strings: AppStrings,
     savedStateHandle: SavedStateHandle,
     private val workflowRepository: WorkflowRepository,
     private val configRepository: ConfigRepository,
@@ -90,7 +93,7 @@ class MarketInfoViewModel @Inject constructor(
             // that requiring one would stop the survey being filed at all.
             photoMax = step?.configInt(StepConfig.PHOTO_MAX, default = 4) ?: 4
 
-            _state.update { it.copy(title = title.ifBlank { "Thông tin thị trường" }) }
+            _state.update { it.copy(title = title.ifBlank { strings(R.string.sfb_84) }) }
             reload()
         }
     }
@@ -104,7 +107,7 @@ class MarketInfoViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(loading = false, error = "Không tải được danh sách khảo sát")
+                    it.copy(loading = false, error = strings(R.string.sfv_28))
                 }
             }
         }
@@ -126,7 +129,7 @@ class MarketInfoViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(loading = false, error = "Không mở được khảo sát đối thủ")
+                    it.copy(loading = false, error = strings(R.string.sfv_29))
                 }
             }
         }
@@ -183,7 +186,7 @@ class MarketInfoViewModel @Inject constructor(
             if (size <= 0L) {
                 photoStore.delete(target.path)
                 _state.update {
-                    it.copy(capturing = false, error = "Không lưu được ảnh, thử lại")
+                    it.copy(capturing = false, error = strings(R.string.photo_save_failed))
                 }
                 return@launch
             }
@@ -240,7 +243,7 @@ class MarketInfoViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(submitting = false, error = "Không gửi được khảo sát, thử lại")
+                    it.copy(submitting = false, error = strings(R.string.sfv_30))
                 }
             }
         }

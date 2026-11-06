@@ -282,7 +282,7 @@ private fun FreshnessLine(view: SiteStockView) {
                 shape = CircleShape,
             ) {
                 Text(
-                    text = "${view.outOfStockCount} hết hàng",
+                    text = stringResource(R.string.sft_102, view.outOfStockCount),
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                 )

@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.worknote
 
 import androidx.lifecycle.ViewModel
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.AppError
 import com.tinhcd.myesalessfa.domain.DataResult
@@ -45,6 +47,7 @@ data class WorkNoteUiState(
 
 @HiltViewModel
 class WorkNoteViewModel @Inject constructor(
+    private val strings: AppStrings,
     private val repository: WorkNoteRepository,
 ) : ViewModel() {
 
@@ -63,7 +66,7 @@ class WorkNoteViewModel @Inject constructor(
                     _state.update { it.copy(loading = false, notes = result.data) }
 
                 is DataResult.Failure ->
-                    _state.update { it.copy(loading = false, error = "Không tải được ghi chú") }
+                    _state.update { it.copy(loading = false, error = strings(R.string.sfv_91)) }
             }
         }
     }

@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.dailytarget
 
 import androidx.lifecycle.ViewModel
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.AppError
 import com.tinhcd.myesalessfa.domain.DataResult
@@ -26,6 +28,7 @@ data class DailyTargetUiState(
 
 @HiltViewModel
 class DailyTargetViewModel @Inject constructor(
+    private val strings: AppStrings,
     private val repository: DailyTargetRepository,
 ) : ViewModel() {
 
@@ -52,7 +55,7 @@ class DailyTargetViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(loading = false, error = "Không tải được chỉ tiêu ngày")
+                    it.copy(loading = false, error = strings(R.string.sfv_20))
                 }
             }
         }

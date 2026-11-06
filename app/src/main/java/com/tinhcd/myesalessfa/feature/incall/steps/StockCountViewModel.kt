@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.lifecycle.SavedStateHandle
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.DataResult
@@ -85,6 +87,7 @@ data class StockCountUiState(
  */
 @HiltViewModel
 class StockCountViewModel @Inject constructor(
+    private val strings: AppStrings,
     savedStateHandle: SavedStateHandle,
     private val getVisitCatalogue: GetVisitCatalogueUseCase,
     private val stockRepository: StockRepository,
@@ -135,7 +138,7 @@ class StockCountViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(loading = false, error = "Không tải được danh mục sản phẩm")
+                    it.copy(loading = false, error = strings(R.string.order_catalogue_failed))
                 }
             }
         }
@@ -207,7 +210,7 @@ class StockCountViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(submitting = false, error = "Không lưu được phiếu kiểm tồn")
+                    it.copy(submitting = false, error = strings(R.string.sfv_43))
                 }
             }
         }

@@ -385,7 +385,7 @@ private fun RegisteredDialog(customer: RegisteredCustomer, onDismiss: () -> Unit
         title = { Text(stringResource(R.string.sfa_99)) },
         text = {
             Column {
-                Text("${customer.name} — mã ${customer.code}")
+                Text(stringResource(R.string.sft_74, customer.name, customer.code))
                 Text(
                     text = stringResource(R.string.sfa_100) +
                         stringResource(R.string.sfb_155),

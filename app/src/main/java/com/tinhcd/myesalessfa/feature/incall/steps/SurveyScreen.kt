@@ -74,7 +74,7 @@ fun SurveyScreen(
             StepHeader(
                 title = survey?.definition?.name ?: stringResource(R.string.sfb_125),
                 subtitle = if (survey != null && survey.definition.isScored) {
-                    "Điểm ${survey.totalScore}/${survey.definition.maxScore}" +
+                    stringResource(R.string.sft_66, survey.totalScore, survey.definition.maxScore) +
                         if (survey.definition.passScore > 0) {
                             if (survey.isPassing) stringResource(R.string.sfb_126) else stringResource(R.string.sfb_127)
                         } else {
@@ -181,7 +181,7 @@ private fun QuestionCard(
             // questionnaire does not sprout meaningless zeros.
             if (question.maxScore > 0) {
                 Text(
-                    "Tối đa ${question.maxScore} điểm",
+                    stringResource(R.string.sft_67, question.maxScore),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -309,7 +309,7 @@ private fun SurveyFooter(
 
             if (survey.unanswered.isNotEmpty()) {
                 Text(
-                    "Còn ${survey.unanswered.size} câu bắt buộc chưa trả lời",
+                    stringResource(R.string.sft_68, survey.unanswered.size),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error,
                 )

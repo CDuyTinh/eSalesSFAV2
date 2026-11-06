@@ -147,7 +147,7 @@ fun DisplayAuditScreen(
                 subtitle = if (state.programs.isEmpty()) {
                     null
                 } else {
-                    "Đã chấm ${state.scoredCount}/${state.programs.size} chương trình"
+                    stringResource(R.string.sft_10, state.scoredCount, state.programs.size)
                 },
             )
         },
@@ -182,7 +182,7 @@ fun DisplayAuditScreen(
             title = { Text(stringResource(R.string.sfa_13)) },
             text = {
                 Text(
-                    "Đã chụp ${state.audit.photoCount} ảnh nhưng chưa gửi. " +
+                    stringResource(R.string.sft_11, state.audit.photoCount) +
                         stringResource(R.string.sfb_63),
                 )
             },
@@ -285,7 +285,7 @@ private fun ProgramCard(program: DisplayProgram, onClick: () -> Unit) {
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "Đăng ký ${program.requiredFaces} mặt",
+                    stringResource(R.string.sft_12, program.requiredFaces),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
@@ -316,7 +316,7 @@ private fun ProgramCard(program: DisplayProgram, onClick: () -> Unit) {
                 )
             } else if (program.bonusAmount > 0) {
                 Text(
-                    "Thưởng ${formatDong(program.bonusAmount)}",
+                    stringResource(R.string.sft_14, formatDong(program.bonusAmount)),
                     style = MaterialTheme.typography.labelSmall,
                     color = Pass,
                 )
@@ -386,8 +386,8 @@ private fun AuditForm(
             Text(
                 buildString {
                     append(stringResource(R.string.sfa_22))
-                    if (audit.photoMin > 0) append(" - tối thiểu ${audit.photoMin}")
-                    append(", tối đa ${audit.photoMax}")
+                    if (audit.photoMin > 0) append(stringResource(R.string.sft_15, audit.photoMin))
+                    append(stringResource(R.string.sft_16, audit.photoMax))
                 },
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -430,7 +430,7 @@ private fun AuditForm(
                 // Gone rather than greyed. A disabled button reads as something the
                 // rep failed to earn; there is simply nothing more to take.
                 Text(
-                    "Đã đủ ${audit.photoMax} ảnh. Bỏ bớt một ảnh nếu muốn chụp lại.",
+                    stringResource(R.string.sft_17, audit.photoMax),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -459,7 +459,7 @@ private fun AuditForm(
             Column(Modifier.padding(16.dp)) {
                 when {
                     audit.photosStillNeeded > 0 -> Text(
-                        "Còn thiếu ${audit.photosStillNeeded} ảnh",
+                        stringResource(R.string.sft_18, audit.photosStillNeeded),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -473,7 +473,7 @@ private fun AuditForm(
                     audit.photos.isNotEmpty() -> Text(
                         // The size is the honest answer to "why is this slow" on a
                         // connection measured in tens of kilobytes per second.
-                        "${audit.photoCount} ảnh - ${audit.totalSizeBytes / 1024} KB sẽ được gửi",
+                        stringResource(R.string.sft_19, audit.photoCount, audit.totalSizeBytes / 1024),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -578,7 +578,7 @@ private fun ScoreCard(
                 val short = program.shortfall(countedFaces)
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    if (short > 0) "Thiếu $short mặt so với đăng ký" else "Đủ số mặt đăng ký",
+                    if (short > 0) stringResource(R.string.sft_20, short) else "Đủ số mặt đăng ký",
                     style = MaterialTheme.typography.labelSmall,
                     color = if (short > 0) Fail else Pass,
                 )
@@ -612,7 +612,7 @@ private fun ScoreCard(
             if (program.bonusAmount > 0) {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "Thưởng khi đạt: ${formatDong(program.bonusAmount)}",
+                    stringResource(R.string.sft_21, formatDong(program.bonusAmount)),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

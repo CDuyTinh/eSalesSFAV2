@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.workday
 
 import androidx.lifecycle.ViewModel
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.core.photo.PhotoStore
 import com.tinhcd.myesalessfa.core.photo.PhotoTarget
@@ -73,6 +75,7 @@ data class WorkDayUiState(
  */
 @HiltViewModel
 class WorkDayViewModel @Inject constructor(
+    private val strings: AppStrings,
     private val timekeeping: TimekeepingRepository,
     private val configRepository: ConfigRepository,
     private val evaluate: EvaluateCheckInUseCase,
@@ -106,7 +109,7 @@ class WorkDayViewModel @Inject constructor(
                         it.copy(
                             loading = false,
                             policy = policy,
-                            error = "Không tải được thông tin chấm công",
+                            error = strings(R.string.sfb_229),
                         )
                     }
             }
@@ -157,7 +160,7 @@ class WorkDayViewModel @Inject constructor(
         viewModelScope.launch {
             if (photoStore.compress(target.path) <= 0L) {
                 photoStore.delete(target.path)
-                _state.update { it.copy(capturing = false, error = "Không lưu được ảnh, thử lại") }
+                _state.update { it.copy(capturing = false, error = strings(R.string.photo_save_failed)) }
                 return@launch
             }
             _state.value.photoLocalPath?.let(photoStore::delete)

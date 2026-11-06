@@ -265,7 +265,7 @@ private fun UnmappedNotice(count: Int, modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxWidth(),
     ) {
         Text(
-            text = "$count điểm bán chưa có toạ độ, không hiện trên bản đồ",
+            text = stringResource(R.string.sft_100, count),
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )
@@ -308,7 +308,7 @@ private fun StopSheet(
                     // "Theo đường chim bay" because it is, and a rep planning the
                     // next hop should not be handed a straight line as if it were
                     // a drive.
-                    distanceM?.let { append(" · cách ${it.roundToInt()} m theo đường chim bay") }
+                    distanceM?.let { append(stringResource(R.string.sft_101, it.roundToInt())) }
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary,

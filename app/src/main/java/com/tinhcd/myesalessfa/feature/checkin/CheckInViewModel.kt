@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.checkin
 
 import com.tinhcd.myesalessfa.core.photo.PhotoStore
+import com.tinhcd.myesalessfa.core.ui.AppStrings
 import com.tinhcd.myesalessfa.core.ui.uiText
 import com.tinhcd.myesalessfa.core.ui.UiText
 import com.tinhcd.myesalessfa.R
@@ -81,6 +82,7 @@ data class CheckInUiState(
 
 @HiltViewModel
 class CheckInViewModel @Inject constructor(
+    private val strings: AppStrings,
     savedStateHandle: SavedStateHandle,
     private val routeRepository: RouteRepository,
     private val checkInRepository: CheckInRepository,
@@ -203,13 +205,13 @@ class CheckInViewModel @Inject constructor(
         val s = _state.value
         val c = s.customer
         fun coords(lat: Double?, lng: Double?) =
-            if (lat == null || lng == null) "không có" else "%.6f, %.6f".format(Locale.US, lat, lng)
+            if (lat == null || lng == null) strings(R.string.sfv_13) else "%.6f, %.6f".format(Locale.US, lat, lng)
         return listOfNotNull(
             c?.let { " -KH: ${it.code} - ${it.name}" },
             " -Check in: ${LocalDateTime.now().format(stampTime)}",
-            " -Toạ độ KH: ${coords(c?.lat, c?.lng)}",
-            " -Toạ độ hiện tại: ${coords(s.location?.lat, s.location?.lng)}",
-            c?.address?.takeIf { it.isNotBlank() }?.let { " -Địa chỉ KH: $it" },
+            strings(R.string.sfv_14, coords(c?.lat, c?.lng)),
+            strings(R.string.sfv_15, coords(s.location?.lat, s.location?.lng)),
+            c?.address?.takeIf { it.isNotBlank() }?.let { strings(R.string.sfv_16, it) },
         )
     }
 
