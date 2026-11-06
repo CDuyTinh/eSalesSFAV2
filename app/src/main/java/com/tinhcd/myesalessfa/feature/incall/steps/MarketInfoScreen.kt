@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.activity.compose.rememberLauncherForActivityResult
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -122,7 +124,7 @@ private fun SurveyListPage(
     Scaffold(
         topBar = {
             StepHeader(
-                title = state.title.ifBlank { "Thông tin thị trường" },
+                title = state.title.ifBlank { stringResource(R.string.sfb_84) },
                 subtitle = if (state.surveys.isEmpty()) {
                     null
                 } else {
@@ -205,7 +207,7 @@ private fun SurveyCard(survey: MarketInfoSurvey, onClick: () -> Unit) {
             if (survey.isCompleted) {
                 Icon(
                     Icons.Default.CheckCircle,
-                    contentDescription = "Đã làm",
+                    contentDescription = stringResource(R.string.sfa_28),
                     tint = MaterialTheme.status.success,
                 )
             }
@@ -225,7 +227,7 @@ private fun EmptyMarketInfo(modifier: Modifier = Modifier) {
             )
             Spacer(Modifier.height(12.dp))
             Text(
-                "Hôm nay không có khảo sát nào",
+                stringResource(R.string.sfb_85),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -282,7 +284,7 @@ private fun CompetitorSurveyPage(
                     }
 
                     PrimaryButton(
-                        text = if (state.submitting) "Đang gửi..." else "Gửi khảo sát",
+                        text = if (state.submitting) stringResource(R.string.sfb_86) else stringResource(R.string.sfb_87),
                         onClick = viewModel::onSubmit,
                         // Every required criterion on every pairing, which is the
                         // same rule the server counts completion by — so a grid the
@@ -359,7 +361,7 @@ private fun PairingCard(
                 if (draft.isComplete(pairing)) {
                     Icon(
                         Icons.Default.CheckCircle,
-                        contentDescription = "Đã ghi",
+                        contentDescription = stringResource(R.string.sfa_29),
                         tint = MaterialTheme.status.success,
                     )
                 }
@@ -453,7 +455,7 @@ private fun CriterionField(
                         Modifier.padding(start = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("mới", style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(R.string.sfa_30), style = MaterialTheme.typography.labelSmall)
                         IconButton(
                             onClick = {
                                 viewModel.onRemovePhoto(pairing, criterion, photo.localPath)
@@ -462,7 +464,7 @@ private fun CriterionField(
                         ) {
                             Icon(
                                 Icons.Default.Close,
-                                contentDescription = "Bỏ ảnh",
+                                contentDescription = stringResource(R.string.sfa_26),
                                 modifier = Modifier.size(16.dp),
                             )
                         }

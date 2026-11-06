@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import android.Manifest
+import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.R as CoreR
 import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
@@ -95,7 +96,7 @@ fun FeedbackScreen(
     Scaffold(
         topBar = {
             StepHeader(
-                title = state.title.ifBlank { "Phản hồi khách hàng" },
+                title = state.title.ifBlank { stringResource(R.string.sfb_74) },
                 onBack = onDone,
             )
         },
@@ -116,7 +117,7 @@ fun FeedbackScreen(
             ) {
                 if (state.topics.isNotEmpty()) {
                     Text(
-                        "Nội dung phản hồi về",
+                        stringResource(R.string.sfb_75),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
                     )
@@ -136,7 +137,7 @@ fun FeedbackScreen(
                 OutlinedTextField(
                     value = state.draft.note,
                     onValueChange = viewModel::onNoteChange,
-                    label = { Text("Khách hàng nói gì") },
+                    label = { Text(stringResource(R.string.sfa_24)) },
                     minLines = 4,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -186,7 +187,7 @@ fun FeedbackScreen(
                 }
 
                 ButtonPair(
-                    text = "Hoàn thành",
+                    text = stringResource(R.string.sfa_25),
                     onClick = viewModel::submit,
                     onBack = onDone,
                     enabled = state.canSubmit,
@@ -223,7 +224,7 @@ private fun PhotoSection(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                if (draft.photoMin > 0) "Hình ảnh" else "Hình ảnh (tùy chọn)",
+                if (draft.photoMin > 0) stringResource(R.string.sfb_76) else stringResource(R.string.sfb_77),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
             )
@@ -257,7 +258,7 @@ private fun PhotoSection(
                             ) {
                                 Icon(
                                     Icons.Default.Close,
-                                    contentDescription = "Bỏ ảnh",
+                                    contentDescription = stringResource(R.string.sfa_26),
                                     modifier = Modifier
                                         .padding(2.dp)
                                         .size(16.dp),
@@ -273,7 +274,7 @@ private fun PhotoSection(
                         enabled = !state.capturing && !state.recording,
                         modifier = Modifier.size(84.dp),
                     ) {
-                        Icon(Icons.Default.AddAPhoto, contentDescription = "Chụp ảnh")
+                        Icon(Icons.Default.AddAPhoto, contentDescription = stringResource(R.string.photo_take))
                     }
                 }
             }
@@ -326,7 +327,7 @@ private fun AudioSection(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                "Ghi âm (tùy chọn)",
+                stringResource(R.string.sfb_78),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
             )
@@ -353,7 +354,7 @@ private fun AudioSection(
                     )
                     OutlinedButton(onClick = onStop) {
                         Icon(Icons.Default.Stop, contentDescription = null)
-                        Text("Dừng", Modifier.padding(start = 6.dp))
+                        Text(stringResource(R.string.sfa_27), Modifier.padding(start = 6.dp))
                     }
                 }
 
@@ -366,13 +367,13 @@ private fun AudioSection(
                 ) {
                     Icon(Icons.Default.Mic, contentDescription = null)
                     Text(
-                        if (draft.hasAudio) "Ghi thêm" else "Ghi âm",
+                        if (draft.hasAudio) stringResource(R.string.sfb_79) else stringResource(R.string.sfb_80),
                         Modifier.padding(start = 6.dp),
                     )
                 }
 
                 else -> Text(
-                    "Đã ghi đủ thời lượng cho phép",
+                    stringResource(R.string.sfb_81),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -380,7 +381,7 @@ private fun AudioSection(
 
             if (micDenied) {
                 Text(
-                    "Chưa cho phép dùng micro. Vẫn có thể gửi phản hồi bằng chữ.",
+                    stringResource(R.string.sfb_82),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -391,7 +392,7 @@ private fun AudioSection(
             Text(
                 "Mỗi lần tối đa ${draft.audioMaxSeconds / 60} phút, " +
                     "tổng ${draft.audioTotalSeconds / 60} phút. " +
-                    "Bản ghi không thay cho phần nội dung.",
+                    stringResource(R.string.sfb_83),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -423,7 +424,7 @@ private fun RecordingRow(
                 if (playing) Icons.Default.Stop else Icons.Default.PlayArrow,
                 contentDescription = null,
             )
-            Text(if (playing) "Dừng" else "Nghe", Modifier.padding(start = 6.dp))
+            Text(if (playing) stringResource(R.string.sfa_27) else "Nghe", Modifier.padding(start = 6.dp))
         }
         TextButton(onClick = onRemove, enabled = enabled) {
             Icon(Icons.Default.Delete, contentDescription = "Xoá đoạn $index")

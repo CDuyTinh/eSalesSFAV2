@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.worknote
 
 import androidx.compose.foundation.clickable
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -123,12 +125,12 @@ private fun WorkNoteContent(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clip(HeaderShape),
-                title = { Text("Ghi chú công việc") },
+                title = { Text(stringResource(R.string.sfa_167)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Quay lại",
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
                 },
@@ -141,7 +143,7 @@ private fun WorkNoteContent(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onStartAdding) {
-                Icon(Icons.Default.Add, contentDescription = "Thêm ghi chú")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.sfa_168))
             }
         },
     ) { padding ->
@@ -165,9 +167,9 @@ private fun WorkNoteContent(
 
                     state.notes.isEmpty() -> ErrorBox(
                         when (state.filter) {
-                            WorkNoteFilter.OPEN -> "Không có việc nào đang mở"
-                            WorkNoteFilter.DONE -> "Chưa có việc nào hoàn thành"
-                            WorkNoteFilter.ALL -> "Chưa có ghi chú nào"
+                            WorkNoteFilter.OPEN -> stringResource(R.string.sfb_235)
+                            WorkNoteFilter.DONE -> stringResource(R.string.sfb_236)
+                            WorkNoteFilter.ALL -> stringResource(R.string.sfb_237)
                         },
                     )
 
@@ -219,9 +221,9 @@ private fun WorkNoteContent(
     state.deleting?.let { note ->
         AlertDialog(
             onDismissRequest = onCancelDeleting,
-            confirmButton = { TextButton(onClick = onConfirmDeleting) { Text("Xoá") } },
-            dismissButton = { TextButton(onClick = onCancelDeleting) { Text("Huỷ") } },
-            title = { Text("Xoá ghi chú?") },
+            confirmButton = { TextButton(onClick = onConfirmDeleting) { Text(stringResource(R.string.sfa_169)) } },
+            dismissButton = { TextButton(onClick = onCancelDeleting) { Text(stringResource(R.string.sfa_35)) } },
+            title = { Text(stringResource(R.string.sfa_170)) },
             text = { Text(note.title) },
         )
     }
@@ -305,7 +307,7 @@ private fun NoteCard(
                     IconButton(onClick = onComplete, modifier = Modifier.size(36.dp)) {
                         Icon(
                             Icons.Default.Check,
-                            contentDescription = "Hoàn thành",
+                            contentDescription = stringResource(R.string.sfa_25),
                             tint = MaterialTheme.colorScheme.primary,
                         )
                     }
@@ -313,7 +315,7 @@ private fun NoteCard(
                 IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
                     Icon(
                         Icons.Default.DeleteOutline,
-                        contentDescription = "Xoá",
+                        contentDescription = stringResource(R.string.sfa_169),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -342,7 +344,7 @@ private fun NoteCard(
                 Text(
                     text = when {
                         overdue -> "Quá hạn · ${DateFormat.format(due)}"
-                        note.isDueToday(today) -> "Hạn hôm nay"
+                        note.isDueToday(today) -> stringResource(R.string.sfb_238)
                         else -> "Hạn ${DateFormat.format(due)}"
                     },
                     style = MaterialTheme.typography.labelSmall,
@@ -383,16 +385,16 @@ private fun AddDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(onClick = onSave, enabled = canSubmit && !busy) { Text("Lưu") }
+            TextButton(onClick = onSave, enabled = canSubmit && !busy) { Text(stringResource(R.string.sfa_46)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Huỷ") } },
-        title = { Text("Thêm ghi chú") },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.sfa_35)) } },
+        title = { Text(stringResource(R.string.sfa_168)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = title,
                     onValueChange = onTitle,
-                    label = { Text("Nội dung công việc") },
+                    label = { Text(stringResource(R.string.sfa_171)) },
                     singleLine = true,
                     isError = title.isNotEmpty() && titleError != null,
                     modifier = Modifier.fillMaxWidth(),
@@ -401,7 +403,7 @@ private fun AddDialog(
                 OutlinedTextField(
                     value = body,
                     onValueChange = onBody,
-                    label = { Text("Chi tiết (tuỳ chọn)") },
+                    label = { Text(stringResource(R.string.sfa_172)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -421,14 +423,14 @@ private fun CompleteDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(onClick = onConfirm, enabled = canSubmit && !busy) { Text("Hoàn thành") }
+            TextButton(onClick = onConfirm, enabled = canSubmit && !busy) { Text(stringResource(R.string.sfa_25)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Huỷ") } },
-        title = { Text("Hoàn thành công việc") },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.sfa_35)) } },
+        title = { Text(stringResource(R.string.sfa_173)) },
         text = {
             Column {
                 Text(
-                    text = "Ghi lại kết quả để sau này còn đọc được.",
+                    text = stringResource(R.string.sfa_174),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -436,7 +438,7 @@ private fun CompleteDialog(
                 OutlinedTextField(
                     value = result,
                     onValueChange = onResult,
-                    label = { Text("Kết quả") },
+                    label = { Text(stringResource(R.string.sfa_175)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }

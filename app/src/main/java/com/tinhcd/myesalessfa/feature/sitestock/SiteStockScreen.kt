@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.sitestock
 
 import androidx.compose.foundation.clickable
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -101,18 +103,18 @@ private fun SiteStockContent(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clip(HeaderShape),
-                title = { Text("Kho xuất hàng") },
+                title = { Text(stringResource(R.string.sfa_150)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Quay lại",
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
                 },
                 actions = {
                     IconButton(onClick = onRetry, enabled = !state.loading) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Tải lại")
+                        Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_reload))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -129,7 +131,7 @@ private fun SiteStockContent(
                 state.loading -> SkeletonList(count = 7, lines = 1)
                 state.error != null -> ErrorBox(state.error, onRetry = onRetry)
                 view.sites.isEmpty() ->
-                    ErrorBox("Chi nhánh chưa có kho xuất hàng nào")
+                    ErrorBox(stringResource(R.string.sfa_151))
 
                 else -> Column(Modifier.fillMaxSize()) {
                     // Only when there is a choice to make. One warehouse and a
@@ -166,7 +168,7 @@ private fun SiteStockContent(
                     OutlinedTextField(
                         value = view.query,
                         onValueChange = onQueryChanged,
-                        label = { Text("Tìm sản phẩm") },
+                        label = { Text(stringResource(R.string.sfa_51)) },
                         singleLine = true,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -174,7 +176,7 @@ private fun SiteStockContent(
                     )
 
                     if (view.items.isEmpty()) {
-                        ErrorBox("Kho này chưa có số liệu tồn")
+                        ErrorBox(stringResource(R.string.sfa_152))
                     } else {
                         LazyColumn(
                             contentPadding = PaddingValues(
@@ -186,7 +188,7 @@ private fun SiteStockContent(
                             if (view.visible.isEmpty()) {
                                 item {
                                     Text(
-                                        text = "Không tìm thấy sản phẩm nào",
+                                        text = stringResource(R.string.order_no_products),
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         textAlign = TextAlign.Center,
@@ -311,7 +313,7 @@ private fun StockRow(item: SiteStockItem) {
         Spacer(Modifier.width(8.dp))
         Column(horizontalAlignment = Alignment.End) {
             Text(
-                text = if (item.isOutOfStock) "Hết hàng" else "${item.qtyBase}",
+                text = if (item.isOutOfStock) stringResource(R.string.sfa_54) else "${item.qtyBase}",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = if (item.isOutOfStock) {

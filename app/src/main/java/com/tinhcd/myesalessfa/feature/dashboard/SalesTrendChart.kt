@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.dashboard
 
 import androidx.compose.foundation.Canvas
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -43,7 +45,7 @@ fun SalesTrendChart(
     if (points.isEmpty()) {
         Box(modifier, contentAlignment = Alignment.Center) {
             Text(
-                text = "Chưa có dữ liệu",
+                text = stringResource(R.string.sfa_10),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

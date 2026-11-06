@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import android.Manifest
+import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.R as CoreR
 import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
@@ -126,11 +127,11 @@ fun NearExpiryScreen(
     Scaffold(
         topBar = {
             StepHeader(
-                title = if (onPicker) "Chọn sản phẩm" else state.title.ifBlank { "Hàng cận date" },
+                title = if (onPicker) stringResource(R.string.sfb_88) else state.title.ifBlank { stringResource(R.string.sfb_89) },
                 onBack = back,
                 subtitle = when {
-                    onPicker -> "Tìm mặt hàng cần ghi lô"
-                    state.draft.lots.isEmpty() -> "Ghi từng lô sắp hết hạn trên kệ"
+                    onPicker -> stringResource(R.string.sfb_90)
+                    state.draft.lots.isEmpty() -> stringResource(R.string.sfb_91)
                     else -> "${state.draft.lots.size} lô · ${state.draft.totalBaseQty} đơn vị"
                 },
             )
@@ -175,18 +176,18 @@ fun NearExpiryScreen(
     if (confirmLeave) {
         AlertDialog(
             onDismissRequest = { confirmLeave = false },
-            title = { Text("Chưa lưu phiếu hàng cận date") },
+            title = { Text(stringResource(R.string.sfa_31)) },
             text = {
                 Text(
                     "Đã ghi ${state.draft.lots.size} lô nhưng chưa lưu. " +
-                        "Thoát bây giờ sẽ mất hết.",
+                        stringResource(R.string.sfb_63),
                 )
             },
             confirmButton = {
-                TextButton(onClick = { confirmLeave = false; onDone() }) { Text("Thoát") }
+                TextButton(onClick = { confirmLeave = false; onDone() }) { Text(stringResource(R.string.sfa_14)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmLeave = false }) { Text("Ở lại") }
+                TextButton(onClick = { confirmLeave = false }) { Text(stringResource(R.string.sfa_15)) }
             },
         )
     }
@@ -224,7 +225,7 @@ private fun DocumentPage(
             if (draft.lots.isEmpty()) {
                 item(key = "empty") {
                     Text(
-                        "Chưa ghi lô nào. Thêm từng lô hàng sắp hết hạn tìm thấy trên kệ.",
+                        stringResource(R.string.sfb_92),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 16.dp),
@@ -256,7 +257,7 @@ private fun DocumentPage(
                         .height(44.dp),
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null)
-                    Text("  Thêm lô")
+                    Text(stringResource(R.string.sfa_32))
                 }
             }
 
@@ -273,7 +274,7 @@ private fun DocumentPage(
                 OutlinedTextField(
                     value = draft.note,
                     onValueChange = onNoteChange,
-                    label = { Text("Ghi chú (tùy chọn)") },
+                    label = { Text(stringResource(R.string.sfa_19)) },
                     minLines = 2,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -293,7 +294,7 @@ private fun DocumentPage(
 
                 if (draft.lots.isNotEmpty() && !draft.evidenceSettled) {
                     Text(
-                        "Cần một ảnh, hoặc chọn lý do không chụp được",
+                        stringResource(R.string.sfb_93),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -301,7 +302,7 @@ private fun DocumentPage(
                 }
 
                 ButtonPair(
-                    text = "Hoàn thành",
+                    text = stringResource(R.string.sfa_25),
                     onClick = onSubmit,
                     onBack = onBack,
                     enabled = state.canSubmit,
@@ -370,7 +371,7 @@ private fun EvidenceCard(
     ) {
         Column(Modifier.padding(14.dp)) {
             Text(
-                "Ảnh hàng cận date",
+                stringResource(R.string.sfb_94),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
             )
@@ -401,7 +402,7 @@ private fun EvidenceCard(
                         .height(44.dp),
                 ) {
                     Icon(Icons.Default.PhotoCamera, contentDescription = null)
-                    Text(if (draft.photos.isEmpty()) "  Chụp ảnh" else "  Chụp thêm ảnh")
+                    Text(if (draft.photos.isEmpty()) stringResource(R.string.sfb_64) else stringResource(R.string.sfb_65))
                 }
             }
 
@@ -411,7 +412,7 @@ private fun EvidenceCard(
                 Spacer(Modifier.height(10.dp))
 
                 Text(
-                    "Hoặc chọn lý do không chụp được",
+                    stringResource(R.string.sfb_95),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -450,7 +451,7 @@ private fun ProductPicker(
         OutlinedTextField(
             value = state.query,
             onValueChange = onQueryChange,
-            label = { Text("Tìm tên hoặc mã sản phẩm") },
+            label = { Text(stringResource(R.string.order_search_hint)) },
             singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
@@ -489,7 +490,7 @@ private fun ProductPicker(
             if (state.visibleProducts.isEmpty()) {
                 item(key = "none") {
                     Text(
-                        "Không tìm thấy sản phẩm nào",
+                        stringResource(R.string.order_no_products),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 24.dp),
@@ -545,7 +546,7 @@ private fun LotDialog(
                 OutlinedTextField(
                     value = expiry,
                     onValueChange = { expiry = it },
-                    label = { Text("Hạn dùng (dd/MM/yyyy)") },
+                    label = { Text(stringResource(R.string.sfa_33)) },
                     singleLine = true,
                     isError = expiry.isNotEmpty() && parsedDate == null,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -556,7 +557,7 @@ private fun LotDialog(
                     OutlinedTextField(
                         value = qty,
                         onValueChange = { qty = it.filter(Char::isDigit) },
-                        label = { Text("Số lượng") },
+                        label = { Text(stringResource(R.string.order_qty)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f),
@@ -583,10 +584,10 @@ private fun LotDialog(
             TextButton(
                 onClick = { onAdd(lotNo, parsedDate!!.toString(), uom, qty.toIntOrNull() ?: 0) },
                 enabled = ready,
-            ) { Text("Thêm") }
+            ) { Text(stringResource(R.string.sfa_34)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Huỷ") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.sfa_35)) }
         },
     )
 }
@@ -643,7 +644,7 @@ private fun NearExpiryPhotoTile(localPath: String, onRemove: () -> Unit) {
             ) {
                 Icon(
                     Icons.Default.Close,
-                    contentDescription = "Bỏ ảnh",
+                    contentDescription = stringResource(R.string.sfa_26),
                     modifier = Modifier.size(16.dp),
                 )
             }

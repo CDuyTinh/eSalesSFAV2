@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.promotion
 
 import androidx.compose.foundation.clickable
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -114,10 +116,10 @@ fun PromotionCatalogueScreen(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clip(HeaderShape),
-                title = { Text("Chương trình khuyến mãi") },
+                title = { Text(stringResource(R.string.sfa_106)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Quay lại")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -132,7 +134,7 @@ fun PromotionCatalogueScreen(
             when {
                 state.loading -> SkeletonList(count = 5, lines = 3)
                 state.error != null -> ErrorBox(state.error!!, onRetry = viewModel::load)
-                state.promotions.isEmpty() -> ErrorBox("Hiện không có chương trình khuyến mãi nào đang chạy")
+                state.promotions.isEmpty() -> ErrorBox(stringResource(R.string.sfa_107))
                 else -> LazyColumn(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -177,7 +179,7 @@ private fun PromotionItem(promo: CataloguePromotion, expanded: Boolean, onToggle
                 }
                 Icon(
                     if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = if (expanded) "Thu gọn" else "Xem chi tiết",
+                    contentDescription = if (expanded) stringResource(R.string.sfb_47) else stringResource(R.string.sfb_48),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -186,7 +188,7 @@ private fun PromotionItem(promo: CataloguePromotion, expanded: Boolean, onToggle
                     kindLabel(promo),
                     period(promo),
                     promo.proposalName?.let { "Nhóm lựa chọn: $it" },
-                    "Áp dụng cho một số khách hàng".takeIf { promo.targeted },
+                    stringResource(R.string.sfb_167).takeIf { promo.targeted },
                 ).joinToString(" · "),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary,
@@ -194,20 +196,20 @@ private fun PromotionItem(promo: CataloguePromotion, expanded: Boolean, onToggle
 
             if (expanded) {
                 if (promo.items.isNotEmpty()) {
-                    Section("Sản phẩm áp dụng")
+                    Section(stringResource(R.string.sfa_108))
                     promo.items.forEach { Line("${it.productCode} – ${it.productName}", it.uomName) }
                 }
-                Section("Mức khuyến mãi")
+                Section(stringResource(R.string.sfa_109))
                 promo.levels.forEach { Line(it.name, levelText(promo, it)) }
                 if (promo.gifts.isNotEmpty()) {
-                    Section("Sản phẩm tặng")
+                    Section(stringResource(R.string.sfa_110))
                     promo.gifts.forEach { Line(it.productName, "${it.qty} ${it.uomName}") }
                 }
                 promo.budget?.let { b ->
                     Section("Ngân sách: ${b.name}")
-                    Line("Được cấp", b.allocated?.let { budgetFigure(b.counts, it) })
-                    Line("Đã dùng", b.spent?.let { budgetFigure(b.counts, it) })
-                    Line("Còn lại", b.remaining?.let { budgetFigure(b.counts, it) })
+                    Line(stringResource(R.string.sfa_111), b.allocated?.let { budgetFigure(b.counts, it) })
+                    Line(stringResource(R.string.sfa_112), b.spent?.let { budgetFigure(b.counts, it) })
+                    Line(stringResource(R.string.sfa_113), b.remaining?.let { budgetFigure(b.counts, it) })
                 }
             }
         }

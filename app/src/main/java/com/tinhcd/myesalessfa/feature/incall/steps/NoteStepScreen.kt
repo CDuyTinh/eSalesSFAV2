@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.compose.foundation.layout.Arrangement
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,7 +40,7 @@ fun NoteStepScreen(
     Scaffold(
         topBar = {
             StepHeader(
-                title = state.title.ifBlank { "Bước công việc" },
+                title = state.title.ifBlank { stringResource(R.string.sfb_96) },
                 onBack = onDone,
             )
         },
@@ -76,9 +78,9 @@ private fun NoteForm(
     ) {
         Text(
             if (state.isRequired) {
-                "Ghi nhận nội dung tại điểm bán (bắt buộc)"
+                stringResource(R.string.sfb_97)
             } else {
-                "Ghi nhận nội dung tại điểm bán"
+                stringResource(R.string.sfb_98)
             },
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -88,7 +90,7 @@ private fun NoteForm(
         OutlinedTextField(
             value = state.note,
             onValueChange = onNoteChange,
-            label = { Text("Nội dung") },
+            label = { Text(stringResource(R.string.sfa_36)) },
             minLines = 4,
             isError = state.error != null,
             // Says why the button is dead instead of leaving the rep guessing.
@@ -113,7 +115,7 @@ private fun NoteForm(
         // An optional step stays skippable; leaving without finishing a required
         // one is allowed too, it just keeps check-out closed.
         ButtonPair(
-            text = "Hoàn thành",
+            text = stringResource(R.string.sfa_25),
             onClick = onSubmit,
             onBack = onBack,
             enabled = state.canSubmit,
@@ -122,7 +124,7 @@ private fun NoteForm(
 
         if (state.isRequired) {
             Text(
-                "Bước bắt buộc: chưa hoàn thành sẽ không check-out được",
+                stringResource(R.string.sfb_99),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

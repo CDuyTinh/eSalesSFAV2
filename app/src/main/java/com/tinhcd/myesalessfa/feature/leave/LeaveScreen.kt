@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.leave
 
 import androidx.compose.foundation.clickable
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -121,12 +123,12 @@ private fun LeaveContent(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clip(HeaderShape),
-                title = { Text("Đơn xin nghỉ") },
+                title = { Text(stringResource(R.string.sfa_61)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Quay lại",
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
                 },
@@ -139,7 +141,7 @@ private fun LeaveContent(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onStartAdding) {
-                Icon(Icons.Default.Add, contentDescription = "Tạo đơn nghỉ")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.sfa_62))
             }
         },
     ) { padding ->
@@ -149,7 +151,7 @@ private fun LeaveContent(
                 state.error != null && state.requests.isEmpty() ->
                     ErrorBox(state.error, onRetry = onRetry)
 
-                state.requests.isEmpty() -> ErrorBox("Chưa có đơn xin nghỉ nào")
+                state.requests.isEmpty() -> ErrorBox(stringResource(R.string.sfa_63))
 
                 else -> LazyColumn(
                     contentPadding = PaddingValues(16.dp),
@@ -187,10 +189,10 @@ private fun LeaveContent(
         AlertDialog(
             onDismissRequest = onCancelWithdrawing,
             confirmButton = {
-                TextButton(onClick = onConfirmWithdrawing) { Text("Huỷ đơn") }
+                TextButton(onClick = onConfirmWithdrawing) { Text(stringResource(R.string.sfa_64)) }
             },
-            dismissButton = { TextButton(onClick = onCancelWithdrawing) { Text("Để nguyên") } },
-            title = { Text("Huỷ đơn xin nghỉ?") },
+            dismissButton = { TextButton(onClick = onCancelWithdrawing) { Text(stringResource(R.string.sfa_65)) } },
+            title = { Text(stringResource(R.string.sfa_66)) },
             text = {
                 Text("${request.typeName} · ${DateFormat.format(request.fromDate)} - " +
                     DateFormat.format(request.toDate))
@@ -218,7 +220,7 @@ private fun RequestCard(request: LeaveRequest, onWithdraw: () -> Unit) {
                     Text(
                         text = "${DateFormat.format(request.fromDate)} - " +
                             "${DateFormat.format(request.toDate)} · ${request.days} ngày" +
-                            if (request.isPaid) "" else " · không lương",
+                            if (request.isPaid) "" else stringResource(R.string.sfb_131),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -252,7 +254,7 @@ private fun RequestCard(request: LeaveRequest, onWithdraw: () -> Unit) {
 
             if (request.canWithdraw) {
                 Spacer(Modifier.height(8.dp))
-                OutlinedButton(onClick = onWithdraw) { Text("Huỷ đơn") }
+                OutlinedButton(onClick = onWithdraw) { Text(stringResource(R.string.sfa_64)) }
             }
         }
     }
@@ -261,10 +263,10 @@ private fun RequestCard(request: LeaveRequest, onWithdraw: () -> Unit) {
 @Composable
 private fun StatusChip(status: LeaveStatus) {
     val (label, colour) = when (status) {
-        LeaveStatus.PENDING -> "Chờ duyệt" to PendingAmber
-        LeaveStatus.APPROVED -> "Đã duyệt" to ApprovedGreen
-        LeaveStatus.REJECTED -> "Từ chối" to RejectedRed
-        LeaveStatus.CANCELLED -> "Đã huỷ" to CancelledGrey
+        LeaveStatus.PENDING -> stringResource(R.string.sfa_20) to PendingAmber
+        LeaveStatus.APPROVED -> stringResource(R.string.sfb_15) to ApprovedGreen
+        LeaveStatus.REJECTED -> stringResource(R.string.sfb_105) to RejectedRed
+        LeaveStatus.CANCELLED -> stringResource(R.string.sfb_132) to CancelledGrey
     }
 
     Surface(color = colour, contentColor = MaterialTheme.status.onStatus, shape = CircleShape) {
@@ -295,14 +297,14 @@ private fun LeaveFormDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(onClick = onSubmit, enabled = draft.canSubmit && !busy) { Text("Gửi đơn") }
+            TextButton(onClick = onSubmit, enabled = draft.canSubmit && !busy) { Text(stringResource(R.string.sfa_67)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Huỷ") } },
-        title = { Text("Tạo đơn xin nghỉ") },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.sfa_35)) } },
+        title = { Text(stringResource(R.string.sfa_68)) },
         text = {
             Column {
                 Text(
-                    text = "Loại nghỉ",
+                    text = stringResource(R.string.sfa_69),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -336,14 +338,14 @@ private fun LeaveFormDialog(
                 Spacer(Modifier.height(12.dp))
                 Row {
                     DateField(
-                        label = "Từ ngày",
+                        label = stringResource(R.string.sfa_70),
                         date = draft.fromDate,
                         onClick = { picking = DatePickTarget.FROM },
                         modifier = Modifier.weight(1f),
                     )
                     Spacer(Modifier.width(8.dp))
                     DateField(
-                        label = "Đến ngày",
+                        label = stringResource(R.string.sfa_71),
                         date = draft.toDate,
                         onClick = { picking = DatePickTarget.TO },
                         modifier = Modifier.weight(1f),
@@ -370,7 +372,7 @@ private fun LeaveFormDialog(
                 OutlinedTextField(
                     value = draft.reason,
                     onValueChange = onReason,
-                    label = { Text("Lý do") },
+                    label = { Text(stringResource(R.string.reason_generic)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
 
@@ -408,9 +410,9 @@ private fun LeaveFormDialog(
                         }
                         picking = null
                     },
-                ) { Text("Chọn") }
+                ) { Text(stringResource(R.string.sfa_72)) }
             },
-            dismissButton = { TextButton(onClick = { picking = null }) { Text("Huỷ") } },
+            dismissButton = { TextButton(onClick = { picking = null }) { Text(stringResource(R.string.sfa_35)) } },
         ) { DatePicker(state = pickerState) }
     }
 }

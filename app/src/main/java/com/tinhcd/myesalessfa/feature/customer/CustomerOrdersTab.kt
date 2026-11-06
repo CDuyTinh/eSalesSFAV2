@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.customer
 
 import androidx.compose.animation.AnimatedVisibility
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -102,13 +104,13 @@ private fun EmptyOrders() {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = "Chưa có đơn hàng nào",
+            text = stringResource(R.string.sfa_3),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
         )
         Spacer(Modifier.height(6.dp))
         Text(
-            text = "Bạn chưa đặt đơn nào cho khách hàng này",
+            text = stringResource(R.string.sfa_4),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -148,7 +150,7 @@ private fun OrderCard(order: CustomerOrder, expanded: Boolean, onToggle: () -> U
 
                 Icon(
                     if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = if (expanded) "Thu gọn" else "Xem chi tiết",
+                    contentDescription = if (expanded) stringResource(R.string.sfb_47) else stringResource(R.string.sfb_48),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp),
                 )
@@ -218,8 +220,8 @@ private fun OrderLineRow(line: CustomerOrderLine) {
 @Composable
 private fun StatusChip(status: String) {
     val (label, color) = when (status) {
-        "confirmed" -> "Đã xác nhận" to MaterialTheme.colorScheme.primary
-        "new" -> "Đã gửi" to MaterialTheme.colorScheme.tertiary
+        "confirmed" -> stringResource(R.string.sfa_139) to MaterialTheme.colorScheme.primary
+        "new" -> stringResource(R.string.sfb_49) to MaterialTheme.colorScheme.tertiary
         else -> status to MaterialTheme.colorScheme.outline
     }
 
