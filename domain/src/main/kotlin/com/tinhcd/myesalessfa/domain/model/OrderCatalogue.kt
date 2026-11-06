@@ -10,7 +10,7 @@ import com.tinhcd.myesalessfa.domain.foldForSearch
  * present and inert — a sort that never changes the order teaches a rep to stop
  * trusting the sheet.
  */
-enum class ProductSort(val label: String) {
+enum class ProductSort(val viLabel: String) {
     /** The catalogue's own order, which head office set. */
     DEFAULT("Mặc định"),
     PRICE_ASC("Giá thấp đến cao"),

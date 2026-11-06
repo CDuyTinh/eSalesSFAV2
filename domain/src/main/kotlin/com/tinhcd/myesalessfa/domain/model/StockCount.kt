@@ -137,7 +137,7 @@ data class DraftStockCount(
  * something new would be uncountable — so the history is the default and the
  * whole catalogue stays one tap away.
  */
-enum class StockScope(val label: String) {
+enum class StockScope(val viLabel: String) {
     /** What this outlet has bought recently. The legacy sheet, and the default. */
     PURCHASED("Đã mua"),
 

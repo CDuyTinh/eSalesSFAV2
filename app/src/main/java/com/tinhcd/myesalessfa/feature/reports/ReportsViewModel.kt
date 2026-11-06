@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.reports
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.annotation.StringRes
 import com.tinhcd.myesalessfa.core.ui.AppStrings
 import com.tinhcd.myesalessfa.R
 import androidx.paging.Pager
@@ -47,15 +48,15 @@ import javax.inject.Inject
  */
 enum class ReportKind(
     val wire: String,
-    val label: String,
-    val description: String,
+    @StringRes val label: Int,
+    @StringRes val description: Int,
 ) {
-    ACTIVITIES("activities", "Hoạt động ngày", "Ghé thăm, có đơn, đóng cửa trong ngày"),
-    SALES("sales", "Doanh số tháng", "Doanh thu tháng theo khách hàng và sản phẩm"),
-    ORDERS("orders", "Đơn hàng", "Đơn đã đặt trong kỳ và trạng thái xử lý"),
-    SKU("sku", "Sản lượng SKU", "Số lượng bán ra theo từng mặt hàng"),
-    TRADE("trade", "Chương trình thương mại", "Lượt đăng ký trưng bày và tích lũy"),
-    WORK_RESULT("work_result", "Kết quả công việc", "Kế hoạch đã hoàn thành hoặc đã hủy");
+    ACTIVITIES("activities", R.string.rk_activities, R.string.rk_activities_sub),
+    SALES("sales", R.string.rk_sales, R.string.rk_sales_sub),
+    ORDERS("orders", R.string.rk_orders, R.string.rk_orders_sub),
+    SKU("sku", R.string.rk_sku, R.string.rk_sku_sub),
+    TRADE("trade", R.string.rk_trade, R.string.rk_trade_sub),
+    WORK_RESULT("work_result", R.string.rk_work, R.string.rk_work_sub);
 
     companion object {
         fun fromWire(value: String?): ReportKind =
@@ -64,9 +65,9 @@ enum class ReportKind(
 }
 
 /** Which cut of the month's money is on screen. */
-enum class SalesCut(val label: String) {
-    CUSTOMER("Theo khách hàng"),
-    PRODUCT("Theo sản phẩm"),
+enum class SalesCut(@StringRes val label: Int) {
+    CUSTOMER(R.string.cut_customer),
+    PRODUCT(R.string.cut_product),
 }
 
 data class ReportsUiState(

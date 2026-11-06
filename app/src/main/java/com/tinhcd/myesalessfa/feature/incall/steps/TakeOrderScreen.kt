@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.activity.compose.BackHandler
+import com.tinhcd.myesalessfa.feature.common.reasonsText
+import com.tinhcd.myesalessfa.feature.common.label
 import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
@@ -851,9 +853,9 @@ private fun ConfirmPage(
             items(caps, key = { "cap-" + it.sequenceId + it.breakId }) { cap ->
                 PromotionNote(
                     if (cap.requestedAmount != null) {
-                        stringResource(R.string.order_cap_amount, cap.programName, cap.breakName, formatDong(cap.grantedAmount ?: 0), formatDong(cap.requestedAmount ?: 0), cap.reasons)
+                        stringResource(R.string.order_cap_amount, cap.programName, cap.breakName, formatDong(cap.grantedAmount ?: 0), formatDong(cap.requestedAmount ?: 0), cap.reasonsText())
                     } else {
-                        stringResource(R.string.order_cap_lots, cap.programName, cap.breakName, cap.grantedLots ?: 0, cap.requestedLots ?: 0, cap.reasons)
+                        stringResource(R.string.order_cap_lots, cap.programName, cap.breakName, cap.grantedLots ?: 0, cap.requestedLots ?: 0, cap.reasonsText())
                     },
                 )
             }
@@ -1160,7 +1162,7 @@ private fun SortSheet(
                         selected = option == selected,
                         onClick = { onSelect(option) },
                     )
-                    Text(option.label, style = MaterialTheme.typography.bodyLarge)
+                    Text(option.label(), style = MaterialTheme.typography.bodyLarge)
                 }
             }
             Spacer(Modifier.height(12.dp))

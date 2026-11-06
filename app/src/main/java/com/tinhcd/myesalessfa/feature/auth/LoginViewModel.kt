@@ -64,30 +64,30 @@ class LoginViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure ->
-                    _state.update { it.copy(loading = false, error = result.error.toMessage()) }
+                    _state.update { it.copy(loading = false, error = result.error.toMessage(strings)) }
             }
         }
     }
 }
 
-private fun AppError.toMessage(): String = when (this) {
+private fun AppError.toMessage(strings: AppStrings): String = when (this) {
     is AppError.Auth -> when (message) {
-        "invalid_credentials" -> "Sai tên đăng nhập hoặc mật khẩu"
+        "invalid_credentials" -> strings(R.string.lg_1)
         // Permanent, and only head office can fix it.
-        "account_not_provisioned" -> "Tài khoản chưa được gắn nhân viên bán hàng"
-        "manager_account" -> "Tài khoản quản lý — hãy đăng nhập ứng dụng eSales Manager"
+        "account_not_provisioned" -> strings(R.string.lg_2)
+        "manager_account" -> strings(R.string.lg_3)
         // Transient: the password was accepted, the profile was not fetched. Says so,
         // rather than blaming the account.
-        "profile_unavailable" -> "Đã đăng nhập nhưng chưa tải được thông tin nhân viên. Thử lại."
-        else -> "Đăng nhập thất bại"
+        "profile_unavailable" -> strings(R.string.lg_4)
+        else -> strings(R.string.lg_5)
     }
 
-    is AppError.Network -> "Không có kết nối mạng"
+    is AppError.Network -> strings(R.string.lg_6)
     is AppError.Rule -> when (key) {
-        "login_empty_fields" -> "Vui lòng nhập đầy đủ thông tin"
-        else -> "Dữ liệu không hợp lệ"
+        "login_empty_fields" -> strings(R.string.lg_7)
+        else -> strings(R.string.lg_8)
     }
 
-    is AppError.Server -> "Lỗi máy chủ${code?.let { " ($it)" }.orEmpty()}"
-    is AppError.Unknown -> message?.takeIf { it.isNotBlank() } ?: "Đã có lỗi xảy ra"
+    is AppError.Server -> code?.let { strings(R.string.error_server_code, it) } ?: strings(R.string.error_server)
+    is AppError.Unknown -> message?.takeIf { it.isNotBlank() } ?: strings(R.string.lg_9)
 }

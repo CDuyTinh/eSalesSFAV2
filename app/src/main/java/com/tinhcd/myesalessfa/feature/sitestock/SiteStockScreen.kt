@@ -334,10 +334,11 @@ private fun StockRow(item: SiteStockItem) {
 }
 
 /** Coarse on purpose: nobody plans a round on the difference between 3h and 4h. */
+@Composable
 private fun Duration.describe(): String = when {
-    toMinutes() < 60 -> "${toMinutes().coerceAtLeast(0)} phút trước"
-    toHours() < 24 -> "${toHours()} giờ trước"
-    else -> "${toDays()} ngày trước"
+    toMinutes() < 60 -> stringResource(R.string.sfc_85, toMinutes().coerceAtLeast(0))
+    toHours() < 24 -> stringResource(R.string.sfc_86, toHours())
+    else -> stringResource(R.string.sfc_87, toDays())
 }
 
 private val OutRed: Color

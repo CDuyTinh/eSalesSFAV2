@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.newcustomer
 
 import android.Manifest
+import com.tinhcd.myesalessfa.feature.common.label
 import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.R as CoreR
@@ -222,7 +223,7 @@ private fun ListPage(
                                 FilterChip(
                                     selected = state.statusFilter == status,
                                     onClick = { onStatusFilter(status) },
-                                    label = { Text("${status.label} ${state.board.count(status)}") },
+                                    label = { Text("${status.label()} ${state.board.count(status)}") },
                                 )
                             }
                         }
@@ -479,7 +480,7 @@ private fun HeadCard(detail: CustomerRegistrationDetail) {
 
             if (!row.canEdit) {
                 Text(
-                    stringResource(R.string.sft_73, row.status.label.lowercase()),
+                    stringResource(R.string.sft_73, row.status.label().lowercase()),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline,
                 )
@@ -620,7 +621,7 @@ private fun EditPage(
                     onValueChange = onName,
                     label = { Text(stringResource(R.string.sfa_86)) },
                     isError = draft.nameError != null,
-                    supportingText = draft.nameError?.let { { Text(it) } },
+                    supportingText = draft.nameError?.let { { Text(stringResource(R.string.err_outlet_name)) } },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -632,7 +633,7 @@ private fun EditPage(
                     onValueChange = onAddress,
                     label = { Text(stringResource(R.string.order_address)) },
                     isError = draft.addressError != null,
-                    supportingText = draft.addressError?.let { { Text(it) } },
+                    supportingText = draft.addressError?.let { { Text(stringResource(R.string.err_address)) } },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -682,7 +683,7 @@ private fun StatusPill(status: RegistrationStatus) {
 
     Surface(shape = RoundedCornerShape(6.dp), color = colour.copy(alpha = 0.16f)) {
         Text(
-            status.label,
+            status.label(),
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
             style = MaterialTheme.typography.labelSmall,
             color = colour,

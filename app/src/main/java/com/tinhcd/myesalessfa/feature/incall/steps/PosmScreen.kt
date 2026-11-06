@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import android.Manifest
+import com.tinhcd.myesalessfa.feature.common.label
 import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.R as CoreR
@@ -148,7 +149,7 @@ fun PosmScreen(
                 title = when {
                     onChecking -> state.check?.item?.itemName.orEmpty()
                     state.page == PosmPage.REGISTER -> stringResource(R.string.sfa_40)
-                    state.page == PosmPage.MOVE -> state.movement?.kind?.label.orEmpty()
+                    state.page == PosmPage.MOVE -> state.movement?.kind?.label().orEmpty()
                     else -> state.title.ifBlank { "POSM" }
                 },
                 onBack = back,
@@ -403,7 +404,7 @@ private fun TabRow(selected: PosmTab, onSelect: (PosmTab) -> Unit, registered: I
             modifier = Modifier.weight(1f),
         )
         TabButton(
-            text = if (registered > 0) stringResource(R.string.sft_47, registered) else "Đã đăng ký",
+            text = if (registered > 0) stringResource(R.string.sft_47, registered) else stringResource(R.string.sfc_20),
             selected = selected == PosmTab.REGISTERED,
             onClick = { onSelect(PosmTab.REGISTERED) },
             modifier = Modifier.weight(1f),
@@ -508,7 +509,7 @@ private fun PosmItemCard(item: PosmAtCustomer, onClick: () -> Unit, onRecall: ()
 
                 val condition = item.condition
                 if (condition != null) {
-                    StatusChip(condition.label, conditionColour(condition))
+                    StatusChip(condition.label(), conditionColour(condition))
                 } else {
                     StatusChip(stringResource(R.string.sfb_104), MaterialTheme.colorScheme.outline)
                 }
@@ -865,7 +866,7 @@ private fun ConditionRow(
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
-                condition.label,
+                condition.label(),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 color = if (selected) MaterialTheme.status.onStatus else MaterialTheme.colorScheme.onSurfaceVariant,

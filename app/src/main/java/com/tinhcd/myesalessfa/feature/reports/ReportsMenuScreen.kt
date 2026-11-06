@@ -124,7 +124,7 @@ private fun ReportTile(kind: ReportKind, onClick: () -> Unit) {
         ) {
             AsyncImage(model = request, contentDescription = null, modifier = Modifier.size(60.dp))
             Text(
-                kind.label,
+                stringResource(kind.label),
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 maxLines = 2,

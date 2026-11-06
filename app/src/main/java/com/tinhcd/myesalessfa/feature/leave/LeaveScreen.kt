@@ -362,7 +362,7 @@ private fun LeaveFormDialog(
                 }
                 draft.periodError?.let { message ->
                     Text(
-                        text = message,
+                        text = stringResource(R.string.err_period),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                     )

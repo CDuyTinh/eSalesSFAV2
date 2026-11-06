@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.account
 
 import androidx.compose.foundation.background
+import com.tinhcd.myesalessfa.feature.common.label
 import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
@@ -333,7 +334,7 @@ private fun RuleList(unmet: Set<PasswordRule>, typing: Boolean) {
                     modifier = Modifier.size(14.dp),
                 )
                 Text(
-                    text = rule.label,
+                    text = rule.label(),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (met) {
                         MaterialTheme.colorScheme.primary

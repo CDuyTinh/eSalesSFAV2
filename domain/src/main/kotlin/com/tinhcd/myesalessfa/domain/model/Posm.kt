@@ -15,7 +15,7 @@ package com.tinhcd.myesalessfa.domain.model
  * (`API_GetPOSMStatus`). Three values that have not changed in the legacy's
  * lifetime, so they are a type here rather than a lookup table.
  */
-enum class PosmCondition(val wireValue: String, val label: String) {
+enum class PosmCondition(val wireValue: String, val viLabel: String) {
     USABLE("usable", "Sử dụng được"),
     REPAIRABLE("repairable", "Có thể sửa chữa"),
     UNUSABLE("unusable", "Không thể sử dụng"),
@@ -194,7 +194,7 @@ data class PosmMovementLine(
 )
 
 /** Which way the assets are going. The legacy's order types IN and IR. */
-enum class PosmMovementKind(val wireValue: String, val label: String) {
+enum class PosmMovementKind(val wireValue: String, val viLabel: String) {
     DELIVERY("delivery", "Giao POSM"),
     RECALL("recall", "Thu hồi POSM"),
 }

@@ -354,7 +354,7 @@ private fun VisitStatus.openable(): Boolean = this != VisitStatus.ABANDONED
 
 @Composable
 private fun VisitStatus.actionLabel(): String = when (this) {
-    VisitStatus.IN_PROGRESS -> "Vào cuộc"
+    VisitStatus.IN_PROGRESS -> stringResource(R.string.sfc_59)
     VisitStatus.PLANNED -> "Check-in"
     else -> stringResource(R.string.route_visit_again)
 }

@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.core.ui
 
 import android.content.ActivityNotFoundException
+import com.tinhcd.myesalessfa.core.R
+import androidx.compose.ui.res.stringResource
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -40,14 +42,14 @@ fun UpdateDialog(
         onDismissRequest = { if (!required) onLater() },
         properties = DialogProperties(dismissOnBackPress = !required, dismissOnClickOutside = !required),
         icon = { Icon(Icons.Default.SystemUpdate, contentDescription = null) },
-        title = { Text(if (required) "Cần cập nhật ứng dụng" else "Đã có phiên bản mới") },
+        title = { Text(if (required) stringResource(R.string.core_6) else stringResource(R.string.core_7)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     if (required) {
-                        "Phiên bản $versionName không còn được hỗ trợ. Vui lòng cập nhật để tiếp tục làm việc."
+                        stringResource(R.string.core_10, versionName)
                     } else {
-                        "Bạn đang dùng phiên bản $versionName. Cập nhật để có các thay đổi mới nhất."
+                        stringResource(R.string.core_11, versionName)
                     },
                     style = MaterialTheme.typography.bodyLarge,
                 )
@@ -56,8 +58,8 @@ fun UpdateDialog(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = { openUpdate(context, url) }) { Text("Cập nhật") } },
-        dismissButton = if (required) null else ({ TextButton(onClick = onLater) { Text("Để sau") } }),
+        confirmButton = { TextButton(onClick = { openUpdate(context, url) }) { Text(stringResource(R.string.core_8)) } },
+        dismissButton = if (required) null else ({ TextButton(onClick = onLater) { Text(stringResource(R.string.permission_later)) } }),
     )
 }
 

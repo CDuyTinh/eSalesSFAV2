@@ -104,9 +104,10 @@ private fun DetailCard(info: CustomerInfo) {
  * shown the same way tells a rep they may not sell on terms when nobody has
  * decided that.
  */
+@Composable
 private fun creditLimitText(limit: Long?): String = when {
-    limit == null -> "Chưa thiết lập"
-    limit == 0L -> "Chỉ bán tiền mặt"
+    limit == null -> stringResource(R.string.sfc_3)
+    limit == 0L -> stringResource(R.string.sfc_4)
     else -> formatDong(limit)
 }
 

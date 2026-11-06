@@ -821,4 +821,131 @@
     <string name="sfv_100">Plan cancelled</string>
     <string name="sfv_101">Draft plan deleted</string>
     <string name="sfv_102">Could not delete the plan</string>
+
+    <!-- Nhãn trong hàm -->
+    <string name="sfc_3">Not set</string>
+    <string name="sfc_4">Cash only</string>
+    <string name="sfc_19">Registered faces met</string>
+    <string name="sfc_20">Registered</string>
+    <string name="sfc_34">" · until "</string>
+    <string name="sfc_39">On the order total</string>
+    <string name="sfc_40">On a product group</string>
+    <string name="sfc_41">On products</string>
+    <string name="sfc_42">% off</string>
+    <string name="sfc_43">free goods</string>
+    <string name="sfc_44">money off or free goods</string>
+    <string name="sfc_45">money off</string>
+    <string name="sfc_49">Visit date</string>
+    <string name="sfc_50">Report month</string>
+    <string name="sfc_51">Period</string>
+    <string name="sfc_59">In visit</string>
+
+    <!-- Nhãn trong hàm (2) -->
+    <string name="sfc_76">from %1$s</string>
+    <string name="sfc_77">%1$s%% off</string>
+    <string name="sfc_78">%1$s off or free goods</string>
+    <string name="sfc_79">%1$s off</string>
+    <string name="sfc_80">at most %1$s lots/order</string>
+    <string name="sfc_81">at most %1$s lots/customer</string>
+    <string name="sfc_82">%1$s products</string>
+    <string name="sfc_83">Date %1$s</string>
+    <string name="sfc_85">%1$s min ago</string>
+    <string name="sfc_86">%1$s h ago</string>
+    <string name="sfc_87">%1$s days ago</string>
+    <string name="sfc_88">until %1$s</string>
+
+    <!-- Nhãn trạng thái -->
+    <string name="enum_registration_status_pending">Pending</string>
+    <string name="enum_registration_status_approved">Approved</string>
+    <string name="enum_registration_status_rejected">Rejected</string>
+    <string name="enum_notification_kind_promotion">Promotion</string>
+    <string name="enum_notification_kind_manual_promotion">Manual promotion</string>
+    <string name="enum_notification_kind_display">Display</string>
+    <string name="enum_notification_kind_loyalty">Loyalty</string>
+    <string name="enum_notification_kind_posm">POSM</string>
+    <string name="enum_notification_kind_work_note">Note</string>
+    <string name="enum_notification_kind_leave_result">Leave</string>
+    <string name="enum_notification_kind_customer_result">New customer</string>
+    <string name="enum_notification_kind_trade_result">Programme registration</string>
+    <string name="enum_notification_kind_work_plan">Work</string>
+    <string name="enum_product_sort_default">Default</string>
+    <string name="enum_product_sort_price_asc">Price low to high</string>
+    <string name="enum_product_sort_in_basket">In the basket</string>
+    <string name="enum_password_rule_length">At least 8 characters</string>
+    <string name="enum_password_rule_lowercase">A lowercase letter</string>
+    <string name="enum_password_rule_uppercase">An uppercase letter</string>
+    <string name="enum_password_rule_digit">A digit</string>
+    <string name="enum_password_rule_special">A special character</string>
+    <string name="enum_posm_condition_usable">Usable</string>
+    <string name="enum_posm_condition_repairable">Repairable</string>
+    <string name="enum_posm_condition_unusable">Unusable</string>
+    <string name="enum_posm_movement_kind_delivery">POSM delivery</string>
+    <string name="enum_posm_movement_kind_recall">POSM take-back</string>
+    <string name="enum_promotion_scope_line">On products</string>
+    <string name="enum_promotion_scope_group">On a group</string>
+    <string name="enum_promotion_scope_order">On the order</string>
+    <string name="enum_order_report_status_new">In process</string>
+    <string name="enum_order_report_status_confirmed">Confirmed</string>
+    <string name="enum_order_report_status_cancelled">Cancelled</string>
+    <string name="enum_trade_report_kind_display">Display</string>
+    <string name="enum_trade_report_kind_loyalty">Loyalty</string>
+    <string name="enum_stock_scope_purchased">Bought</string>
+    <string name="enum_stock_scope_must_stock">Must stock</string>
+    <string name="enum_stock_scope_all">All</string>
+    <string name="enum_trade_kind_display">Display</string>
+    <string name="enum_trade_kind_loyalty">Loyalty</string>
+    <string name="enum_trade_registration_status_pending">Pending</string>
+    <string name="enum_trade_registration_status_approved">Approved</string>
+    <string name="enum_trade_registration_status_rejected">Rejected</string>
+    <string name="enum_work_plan_status_draft">Draft</string>
+    <string name="enum_work_plan_status_submitted">Pending</string>
+    <string name="enum_work_plan_status_approved">Approved</string>
+    <string name="enum_work_plan_status_rejected">Rejected</string>
+    <string name="enum_work_plan_status_completed">Completed</string>
+    <string name="enum_work_plan_status_cancelled">Cancelled</string>
+    <string name="enum_work_plan_object_kind_customer">Customer</string>
+    <string name="enum_work_plan_object_kind_salesperson">Sales rep</string>
+    <string name="enum_work_plan_object_kind_branch">Distributor</string>
+
+    <!-- Kế hoạch -->
+    <string name="wp_need_object">This task type needs a %1$s</string>
+
+    <!-- Lỗi -->
+    <string name="error_server">Server error</string>
+    <string name="error_server_code">Server error (%1$s)</string>
+
+    <!-- Đăng nhập (lỗi) -->
+    <string name="lg_1">Wrong username or password</string>
+    <string name="lg_2">This account is not linked to a sales rep</string>
+    <string name="lg_3">This is a manager account — sign in to the eSales Manager app</string>
+    <string name="lg_4">Signed in, but your profile could not be loaded. Try again.</string>
+    <string name="lg_5">Sign-in failed</string>
+    <string name="lg_6">No network connection</string>
+    <string name="lg_7">Please fill in every field</string>
+    <string name="lg_8">Invalid data</string>
+    <string name="lg_9">Something went wrong</string>
+
+    <!-- Báo cáo -->
+    <string name="rk_activities">Daily activity</string>
+    <string name="rk_activities_sub">Visits, orders and closed outlets in the day</string>
+    <string name="rk_sales">Monthly sales</string>
+    <string name="rk_sales_sub">The month\'s revenue by customer and product</string>
+    <string name="rk_orders">Orders</string>
+    <string name="rk_orders_sub">Orders placed in the period and their status</string>
+    <string name="rk_sku">SKU volume</string>
+    <string name="rk_sku_sub">Quantity sold per product</string>
+    <string name="rk_trade">Trade programmes</string>
+    <string name="rk_trade_sub">Display and loyalty registrations</string>
+    <string name="rk_work">Work results</string>
+    <string name="rk_work_sub">Plans completed or cancelled</string>
+    <string name="cut_customer">By customer</string>
+    <string name="cut_product">By product</string>
+
+    <!-- Kiểm tra dữ liệu -->
+    <string name="err_outlet_name">Enter the outlet name</string>
+    <string name="err_address">Enter the address</string>
+    <string name="err_period">The end date must be after the start date</string>
+    <string name="cap_out_of_quota">the customer\'s lots are used up</string>
+    <string name="cap_out_of_budget">the budget is used up</string>
+    <string name="cap_out_of_stock">not enough free goods</string>
 </resources>

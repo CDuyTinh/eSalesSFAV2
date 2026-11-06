@@ -578,7 +578,7 @@ private fun ScoreCard(
                 val short = program.shortfall(countedFaces)
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    if (short > 0) stringResource(R.string.sft_20, short) else "Đủ số mặt đăng ký",
+                    if (short > 0) stringResource(R.string.sft_20, short) else stringResource(R.string.sfc_19),
                     style = MaterialTheme.typography.labelSmall,
                     color = if (short > 0) Fail else Pass,
                 )

@@ -1,7 +1,7 @@
 package com.tinhcd.myesalessfa.domain.model
 
 /** Which kind of programme a registration is for. Legacy TradeType D / A. */
-enum class TradeKind(val wire: String, val label: String) {
+enum class TradeKind(val wire: String, val viLabel: String) {
     DISPLAY("display", "Trưng bày"),
     LOYALTY("loyalty", "Tích lũy");
 
@@ -12,7 +12,7 @@ enum class TradeKind(val wire: String, val label: String) {
 }
 
 /** Where a registration stands with head office. */
-enum class TradeRegistrationStatus(val wire: String, val label: String) {
+enum class TradeRegistrationStatus(val wire: String, val viLabel: String) {
     PENDING("pending", "Chờ duyệt"),
     APPROVED("approved", "Đã duyệt"),
     REJECTED("rejected", "Bị từ chối");

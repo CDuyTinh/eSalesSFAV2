@@ -75,7 +75,7 @@ data class RegisteredCustomer(
 // -----------------------------------------------------------------------------
 
 /** Where a registration stands. */
-enum class RegistrationStatus(val wire: String, val label: String) {
+enum class RegistrationStatus(val wire: String, val viLabel: String) {
     PENDING("pending", "Chờ duyệt"),
     APPROVED("approved", "Đã duyệt"),
     REJECTED("rejected", "Bị từ chối");

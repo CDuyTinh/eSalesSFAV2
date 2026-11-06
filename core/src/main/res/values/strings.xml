@@ -10,4 +10,16 @@
     <string name="permission_rationale_location">Ứng dụng cần quyền vị trí để xác nhận bạn đang ở đúng cửa hàng khi check-in và chấm công.</string>
     <string name="permission_rationale_microphone">Ứng dụng cần quyền micro để ghi âm phản hồi của khách hàng.</string>
     <string name="permission_rationale_notifications">Ứng dụng cần quyền thông báo để báo kết quả duyệt, kế hoạch được giao và giữ việc ghi nhận vị trí trong giờ làm.</string>
+
+    <!-- Thành phần chung -->
+    <string name="core_1">"  Thử lại"</string>
+    <string name="core_2">Xoá từ khoá</string>
+    <string name="core_3">Quay lại</string>
+    <string name="core_6">Cần cập nhật ứng dụng</string>
+    <string name="core_7">Đã có phiên bản mới</string>
+    <string name="core_8">Cập nhật</string>
+
+    <!-- Thành phần chung (2) -->
+    <string name="core_10">Phiên bản %1$s không còn được hỗ trợ. Vui lòng cập nhật để tiếp tục làm việc.</string>
+    <string name="core_11">Bạn đang dùng phiên bản %1$s. Cập nhật để có các thay đổi mới nhất.</string>
 </resources>
