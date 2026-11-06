@@ -293,7 +293,7 @@ private fun MonthCard(
                     Icon(Icons.Default.ChevronLeft, contentDescription = stringResource(R.string.sfa_180))
                 }
                 Text(
-                    "Tháng ${month.monthValue}/${month.year}",
+                    stringResource(R.string.sft_116, month.monthValue, month.year),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )
@@ -403,7 +403,7 @@ private fun StatusRow(
         FilterChip(
             selected = selected == null,
             onClick = { onStatusFilter(null) },
-            label = { Text("Tất cả ${board.total}") },
+            label = { Text(stringResource(R.string.sft_72, board.total)) },
         )
         // Only statuses that occur. A chip reading zero is a button that does
         // nothing, and the legacy's fixed four-chip row had exactly that.
@@ -870,7 +870,7 @@ private fun EditPage(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            SectionTitle("Khách hàng (${draft.objects.size})")
+                            SectionTitle(stringResource(R.string.sft_117, draft.objects.size))
                             TextButton(onClick = onOpenPicker) { Text(stringResource(R.string.sfa_72)) }
                         }
                     }

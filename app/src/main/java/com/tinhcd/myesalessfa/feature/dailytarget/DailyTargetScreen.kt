@@ -136,7 +136,7 @@ private fun DailyTargetContent(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                                 Text(
-                                    text = "${plan.plannedCount}/${plan.stops.size} điểm bán",
+                                    text = stringResource(R.string.sft_2, plan.plannedCount, plan.stops.size),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -241,7 +241,7 @@ private fun StopCard(
             Text(
                 text = stop.lastAmount
                     ?.let {
-                        "Lần gần nhất bạn bán: ${formatMoney(it)}" +
+                        stringResource(R.string.sft_3, formatMoney(it)) +
                             (stop.lastDate?.let { d -> " · ${DateFormat.format(d)}" } ?: "")
                     }
                     ?: stringResource(R.string.sfb_54),

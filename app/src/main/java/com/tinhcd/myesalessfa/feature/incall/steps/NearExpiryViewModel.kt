@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.lifecycle.SavedStateHandle
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.core.location.LocationProvider
@@ -71,6 +73,7 @@ data class NearExpiryUiState(
  */
 @HiltViewModel
 class NearExpiryViewModel @Inject constructor(
+    private val strings: AppStrings,
     savedStateHandle: SavedStateHandle,
     private val workflowRepository: WorkflowRepository,
     private val configRepository: ConfigRepository,
@@ -111,7 +114,7 @@ class NearExpiryViewModel @Inject constructor(
                 is DataResult.Success -> _state.update {
                     it.copy(
                         loading = false,
-                        title = title.ifBlank { "Hàng cận date" },
+                        title = title.ifBlank { strings(R.string.sfb_89) },
                         catalogue = visit.data.catalogue,
                         noPhotoReasons = reasons,
                         draft = DraftNearExpiry(
@@ -126,7 +129,7 @@ class NearExpiryViewModel @Inject constructor(
                 is DataResult.Failure -> _state.update {
                     it.copy(
                         loading = false,
-                        title = title.ifBlank { "Hàng cận date" },
+                        title = title.ifBlank { strings(R.string.sfb_89) },
                         noPhotoReasons = reasons,
                         draft = DraftNearExpiry(
                             visitId = visitId,
@@ -134,7 +137,7 @@ class NearExpiryViewModel @Inject constructor(
                             lotNoLength = lotLength,
                             photoMax = photoMax,
                         ),
-                        error = "Không tải được danh mục sản phẩm",
+                        error = strings(R.string.order_catalogue_failed),
                     )
                 }
             }
@@ -181,25 +184,25 @@ class NearExpiryViewModel @Inject constructor(
 
         if (!draft.isLotNoValid(trimmed)) {
             _state.update {
-                it.copy(error = "Số lô phải đúng ${draft.lotNoLength} ký tự")
+                it.copy(error = strings(R.string.sfv_31, draft.lotNoLength))
             }
             return
         }
 
         if (draft.hasLot(product.product.id, trimmed)) {
-            _state.update { it.copy(error = "Lô $trimmed đã có trong danh sách") }
+            _state.update { it.copy(error = strings(R.string.sfv_32, trimmed)) }
             return
         }
 
         if (qty < 1) {
-            _state.update { it.copy(error = "Số lượng phải lớn hơn 0") }
+            _state.update { it.copy(error = strings(R.string.sfv_33)) }
             return
         }
 
         val unit = product.units.firstOrNull { it.unit.uomCode == uomCode }
             ?: product.units.firstOrNull()
             ?: run {
-                _state.update { it.copy(error = "Sản phẩm chưa có đơn vị bán") }
+                _state.update { it.copy(error = strings(R.string.sfv_34)) }
                 return
             }
 
@@ -260,7 +263,7 @@ class NearExpiryViewModel @Inject constructor(
             if (size <= 0L) {
                 photoStore.delete(target.path)
                 _state.update {
-                    it.copy(capturing = false, error = "Không lưu được ảnh, thử lại")
+                    it.copy(capturing = false, error = strings(R.string.photo_save_failed))
                 }
                 return@launch
             }
@@ -312,7 +315,7 @@ class NearExpiryViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(submitting = false, error = "Không lưu được phiếu hàng cận date")
+                    it.copy(submitting = false, error = strings(R.string.sfv_35))
                 }
             }
         }

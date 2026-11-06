@@ -152,7 +152,7 @@ private fun WorkNoteContent(
 
             if (state.overdueCount > 0) {
                 Text(
-                    text = "${state.overdueCount} việc đã quá hạn",
+                    text = stringResource(R.string.sft_112, state.overdueCount),
                     style = MaterialTheme.typography.labelSmall,
                     color = OverdueRed,
                     modifier = Modifier.padding(horizontal = 16.dp),
@@ -343,9 +343,9 @@ private fun NoteCard(
                 Spacer(Modifier.height(6.dp))
                 Text(
                     text = when {
-                        overdue -> "Quá hạn · ${DateFormat.format(due)}"
+                        overdue -> stringResource(R.string.sft_113, DateFormat.format(due))
                         note.isDueToday(today) -> stringResource(R.string.sfb_238)
-                        else -> "Hạn ${DateFormat.format(due)}"
+                        else -> stringResource(R.string.sft_114, DateFormat.format(due))
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = if (overdue) OverdueRed else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -360,7 +360,7 @@ private fun NoteCard(
                     shape = RoundedCornerShape(8.dp),
                 ) {
                     Text(
-                        text = "Kết quả: $result",
+                        text = stringResource(R.string.sft_115, result),
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(10.dp),
                     )

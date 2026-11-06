@@ -185,7 +185,7 @@ private fun ListPage(
                             FilterChip(
                                 selected = state.kindFilter == null,
                                 onClick = { onKind(null) },
-                                label = { Text("Tất cả ${state.board.total}") },
+                                label = { Text(stringResource(R.string.sft_72, state.board.total)) },
                             )
                             TradeKind.entries.forEach { kind ->
                                 FilterChip(
@@ -356,7 +356,7 @@ private fun RegistrationCard(row: TradeRegistration) {
                     row.levelName,
                     row.programCode,
                     row.registeredAt,
-                    if (row.portion > 1) "${row.portion} suất" else null,
+                    if (row.portion > 1) stringResource(R.string.sft_85, row.portion) else null,
                 ).joinToString(" · "),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.outline,
@@ -369,7 +369,7 @@ private fun RegistrationCard(row: TradeRegistration) {
             // The supervisor's word on it, red when it is why it was refused.
             row.decisionNote?.takeIf { it.isNotBlank() }?.let { note ->
                 Text(
-                    "Phản hồi: $note",
+                    stringResource(R.string.sft_70, note),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (row.status == TradeRegistrationStatus.REJECTED) MaterialTheme.status.danger else Color.Unspecified,
                     maxLines = 3,
@@ -577,8 +577,8 @@ private fun DisplayOfferCard(
             LevelRow(
                 name = level.levelName,
                 detail = listOfNotNull(
-                    "${level.requiredFaces} mặt",
-                    level.slotsLeft?.let { "còn $it suất" },
+                    stringResource(R.string.sft_106, level.requiredFaces),
+                    level.slotsLeft?.let { stringResource(R.string.sft_107, it) },
                 ).joinToString(" · "),
                 enabled = level.available && !working,
                 onRegister = { onRegister(level.levelId) },
@@ -604,7 +604,7 @@ private fun LoyaltyOfferCard(
             LevelRow(
                 name = level.levelName,
                 detail = listOfNotNull(
-                    level.slotsLeft?.let { "còn $it suất" },
+                    level.slotsLeft?.let { stringResource(R.string.sft_107, it) },
                 ).joinToString(" · "),
                 enabled = level.available && !working,
                 onRegister = { onRegister(level.levelId) },
@@ -695,8 +695,8 @@ private fun statusColour(status: TradeRegistrationStatus): Color = when (status)
 
 private fun windowLabel(from: String?, to: String?): String? = when {
     from != null && to != null -> "$from - $to"
-    from != null -> "từ $from"
-    to != null -> "đến $to"
+    from != null -> "từ ${from}"
+    to != null -> "đến ${to}"
     else -> null
 }
 

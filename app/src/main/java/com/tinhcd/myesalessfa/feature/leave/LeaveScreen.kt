@@ -219,7 +219,7 @@ private fun RequestCard(request: LeaveRequest, onWithdraw: () -> Unit) {
                     )
                     Text(
                         text = "${DateFormat.format(request.fromDate)} - " +
-                            "${DateFormat.format(request.toDate)} · ${request.days} ngày" +
+                            stringResource(R.string.sft_69, DateFormat.format(request.toDate), request.days) +
                             if (request.isPaid) "" else stringResource(R.string.sfb_131),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -245,7 +245,7 @@ private fun RequestCard(request: LeaveRequest, onWithdraw: () -> Unit) {
                     shape = RoundedCornerShape(8.dp),
                 ) {
                     Text(
-                        text = "Phản hồi: $note",
+                        text = stringResource(R.string.sft_70, note),
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(10.dp),
                     )
@@ -354,7 +354,7 @@ private fun LeaveFormDialog(
 
                 draft.days?.let { days ->
                     Text(
-                        text = "$days ngày",
+                        text = stringResource(R.string.sft_71, days),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 4.dp),

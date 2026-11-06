@@ -216,7 +216,7 @@ private fun ListPage(
                             FilterChip(
                                 selected = state.statusFilter == null,
                                 onClick = { onStatusFilter(null) },
-                                label = { Text("Tất cả ${state.board.total}") },
+                                label = { Text(stringResource(R.string.sft_72, state.board.total)) },
                             )
                             state.board.presentStatuses.forEach { status ->
                                 FilterChip(
@@ -317,7 +317,7 @@ private fun RegistrationCard(row: CustomerRegistrationRow, onClick: () -> Unit) 
                     text = listOfNotNull(
                         row.phone,
                         row.createdAt.take(10),
-                        if (row.photoCount > 0) "${row.photoCount} ảnh" else null,
+                        if (row.photoCount > 0) stringResource(R.string.sft_38, row.photoCount) else null,
                     ).joinToString(" · "),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline,
@@ -326,7 +326,7 @@ private fun RegistrationCard(row: CustomerRegistrationRow, onClick: () -> Unit) 
                 // Why it was refused: what the rep opens this list to find out.
                 row.decisionNote?.takeIf { it.isNotBlank() }?.let { note ->
                     Text(
-                        text = "Phản hồi: $note",
+                        text = stringResource(R.string.sft_70, note),
                         style = MaterialTheme.typography.bodySmall,
                         color = if (row.status == RegistrationStatus.REJECTED) MaterialTheme.status.danger else Color.Unspecified,
                         maxLines = 2,
@@ -479,7 +479,7 @@ private fun HeadCard(detail: CustomerRegistrationDetail) {
 
             if (!row.canEdit) {
                 Text(
-                    "Hồ sơ đã ${row.status.label.lowercase()} — không sửa được nữa",
+                    stringResource(R.string.sft_73, row.status.label.lowercase()),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline,
                 )

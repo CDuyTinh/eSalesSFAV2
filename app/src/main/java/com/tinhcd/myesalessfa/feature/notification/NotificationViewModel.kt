@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.notification
 
 import androidx.lifecycle.ViewModel
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.Notification
@@ -43,6 +45,7 @@ data class NotificationUiState(
  */
 @HiltViewModel
 class NotificationViewModel @Inject constructor(
+    private val strings: AppStrings,
     private val repository: NotificationRepository,
 ) : ViewModel() {
 
@@ -62,7 +65,7 @@ class NotificationViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(loading = false, error = "Không tải được thông báo")
+                    it.copy(loading = false, error = strings(R.string.sfv_58))
                 }
             }
         }
@@ -111,7 +114,7 @@ class NotificationViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(working = false, error = "Không đánh dấu được đã đọc")
+                    it.copy(working = false, error = strings(R.string.sfv_59))
                 }
             }
         }

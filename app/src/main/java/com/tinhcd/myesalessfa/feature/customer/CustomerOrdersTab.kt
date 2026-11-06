@@ -160,7 +160,7 @@ private fun OrderCard(order: CustomerOrder, expanded: Boolean, onToggle: () -> U
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "${order.skuCount} mặt hàng · ${order.totalQty} đơn vị",
+                    text = stringResource(R.string.sft_1, order.skuCount, order.totalQty),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),

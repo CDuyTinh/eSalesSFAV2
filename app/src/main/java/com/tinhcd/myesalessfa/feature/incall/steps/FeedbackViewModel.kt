@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.lifecycle.SavedStateHandle
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.core.audio.VoiceRecorder
@@ -60,6 +62,7 @@ data class FeedbackUiState(
  */
 @HiltViewModel
 class FeedbackViewModel @Inject constructor(
+    private val strings: AppStrings,
     savedStateHandle: SavedStateHandle,
     private val workflowRepository: WorkflowRepository,
     private val configRepository: ConfigRepository,
@@ -160,7 +163,7 @@ class FeedbackViewModel @Inject constructor(
             if (size <= 0L) {
                 photoStore.delete(target.path)
                 _state.update {
-                    it.copy(capturing = false, error = "Không lưu được ảnh, thử lại")
+                    it.copy(capturing = false, error = strings(R.string.photo_save_failed))
                 }
                 return@launch
             }
@@ -208,7 +211,7 @@ class FeedbackViewModel @Inject constructor(
         val path = runCatching { recorder.start(limit) }.getOrElse { error ->
             _state.update {
                 it.copy(
-                    error = "Không bật được micro" + (error.message?.let { m -> ": $m" } ?: ""),
+                    error = strings(R.string.sfv_25) + (error.message?.let { m -> ": $m" } ?: ""),
                 )
             }
             return
@@ -255,7 +258,7 @@ class FeedbackViewModel @Inject constructor(
                         ),
                     )
                 },
-                error = if (seconds < 1) "Bản ghi quá ngắn" else it.error,
+                error = if (seconds < 1) strings(R.string.sfv_26) else it.error,
             )
         }
     }
@@ -295,7 +298,7 @@ class FeedbackViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(submitting = false, error = "Không lưu được phản hồi")
+                    it.copy(submitting = false, error = strings(R.string.sfv_27))
                 }
             }
         }

@@ -107,7 +107,7 @@ fun StockCountScreen(
                     state.customerName.ifBlank { null },
                     state.count.countedProducts
                         .takeIf { it > 0 }
-                        ?.let { "đã kiểm $it mặt hàng" },
+                        ?.let { stringResource(R.string.sft_58, it) },
                 ).joinToString(" - "),
                 onBack = leave,
                 actions = {
@@ -219,7 +219,7 @@ fun StockCountScreen(
             title = { Text(stringResource(R.string.sfa_52)) },
             text = {
                 Text(
-                    "Đã kiểm ${state.count.countedProducts} mặt hàng nhưng chưa gửi. " +
+                    stringResource(R.string.sft_59, state.count.countedProducts) +
                         stringResource(R.string.sfb_63),
                 )
             },
@@ -476,12 +476,12 @@ private fun StockRow(
                 if (line != null) {
                     val movement = when {
                         line.isNewlyOutOfStock ->
-                            "Hết hàng - kỳ trước còn ${line.prevBaseQty} $baseUom"
+                            stringResource(R.string.sft_60, line.prevBaseQty, baseUom)
 
                         line.soldSinceCount > 0 ->
-                            "Bán ${line.soldSinceCount} $baseUom từ kỳ trước"
+                            stringResource(R.string.sft_61, line.soldSinceCount, baseUom)
 
-                        else -> "Tồn ${line.baseQty} $baseUom"
+                        else -> stringResource(R.string.sft_62, line.baseQty, baseUom)
                     }
                     Text(
                         movement,
@@ -499,7 +499,7 @@ private fun StockRow(
                     // action rather than as decoration.
                     if (line.shortfallBaseQty > 0) {
                         Text(
-                            "Thiếu ${line.shortfallBaseQty} $baseUom so với định mức",
+                            stringResource(R.string.sft_63, line.shortfallBaseQty, baseUom),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.error,
@@ -648,9 +648,9 @@ private fun StockFooter(
             // do next, not what was counted, so they sit under the figures
             // rather than between them.
             val notes = listOfNotNull(
-                "Còn ${compliance.unchecked} hàng bắt buộc chưa kiểm"
+                stringResource(R.string.sft_64, compliance.unchecked)
                     .takeIf { compliance.required > 0 && !compliance.isComplete },
-                "Cần bổ sung ${state.count.totalShortfallBaseQty} đơn vị để đạt định mức"
+                stringResource(R.string.sft_65, state.count.totalShortfallBaseQty)
                     .takeIf { state.count.totalShortfallBaseQty > 0 },
                 state.error,
             )

@@ -200,7 +200,7 @@ private fun WorkDayContent(
 
                     if (state.closing && !day.canCloseDay) {
                         Notice(
-                            "Còn ${day.openVisits} cuộc viếng thăm chưa check-out. " +
+                            stringResource(R.string.sft_109, day.openVisits) +
                                 stringResource(R.string.sfb_230),
                         )
                     }
@@ -354,11 +354,11 @@ private fun LocationLine(gate: CheckInGate?, locating: Boolean, onRefresh: () ->
     val (text, color) = when {
         locating -> stringResource(R.string.sfb_152) to scheme.onSurfaceVariant
         gate is CheckInGate.Allowed ->
-            "Trong bán kính cho phép (${gate.distanceM.roundToInt()} m)" to scheme.primary
+            stringResource(R.string.sft_110, gate.distanceM.roundToInt()) to scheme.primary
 
         gate is CheckInGate.NeedsReason -> {
             val d = gate.distanceM?.let { " (${it.roundToInt()} m)" }.orEmpty()
-            "Cần chọn lý do$d" to scheme.secondary
+            stringResource(R.string.sft_111, d) to scheme.secondary
         }
 
         gate is CheckInGate.Blocked -> stringResource(R.string.sfb_231) to scheme.error

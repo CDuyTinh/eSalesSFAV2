@@ -141,7 +141,7 @@ fun PromotionCatalogueScreen(
                 ) {
                     item {
                         Text(
-                            "${state.promotions.size} chương trình đang chạy",
+                            stringResource(R.string.sft_76, state.promotions.size),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -187,7 +187,7 @@ private fun PromotionItem(promo: CataloguePromotion, expanded: Boolean, onToggle
                 listOfNotNull(
                     kindLabel(promo),
                     period(promo),
-                    promo.proposalName?.let { "Nhóm lựa chọn: $it" },
+                    promo.proposalName?.let { stringResource(R.string.sft_77, it) },
                     stringResource(R.string.sfb_167).takeIf { promo.targeted },
                 ).joinToString(" · "),
                 style = MaterialTheme.typography.labelSmall,
@@ -206,7 +206,7 @@ private fun PromotionItem(promo: CataloguePromotion, expanded: Boolean, onToggle
                     promo.gifts.forEach { Line(it.productName, "${it.qty} ${it.uomName}") }
                 }
                 promo.budget?.let { b ->
-                    Section("Ngân sách: ${b.name}")
+                    Section(stringResource(R.string.sft_78, b.name))
                     Line(stringResource(R.string.sfa_111), b.allocated?.let { budgetFigure(b.counts, it) })
                     Line(stringResource(R.string.sfa_112), b.spent?.let { budgetFigure(b.counts, it) })
                     Line(stringResource(R.string.sfa_113), b.remaining?.let { budgetFigure(b.counts, it) })
@@ -247,7 +247,7 @@ private fun kindLabel(p: CataloguePromotion): String {
 
 private fun period(p: CataloguePromotion): String? {
     val from = p.fromDate?.format(dayFormat) ?: return null
-    return p.toDate?.let { "$from – ${it.format(dayFormat)}" } ?: "từ $from"
+    return p.toDate?.let { "$from – ${it.format(dayFormat)}" } ?: "từ ${from}"
 }
 
 /** "Mua 10 Thùng → tặng / giảm …": the threshold and what one lot of it pays. */
@@ -264,8 +264,8 @@ private fun levelText(p: CataloguePromotion, l: CatalogueLevel): String {
         else -> "giảm ${formatDong(l.discAmt.toLong())}"
     }
     val caps = listOfNotNull(
-        l.maxLot.takeIf { it > 0 }?.let { "tối đa $it suất/đơn" },
-        l.customerMaxLot?.let { "tối đa $it suất/KH" },
+        l.maxLot.takeIf { it > 0 }?.let { "tối đa ${it} suất/đơn" },
+        l.customerMaxLot?.let { "tối đa ${it} suất/KH" },
     )
     return (listOf(threshold, pays) + caps).joinToString(" · ")
 }

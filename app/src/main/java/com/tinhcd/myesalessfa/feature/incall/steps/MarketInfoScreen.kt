@@ -128,7 +128,7 @@ private fun SurveyListPage(
                 subtitle = if (state.surveys.isEmpty()) {
                     null
                 } else {
-                    "Đã làm ${state.doneCount}/${state.surveys.size} khảo sát"
+                    stringResource(R.string.sft_30, state.doneCount, state.surveys.size)
                 },
                 onBack = onBack,
             )
@@ -195,9 +195,9 @@ private fun SurveyCard(survey: MarketInfoSurvey, onClick: () -> Unit) {
                 )
                 Text(
                     text = when (survey.kind) {
-                        MarketSurveyKind.MARKET -> "Bảng câu hỏi - ${survey.itemCount} câu"
+                        MarketSurveyKind.MARKET -> stringResource(R.string.sft_31, survey.itemCount)
                         MarketSurveyKind.COMPETITOR ->
-                            "Khảo sát đối thủ - ${survey.itemCount} sản phẩm"
+                            stringResource(R.string.sft_32, survey.itemCount)
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -259,8 +259,8 @@ private fun CompetitorSurveyPage(
         topBar = {
             StepHeader(
                 title = draft.definition.name,
-                subtitle = "Đã ghi ${draft.definition.pairings.size - draft.outstanding.size}" +
-                    "/${draft.definition.pairings.size} sản phẩm",
+                subtitle = stringResource(R.string.sft_33, draft.definition.pairings.size - draft.outstanding.size) +
+                    stringResource(R.string.sft_34, draft.definition.pairings.size),
                 onBack = onBack,
             )
         },
@@ -296,7 +296,7 @@ private fun CompetitorSurveyPage(
                     if (!draft.canSubmit) {
                         Spacer(Modifier.height(6.dp))
                         Text(
-                            "Còn ${draft.outstanding.size} sản phẩm chưa ghi đủ",
+                            stringResource(R.string.sft_35, draft.outstanding.size),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -352,7 +352,7 @@ private fun PairingCard(
                     // because the rep is being asked about a specific pack on a
                     // specific shelf, not about the brand in general.
                     Text(
-                        "So với ${pairing.competitorProduct} (${pairing.competitorName})",
+                        stringResource(R.string.sft_36, pairing.competitorProduct, pairing.competitorName),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -425,7 +425,7 @@ private fun CriterionField(
         ) {
             Icon(
                 Icons.Default.PhotoCamera,
-                contentDescription = "Chụp ảnh ${criterion.name}",
+                contentDescription = stringResource(R.string.sft_37, criterion.name),
                 tint = MaterialTheme.colorScheme.primary,
             )
         }
@@ -437,7 +437,7 @@ private fun CriterionField(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                "${entry.photoCount} ảnh",
+                stringResource(R.string.sft_38, entry.photoCount),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

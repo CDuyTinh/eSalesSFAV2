@@ -112,7 +112,7 @@ private fun FocusProductsContent(
                     if (state.measuredCount > 0) {
                         item {
                             Text(
-                                text = "Đạt chỉ tiêu ${state.onTrack}/${state.measuredCount} " +
+                                text = stringResource(R.string.sft_4, state.onTrack, state.measuredCount) +
                                     stringResource(R.string.sfb_58),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -179,9 +179,9 @@ private fun FocusCard(product: FocusProduct, today: LocalDate) {
             val target = product.targetBaseQty
             Text(
                 text = if (target != null) {
-                    "Đã bán ${product.soldBaseQty}/${target} ${product.baseUom}"
+                    stringResource(R.string.sft_5, product.soldBaseQty, target, product.baseUom)
                 } else {
-                    "Đã bán ${product.soldBaseQty} ${product.baseUom}"
+                    stringResource(R.string.sft_6, product.soldBaseQty, product.baseUom)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
@@ -189,7 +189,7 @@ private fun FocusCard(product: FocusProduct, today: LocalDate) {
             Text(
                 // Coverage next to quantity, because one large order can meet a
                 // target while the product reaches almost no shelves.
-                text = "${product.outlets} điểm bán đã lấy hàng",
+                text = stringResource(R.string.sft_7, product.outlets),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -199,7 +199,7 @@ private fun FocusCard(product: FocusProduct, today: LocalDate) {
                 ProgressBar(progress = progress)
                 product.remaining()?.takeIf { it > 0 }?.let { left ->
                     Text(
-                        text = "Còn thiếu $left ${product.baseUom}",
+                        text = stringResource(R.string.sft_8, left, product.baseUom),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 4.dp),
@@ -211,7 +211,7 @@ private fun FocusCard(product: FocusProduct, today: LocalDate) {
 
             val daysLeft = product.daysLeft(today)
             Text(
-                text = "Đến ${DateFormat.format(product.toDate)} · còn $daysLeft ngày",
+                text = stringResource(R.string.sft_9, DateFormat.format(product.toDate), daysLeft),
                 style = MaterialTheme.typography.labelSmall,
                 color = if (product.isEndingSoon(today)) {
                     EndingAmber

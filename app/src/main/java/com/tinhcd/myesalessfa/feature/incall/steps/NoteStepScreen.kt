@@ -95,7 +95,7 @@ private fun NoteForm(
             isError = state.error != null,
             // Says why the button is dead instead of leaving the rep guessing.
             supportingText = if (remaining > 0) {
-                { Text("Còn thiếu $remaining ký tự") }
+                { Text(stringResource(R.string.sft_22, remaining)) }
             } else {
                 null
             },

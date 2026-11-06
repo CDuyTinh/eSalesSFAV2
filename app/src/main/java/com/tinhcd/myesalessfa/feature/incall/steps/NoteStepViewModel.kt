@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.lifecycle.SavedStateHandle
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.DataResult
@@ -48,6 +50,7 @@ data class NoteStepUiState(
  */
 @HiltViewModel
 class NoteStepViewModel @Inject constructor(
+    private val strings: AppStrings,
     savedStateHandle: SavedStateHandle,
     private val workflowRepository: WorkflowRepository,
     private val configRepository: ConfigRepository,
@@ -99,7 +102,7 @@ class NoteStepViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(submitting = false, error = "Không lưu được bước này")
+                    it.copy(submitting = false, error = strings(R.string.sfv_36))
                 }
             }
         }

@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.traderegis
 
 import androidx.lifecycle.ViewModel
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.RegisterableCustomer
@@ -83,6 +85,7 @@ data class TradeRegisUiState(
  */
 @HiltViewModel
 class TradeRegisViewModel @Inject constructor(
+    private val strings: AppStrings,
     private val repository: TradeRegistrationRepository,
 ) : ViewModel() {
 
@@ -104,7 +107,7 @@ class TradeRegisViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(loading = false, error = "Không tải được danh sách đăng ký")
+                    it.copy(loading = false, error = strings(R.string.sfv_84))
                 }
             }
         }
@@ -152,7 +155,7 @@ class TradeRegisViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(pickerLoading = false, error = "Không tải được danh sách khách hàng")
+                    it.copy(pickerLoading = false, error = strings(R.string.sfv_85))
                 }
             }
         }
@@ -178,7 +181,7 @@ class TradeRegisViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(offersLoading = false, error = "Không tải được chương trình")
+                    it.copy(offersLoading = false, error = strings(R.string.sfv_86))
                 }
             }
         }
@@ -212,7 +215,7 @@ class TradeRegisViewModel @Inject constructor(
                             working = false,
                             page = TradeRegisPage.LIST,
                             chosen = null,
-                            message = "Đã đăng ký cho ${customer.name}",
+                            message = strings(R.string.sfv_87, customer.name),
                         )
                     }
                     load()

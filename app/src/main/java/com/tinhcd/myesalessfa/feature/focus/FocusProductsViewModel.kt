@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.focus
 
 import androidx.lifecycle.ViewModel
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.FocusProduct
@@ -30,6 +32,7 @@ data class FocusProductsUiState(
 
 @HiltViewModel
 class FocusProductsViewModel @Inject constructor(
+    private val strings: AppStrings,
     private val repository: FocusProductRepository,
 ) : ViewModel() {
 
@@ -48,7 +51,7 @@ class FocusProductsViewModel @Inject constructor(
                     _state.update { it.copy(loading = false, products = result.data) }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(loading = false, error = "Không tải được sản phẩm trọng tâm")
+                    it.copy(loading = false, error = strings(R.string.sfv_23))
                 }
             }
         }

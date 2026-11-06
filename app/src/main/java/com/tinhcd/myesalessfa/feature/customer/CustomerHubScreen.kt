@@ -269,7 +269,7 @@ private fun CustomerBanner(info: CustomerInfo?, onBack: () -> Unit) {
             if (!phone.isNullOrBlank()) {
                 CircleButton(
                     icon = Icons.Default.Phone,
-                    contentDescription = "Gọi ${info.name}",
+                    contentDescription = stringResource(R.string.route_call, info.name),
                     onClick = {
                         context.startActivity(
                             Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone")),
