@@ -1,6 +1,9 @@
 package com.tinhcd.myesalessfa.feature.checkin
 
 import com.tinhcd.myesalessfa.core.photo.PhotoStore
+import com.tinhcd.myesalessfa.core.ui.uiText
+import com.tinhcd.myesalessfa.core.ui.UiText
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -59,7 +62,7 @@ data class CheckInUiState(
     /** Head office wants the shop front before the visit starts. */
     val photoRequired: Boolean = false,
     val submitting: Boolean = false,
-    val error: String? = null,
+    val error: UiText? = null,
     val finished: Boolean = false,
     val queuedOffline: Boolean = false,
 ) {
@@ -112,7 +115,7 @@ class CheckInViewModel @Inject constructor(
 
                 is DataResult.Failure ->
                     _state.update {
-                        it.copy(loading = false, error = "Không tải được thông tin khách hàng")
+                        it.copy(loading = false, error = uiText(R.string.checkin_customer_failed))
                     }
             }
         }
@@ -171,7 +174,7 @@ class CheckInViewModel @Inject constructor(
             }
             if (merged == null) {
                 shots.forEach(photoStore::delete)
-                _state.update { it.copy(capturing = false, error = "Không lưu được ảnh, thử lại") }
+                _state.update { it.copy(capturing = false, error = uiText(R.string.photo_save_failed)) }
                 return@launch
             }
             discardPhotos()
@@ -247,25 +250,12 @@ class CheckInViewModel @Inject constructor(
 
                 is DataResult.Failure ->
                     _state.update {
-                        it.copy(submitting = false, error = "Không lưu được check-in")
+                        it.copy(submitting = false, error = uiText(R.string.checkin_save_failed))
                     }
             }
         }
     }
 }
 
-internal fun ReasonKind.prompt(): String = when (this) {
-    ReasonKind.GPS_OUT_OF_RANGE -> "Bạn đang ở ngoài bán kính cho phép. Chọn lý do để tiếp tục:"
-    ReasonKind.GPS_LOW_ACCURACY -> "Tín hiệu GPS không đủ chính xác. Chọn lý do để tiếp tục:"
-    ReasonKind.GPS_UNAVAILABLE -> "Không lấy được vị trí. Chọn lý do để tiếp tục:"
-    ReasonKind.OUTLET_CLOSED -> "Cửa hàng đóng cửa. Chọn lý do:"
-    ReasonKind.NO_ORDER -> "Khách không đặt hàng. Chọn lý do:"
-    ReasonKind.PHOTO_SKIPPED -> "Không chụp được ảnh. Chọn lý do:"
-
-    // Not a check-in gate at all — it classifies what feedback is about, and no gate
-    // resolves to it. A neutral string rather than an exception, because an
-    // unreachable branch is not worth crashing a rep's check-in over.
-    ReasonKind.FEEDBACK_TOPIC -> "Chọn lý do:"
-}
 
 private val stampTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")

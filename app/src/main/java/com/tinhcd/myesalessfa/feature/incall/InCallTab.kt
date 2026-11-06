@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.incall
 
 import androidx.compose.foundation.clickable
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -98,7 +100,7 @@ fun InCallTab(
         when {
             state.loading -> SkeletonList(count = 6, lines = 1)
             state.workflow == null ->
-                ErrorBox(state.error ?: "Không có dữ liệu", onRetry = viewModel::load)
+                ErrorBox(state.error?.asString() ?: stringResource(R.string.incall_no_data), onRetry = viewModel::load)
 
             else -> {
                 val workflow = state.workflow!!
@@ -109,7 +111,7 @@ fun InCallTab(
                             .verticalScroll(rememberScrollState()),
                     ) {
                         Text(
-                            text = "Đã xong ${workflow.doneCount}/${workflow.steps.size} bước",
+                            text = stringResource(R.string.incall_steps_done, workflow.doneCount, workflow.steps.size),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp),
@@ -133,8 +135,7 @@ fun InCallTab(
                         ) {
                             if (!workflow.canCheckOut) {
                                 Text(
-                                    text = "Còn bước bắt buộc chưa hoàn thành: " +
-                                        workflow.blockingSteps.joinToString { it.title },
+                                    text = stringResource(R.string.incall_blocking, workflow.blockingSteps.joinToString { it.title }),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.error,
                                     modifier = Modifier.padding(bottom = 8.dp),
@@ -143,7 +144,7 @@ fun InCallTab(
                             // Taken on the way out, once the steps are done: the last
                             // thing the rep does at the shop, as the shop front was the first.
                             PhotoBlock(
-                                title = "Ảnh check-out",
+                                title = stringResource(R.string.incall_checkout_photo),
                                 path = state.photoLocalPath,
                                 required = state.photoRequired,
                                 busy = state.capturing,
@@ -153,7 +154,7 @@ fun InCallTab(
                             )
                             if (state.error != null) {
                                 Text(
-                                    state.error.orEmpty(),
+                                    state.error?.asString().orEmpty(),
                                     color = MaterialTheme.colorScheme.error,
                                     style = MaterialTheme.typography.labelSmall,
                                     modifier = Modifier.padding(bottom = 8.dp),
@@ -164,7 +165,7 @@ fun InCallTab(
                             // visit; it should be the largest target on the tab,
                             // not a 33dp pill beside the back button.
                             PrimaryButton(
-                                text = "Check-out",
+                                text = stringResource(R.string.incall_check_out),
                                 onClick = viewModel::checkOut,
                                 enabled = state.canCheckOut,
                                 loading = state.submitting,
@@ -285,13 +286,13 @@ private fun StepTile(
                 step.isDone -> Badge(
                     icon = Icons.Default.Check,
                     background = DoneGreen,
-                    contentDescription = "Đã xong",
+                    contentDescription = stringResource(R.string.incall_step_done),
                 )
 
                 !step.canOpen -> Badge(
                     icon = Icons.Default.Lock,
                     background = scheme.outline,
-                    contentDescription = "Chưa mở được",
+                    contentDescription = stringResource(R.string.incall_step_locked),
                 )
 
                 step.step.isRequired -> Text(
@@ -326,8 +327,8 @@ private fun StepTile(
         // is a dead end with no way to work out what opens it.
         val waitingOn = step.waitingOn
         val note = when {
-            !step.implemented -> "Chưa có"
-            waitingOn != null -> "Cần ${waitingOn.title}"
+            !step.implemented -> stringResource(R.string.incall_not_available)
+            waitingOn != null -> stringResource(R.string.incall_needs, waitingOn.title)
             else -> null
         }
         if (note != null) {

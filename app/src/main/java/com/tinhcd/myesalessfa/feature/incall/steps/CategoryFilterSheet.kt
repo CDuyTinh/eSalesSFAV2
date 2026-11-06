@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.compose.foundation.clickable
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -56,18 +58,18 @@ internal fun CategorySheet(
                 modifier = Modifier.padding(start = 20.dp, end = 12.dp, bottom = 12.dp),
             ) {
                 Text(
-                    "Nhóm hàng",
+                    stringResource(R.string.category_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.weight(1f),
                 )
-                TextButton(onClick = onClear) { Text("Bỏ lọc") }
+                TextButton(onClick = onClear) { Text(stringResource(R.string.category_clear)) }
             }
             HorizontalDivider()
 
             if (all.isEmpty()) {
                 Text(
-                    "Danh mục chưa chia nhóm",
+                    stringResource(R.string.category_none),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(20.dp),

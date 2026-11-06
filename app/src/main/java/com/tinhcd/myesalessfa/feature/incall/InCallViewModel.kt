@@ -1,6 +1,9 @@
 package com.tinhcd.myesalessfa.feature.incall
 
 import androidx.lifecycle.SavedStateHandle
+import com.tinhcd.myesalessfa.core.ui.uiText
+import com.tinhcd.myesalessfa.core.ui.UiText
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.core.photo.PhotoStore
@@ -26,7 +29,7 @@ data class InCallUiState(
     val customer: Customer? = null,
     val workflow: VisitWorkflow? = null,
     val submitting: Boolean = false,
-    val error: String? = null,
+    val error: UiText? = null,
     val checkedOut: Boolean = false,
     /** The check-out photo, on the device until the check-out takes it up. */
     val photoLocalPath: String? = null,
@@ -85,7 +88,7 @@ class InCallViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(loading = false, error = "Không tải được danh sách công việc")
+                    it.copy(loading = false, error = uiText(R.string.incall_load_failed))
                 }
             }
         }
@@ -108,7 +111,7 @@ class InCallViewModel @Inject constructor(
         viewModelScope.launch {
             if (photoStore.compress(target.path) <= 0L) {
                 photoStore.delete(target.path)
-                _state.update { it.copy(capturing = false, error = "Không lưu được ảnh, thử lại") }
+                _state.update { it.copy(capturing = false, error = uiText(R.string.photo_save_failed)) }
                 return@launch
             }
             _state.value.photoLocalPath?.let(photoStore::delete)
@@ -135,7 +138,7 @@ class InCallViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(submitting = false, error = "Không lưu được check-out")
+                    it.copy(submitting = false, error = uiText(R.string.incall_checkout_failed))
                 }
             }
         }

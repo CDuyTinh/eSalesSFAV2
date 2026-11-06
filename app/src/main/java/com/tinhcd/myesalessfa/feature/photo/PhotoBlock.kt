@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.photo
 
 import android.Manifest
+import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.R as CoreR
 import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
@@ -68,13 +69,13 @@ fun PhotoBlock(
 ) {
     Column(modifier.padding(contentPadding), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(
-            if (required) "$title (bắt buộc)" else title,
+            if (required) stringResource(R.string.photo_required_suffix, title) else title,
             style = MaterialTheme.typography.titleSmall,
         )
         if (path == null) {
             OutlinedButton(onClick = onCapture, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Default.PhotoCamera, contentDescription = null)
-                Text(if (busy) "  Đang lưu ảnh…" else "  Chụp ảnh")
+                Text("  " + stringResource(if (busy) R.string.photo_saving else R.string.photo_take))
             }
         } else {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -85,8 +86,8 @@ fun PhotoBlock(
                     modifier = Modifier.size(84.dp).clip(RoundedCornerShape(10.dp)),
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    TextButton(onClick = onCapture, enabled = !busy) { Text("Chụp lại") }
-                    TextButton(onClick = onRemove, enabled = !busy) { Text("Xoá ảnh") }
+                    TextButton(onClick = onCapture, enabled = !busy) { Text(stringResource(R.string.photo_retake)) }
+                    TextButton(onClick = onRemove, enabled = !busy) { Text(stringResource(R.string.photo_remove)) }
                 }
             }
         }

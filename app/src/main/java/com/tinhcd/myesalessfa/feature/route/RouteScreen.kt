@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.route
 
 import android.content.Intent
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -173,7 +175,7 @@ private fun RouteContent(
         }
         if (state.sync.lastAttemptFailed && !state.sync.syncing) {
             Text(
-                "Chưa cập nhật được dữ liệu mới nhất. Đang dùng dữ liệu đã tải trước đó.",
+                stringResource(R.string.route_stale_data),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
@@ -193,15 +195,15 @@ private fun RouteContent(
                         .padding(16.dp)
                         .zIndex(1f),
                 ) {
-                    Icon(Icons.Default.Map, contentDescription = "Xem tuyến trên bản đồ")
+                    Icon(Icons.Default.Map, contentDescription = stringResource(R.string.route_view_map))
                 }
             }
 
             when {
                 state.loading && state.stops.isEmpty() -> SkeletonList(count = 5, lines = 3)
-                state.error != null -> ErrorBox(state.error, onRetry = onRetry)
+                state.error != null -> ErrorBox(state.error.asString(), onRetry = onRetry)
                 state.stops.isEmpty() ->
-                    ErrorBox("Không có khách hàng nào trong tuyến hôm nay")
+                    ErrorBox(stringResource(R.string.route_empty))
 
                 else -> StopList(
                     stops = state.visibleStops,
@@ -281,10 +283,10 @@ private fun RouteHeader(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onOpenDrawer) {
-                    Icon(Icons.Default.Menu, contentDescription = "Mở menu", tint = brand.onHeader)
+                    Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.action_open_menu), tint = brand.onHeader)
                 }
                 Text(
-                    text = "Viếng thăm",
+                    text = stringResource(R.string.shell_visit_tab),
                     style = MaterialTheme.typography.titleLarge,
                     fontSize = 18.sp,
                     color = brand.onHeader,
@@ -306,7 +308,7 @@ private fun RouteHeader(
                     IconButton(onClick = onRefresh) {
                         Icon(
                             Icons.Default.Refresh,
-                            contentDescription = "Cập nhật dữ liệu",
+                            contentDescription = stringResource(R.string.route_refresh),
                             tint = brand.onHeader,
                         )
                     }
@@ -316,7 +318,7 @@ private fun RouteHeader(
                     Box(contentAlignment = Alignment.TopEnd) {
                         Icon(
                             Icons.Default.Tune,
-                            contentDescription = "Lọc danh sách",
+                            contentDescription = stringResource(R.string.route_filter),
                             tint = brand.onHeader,
                         )
                         // A filtered list looks exactly like a short route, so the
@@ -335,7 +337,7 @@ private fun RouteHeader(
             SearchBox(
                 query = query,
                 onQueryChanged = onQueryChanged,
-                placeholder = "Tìm tên, mã khách hàng, địa chỉ",
+                placeholder = stringResource(R.string.route_search_hint),
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             )
         }
@@ -381,8 +383,7 @@ private fun StopList(
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = "Đang viếng thăm ${openStop.customer.name}. " +
-                            "Check-out trước khi ghé điểm khác.",
+                        text = stringResource(R.string.route_open_visit, openStop.customer.name),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
@@ -393,7 +394,7 @@ private fun StopList(
         // The heading stays put while the cards move under it: it counts what is on
         // screen, and a count that scrolls away is a count nobody can check against.
         ListHeading(
-            subtitle = if (filtering) filter.label else subtitle,
+            subtitle = if (filtering) stringResource(filter.label) else subtitle,
             count = stops.size,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
         )
@@ -405,7 +406,7 @@ private fun StopList(
             if (stops.isEmpty()) {
                 item {
                     Text(
-                        text = "Không có khách hàng nào khớp với điều kiện lọc",
+                        text = stringResource(R.string.route_no_match),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -435,7 +436,7 @@ private fun ListHeading(subtitle: String, count: Int, modifier: Modifier = Modif
     Row(modifier = modifier, verticalAlignment = Alignment.Top) {
         Column(Modifier.weight(1f)) {
             Text(
-                text = "Tuyến hôm nay",
+                text = stringResource(R.string.route_today),
                 style = MaterialTheme.typography.titleLarge,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
@@ -452,7 +453,7 @@ private fun ListHeading(subtitle: String, count: Int, modifier: Modifier = Modif
             }
         }
         Text(
-            text = "$count khách hàng",
+            text = stringResource(R.string.route_customer_count, count),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -512,7 +513,7 @@ private fun StopCard(
                         // Before the code, because it changes what the code means:
                         // this outlet is provisional and could still be rejected.
                         if (stop.unplanned) {
-                            CodeChip(code = "Mới", color = UnplannedViolet)
+                            CodeChip(code = stringResource(R.string.route_new), color = UnplannedViolet)
                             Spacer(Modifier.width(4.dp))
                         }
                         CodeChip(code = stop.customer.code, color = stop.status.chipColor())
@@ -521,11 +522,11 @@ private fun StopCard(
                     Spacer(Modifier.height(6.dp))
                     InfoRow(
                         icon = Icons.Default.Phone,
-                        text = stop.customer.phone ?: "Chưa có số điện thoại",
+                        text = stop.customer.phone ?: stringResource(R.string.route_no_phone),
                     )
                     InfoRow(
                         icon = Icons.Default.LocationOn,
-                        text = stop.customer.address ?: "Chưa có địa chỉ",
+                        text = stop.customer.address ?: stringResource(R.string.route_no_address),
                     )
                     InfoRow(
                         icon = Icons.Default.Schedule,
@@ -533,7 +534,7 @@ private fun StopCard(
                         // been more than one, saying only that would quietly
                         // drop the earlier ones from the day they happened on.
                         text = if (stop.visitCount > 1) {
-                            "${stop.status.label()} - đã ghé ${stop.visitCount} lần"
+                            stringResource(R.string.route_status_visits, stop.status.label(), stop.visitCount)
                         } else {
                             stop.status.label()
                         },
@@ -573,7 +574,7 @@ private fun StopCard(
                 ) {
                     Icon(
                         Icons.Default.Phone,
-                        contentDescription = "Gọi ${stop.customer.name}",
+                        contentDescription = stringResource(R.string.route_call, stop.customer.name),
                         tint = CallBlue,
                         modifier = Modifier.size(18.dp),
                     )
@@ -692,7 +693,7 @@ private fun StopAction(status: VisitStatus, checkInBlocked: Boolean, onOpen: () 
         // greys it. The banner above the list says which shop and what to do
         // about it — a dead chip on its own would leave the rep pressing.
         VisitStatus.PLANNED -> ActionChip(
-            text = "Check-in",
+            text = stringResource(R.string.route_check_in),
             container = if (checkInBlocked) StatusGrey else MaterialTheme.colorScheme.primary,
             content = if (checkInBlocked) MaterialTheme.status.onStatus else MaterialTheme.colorScheme.onPrimary,
             enabled = !checkInBlocked,
@@ -700,7 +701,7 @@ private fun StopAction(status: VisitStatus, checkInBlocked: Boolean, onOpen: () 
         )
 
         VisitStatus.IN_PROGRESS -> ActionChip(
-            text = "Vào cuộc viếng thăm",
+            text = stringResource(R.string.route_enter_visit),
             container = ActionRed,
             content = MaterialTheme.status.onStatus,
             icon = Icons.AutoMirrored.Filled.ArrowForward,
@@ -711,7 +712,7 @@ private fun StopAction(status: VisitStatus, checkInBlocked: Boolean, onOpen: () 
         // looking for the shops they have not reached yet, and a second call on
         // a finished one should not pull the eye away from them.
         VisitStatus.COMPLETED, VisitStatus.NO_ORDER, VisitStatus.CLOSED -> ActionChip(
-            text = "Ghé lại",
+            text = stringResource(R.string.route_visit_again),
             container = if (checkInBlocked) {
                 StatusGrey
             } else {
@@ -795,7 +796,7 @@ private fun StatusLabel(
 private fun FilterSheet(selected: RouteFilter, onSelect: (RouteFilter) -> Unit) {
     Column(Modifier.padding(bottom = 24.dp)) {
         Text(
-            text = "Lọc danh sách",
+            text = stringResource(R.string.route_filter),
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 12.dp),
         )
@@ -810,7 +811,7 @@ private fun FilterSheet(selected: RouteFilter, onSelect: (RouteFilter) -> Unit) 
                     .padding(horizontal = 20.dp, vertical = 16.dp),
             ) {
                 Text(
-                    text = option.label,
+                    text = stringResource(option.label),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f),
                 )
@@ -850,12 +851,12 @@ private fun ProfileMissingBanner(retrying: Boolean, onRetry: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "Chưa tải được thông tin nhân viên, chưa thể check-in",
+                text = stringResource(R.string.route_me_missing),
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier.weight(1f),
             )
             TextButton(onClick = onRetry, enabled = !retrying) {
-                Text(if (retrying) "Đang thử..." else "Thử lại")
+                Text(stringResource(if (retrying) R.string.action_retrying else R.string.action_retry))
             }
         }
     }
@@ -904,16 +905,17 @@ private fun VisitStatus.chipColor(): Color = when (this) {
     VisitStatus.ABANDONED -> StatusGrey
 }
 
-private fun VisitStatus.label(): String = when (this) {
-    VisitStatus.PLANNED -> "Chưa ghé"
-    VisitStatus.IN_PROGRESS -> "Đang trong cuộc viếng thăm"
-    VisitStatus.COMPLETED -> "Đã hoàn thành"
-    VisitStatus.NO_ORDER -> "Không đặt hàng"
-    VisitStatus.CLOSED -> "Đóng cửa"
+@Composable
+private fun VisitStatus.label(): String = stringResource(when (this) {
+    VisitStatus.PLANNED -> R.string.visit_planned
+    VisitStatus.IN_PROGRESS -> R.string.visit_in_progress
+    VisitStatus.COMPLETED -> R.string.visit_completed
+    VisitStatus.NO_ORDER -> R.string.visit_no_order
+    VisitStatus.CLOSED -> R.string.visit_closed
     // Defensive only: abandonment applies to earlier dates than the one asked for,
     // and this list is one day's stops, so a stop should never arrive in this state.
-    VisitStatus.ABANDONED -> "Bỏ dở - không check-out"
-}
+    VisitStatus.ABANDONED -> R.string.visit_abandoned
+})
 
 
 /** Wall-clock time, which is what a rep compares against their own watch. */
@@ -922,12 +924,13 @@ private val ClockFormat = DateTimeFormatter.ofPattern("HH:mm")
 private fun clockOf(epochMs: Long): String = ClockFormat
     .format(Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()))
 
+@Composable
 private fun RouteStop.visitTimes(): String {
     val start = checkInAtEpochMs ?: return ""
     val end = checkOutAtEpochMs
-        ?: return "Vào lúc ${clockOf(start)}"
-    val minutes = Duration.ofMillis(end - start).toMinutes()
-    return "${clockOf(start)} - ${clockOf(end)} - $minutes phút"
+        ?: return stringResource(R.string.route_started_at, clockOf(start))
+    val minutes = Duration.ofMillis(end - start).toMinutes().toInt()
+    return stringResource(R.string.route_visit_span, clockOf(start), clockOf(end), minutes)
 }
 
 // -----------------------------------------------------------------------------
