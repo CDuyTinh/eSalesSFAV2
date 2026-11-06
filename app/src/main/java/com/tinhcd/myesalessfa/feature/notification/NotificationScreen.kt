@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.notification
 
 import androidx.compose.foundation.clickable
+import com.tinhcd.myesalessfa.feature.common.label
 import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.horizontalScroll
@@ -200,7 +201,7 @@ private fun FilterRow(
             FilterChip(
                 selected = selected == kind,
                 onClick = { onFilter(kind) },
-                label = { Text(kind.label) },
+                label = { Text(kind.label()) },
             )
         }
 
@@ -284,8 +285,9 @@ private fun NotificationCard(item: Notification, onClick: () -> Unit) {
 }
 
 /** The kind, the code if there is one, and how long it runs. */
+@Composable
 private fun subtitle(item: Notification): String = buildString {
-    append(item.kind.label)
+    append(item.kind.label())
     item.code?.let { append(" · ").append(it) }
 
     val from = item.fromDate?.let(::shortDate)
@@ -296,7 +298,7 @@ private fun subtitle(item: Notification): String = buildString {
 
         from != null -> append(" · ").append(from)
         // An open-ended campaign says nothing rather than showing half a range.
-        to != null -> append(" · đến ").append(to)
+        to != null -> append(stringResource(R.string.sfc_34)).append(to)
         else -> Unit
     }
 }

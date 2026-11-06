@@ -825,4 +825,131 @@
     <string name="sfv_100">Đã hủy kế hoạch</string>
     <string name="sfv_101">Đã xóa kế hoạch nháp</string>
     <string name="sfv_102">Không xóa được kế hoạch</string>
+
+    <!-- Nhãn trong hàm -->
+    <string name="sfc_3">Chưa thiết lập</string>
+    <string name="sfc_4">Chỉ bán tiền mặt</string>
+    <string name="sfc_19">Đủ số mặt đăng ký</string>
+    <string name="sfc_20">Đã đăng ký</string>
+    <string name="sfc_34">" · đến "</string>
+    <string name="sfc_39">Theo tổng đơn</string>
+    <string name="sfc_40">Theo nhóm hàng</string>
+    <string name="sfc_41">Theo sản phẩm</string>
+    <string name="sfc_42">giảm %</string>
+    <string name="sfc_43">tặng hàng</string>
+    <string name="sfc_44">giảm tiền hoặc tặng hàng</string>
+    <string name="sfc_45">giảm tiền</string>
+    <string name="sfc_49">Ngày ghé thăm</string>
+    <string name="sfc_50">Tháng báo cáo</string>
+    <string name="sfc_51">Khoảng thời gian</string>
+    <string name="sfc_59">Vào cuộc</string>
+
+    <!-- Nhãn trong hàm (2) -->
+    <string name="sfc_76">từ %1$s</string>
+    <string name="sfc_77">giảm %1$s%%</string>
+    <string name="sfc_78">giảm %1$s hoặc tặng hàng</string>
+    <string name="sfc_79">giảm %1$s</string>
+    <string name="sfc_80">tối đa %1$s suất/đơn</string>
+    <string name="sfc_81">tối đa %1$s suất/KH</string>
+    <string name="sfc_82">%1$s sản phẩm</string>
+    <string name="sfc_83">Ngày %1$s</string>
+    <string name="sfc_85">%1$s phút trước</string>
+    <string name="sfc_86">%1$s giờ trước</string>
+    <string name="sfc_87">%1$s ngày trước</string>
+    <string name="sfc_88">đến %1$s</string>
+
+    <!-- Nhãn trạng thái -->
+    <string name="enum_registration_status_pending">Chờ duyệt</string>
+    <string name="enum_registration_status_approved">Đã duyệt</string>
+    <string name="enum_registration_status_rejected">Bị từ chối</string>
+    <string name="enum_notification_kind_promotion">Khuyến mãi</string>
+    <string name="enum_notification_kind_manual_promotion">Khuyến mãi tay</string>
+    <string name="enum_notification_kind_display">Trưng bày</string>
+    <string name="enum_notification_kind_loyalty">Tích lũy</string>
+    <string name="enum_notification_kind_posm">POSM</string>
+    <string name="enum_notification_kind_work_note">Ghi chú</string>
+    <string name="enum_notification_kind_leave_result">Nghỉ phép</string>
+    <string name="enum_notification_kind_customer_result">Khách hàng mới</string>
+    <string name="enum_notification_kind_trade_result">Đăng ký CT</string>
+    <string name="enum_notification_kind_work_plan">Công việc</string>
+    <string name="enum_product_sort_default">Mặc định</string>
+    <string name="enum_product_sort_price_asc">Giá thấp đến cao</string>
+    <string name="enum_product_sort_in_basket">Đã thêm vào giỏ</string>
+    <string name="enum_password_rule_length">Ít nhất 8 ký tự</string>
+    <string name="enum_password_rule_lowercase">Có chữ thường</string>
+    <string name="enum_password_rule_uppercase">Có chữ hoa</string>
+    <string name="enum_password_rule_digit">Có chữ số</string>
+    <string name="enum_password_rule_special">Có ký tự đặc biệt</string>
+    <string name="enum_posm_condition_usable">Sử dụng được</string>
+    <string name="enum_posm_condition_repairable">Có thể sửa chữa</string>
+    <string name="enum_posm_condition_unusable">Không thể sử dụng</string>
+    <string name="enum_posm_movement_kind_delivery">Giao POSM</string>
+    <string name="enum_posm_movement_kind_recall">Thu hồi POSM</string>
+    <string name="enum_promotion_scope_line">Theo sản phẩm</string>
+    <string name="enum_promotion_scope_group">Theo nhóm</string>
+    <string name="enum_promotion_scope_order">Theo đơn hàng</string>
+    <string name="enum_order_report_status_new">Chờ xử lý</string>
+    <string name="enum_order_report_status_confirmed">Đã xác nhận</string>
+    <string name="enum_order_report_status_cancelled">Đã hủy</string>
+    <string name="enum_trade_report_kind_display">Trưng bày</string>
+    <string name="enum_trade_report_kind_loyalty">Tích lũy</string>
+    <string name="enum_stock_scope_purchased">Đã mua</string>
+    <string name="enum_stock_scope_must_stock">Bắt buộc</string>
+    <string name="enum_stock_scope_all">Tất cả</string>
+    <string name="enum_trade_kind_display">Trưng bày</string>
+    <string name="enum_trade_kind_loyalty">Tích lũy</string>
+    <string name="enum_trade_registration_status_pending">Chờ duyệt</string>
+    <string name="enum_trade_registration_status_approved">Đã duyệt</string>
+    <string name="enum_trade_registration_status_rejected">Bị từ chối</string>
+    <string name="enum_work_plan_status_draft">Nháp</string>
+    <string name="enum_work_plan_status_submitted">Chờ duyệt</string>
+    <string name="enum_work_plan_status_approved">Đã duyệt</string>
+    <string name="enum_work_plan_status_rejected">Bị từ chối</string>
+    <string name="enum_work_plan_status_completed">Hoàn thành</string>
+    <string name="enum_work_plan_status_cancelled">Đã hủy</string>
+    <string name="enum_work_plan_object_kind_customer">Khách hàng</string>
+    <string name="enum_work_plan_object_kind_salesperson">Nhân viên</string>
+    <string name="enum_work_plan_object_kind_branch">Nhà phân phối</string>
+
+    <!-- Kế hoạch -->
+    <string name="wp_need_object">Loại công việc này cần chọn %1$s</string>
+
+    <!-- Lỗi -->
+    <string name="error_server">Lỗi máy chủ</string>
+    <string name="error_server_code">Lỗi máy chủ (%1$s)</string>
+
+    <!-- Đăng nhập (lỗi) -->
+    <string name="lg_1">Sai tên đăng nhập hoặc mật khẩu</string>
+    <string name="lg_2">Tài khoản chưa được gắn nhân viên bán hàng</string>
+    <string name="lg_3">Tài khoản quản lý — hãy đăng nhập ứng dụng eSales Manager</string>
+    <string name="lg_4">Đã đăng nhập nhưng chưa tải được thông tin nhân viên. Thử lại.</string>
+    <string name="lg_5">Đăng nhập thất bại</string>
+    <string name="lg_6">Không có kết nối mạng</string>
+    <string name="lg_7">Vui lòng nhập đầy đủ thông tin</string>
+    <string name="lg_8">Dữ liệu không hợp lệ</string>
+    <string name="lg_9">Đã có lỗi xảy ra</string>
+
+    <!-- Báo cáo -->
+    <string name="rk_activities">Hoạt động ngày</string>
+    <string name="rk_activities_sub">Ghé thăm, có đơn, đóng cửa trong ngày</string>
+    <string name="rk_sales">Doanh số tháng</string>
+    <string name="rk_sales_sub">Doanh thu tháng theo khách hàng và sản phẩm</string>
+    <string name="rk_orders">Đơn hàng</string>
+    <string name="rk_orders_sub">Đơn đã đặt trong kỳ và trạng thái xử lý</string>
+    <string name="rk_sku">Sản lượng SKU</string>
+    <string name="rk_sku_sub">Số lượng bán ra theo từng mặt hàng</string>
+    <string name="rk_trade">Chương trình thương mại</string>
+    <string name="rk_trade_sub">Lượt đăng ký trưng bày và tích lũy</string>
+    <string name="rk_work">Kết quả công việc</string>
+    <string name="rk_work_sub">Kế hoạch đã hoàn thành hoặc đã hủy</string>
+    <string name="cut_customer">Theo khách hàng</string>
+    <string name="cut_product">Theo sản phẩm</string>
+
+    <!-- Kiểm tra dữ liệu -->
+    <string name="err_outlet_name">Nhập tên cửa hàng</string>
+    <string name="err_address">Nhập địa chỉ</string>
+    <string name="err_period">Ngày kết thúc phải sau ngày bắt đầu</string>
+    <string name="cap_out_of_quota">hết suất của khách hàng</string>
+    <string name="cap_out_of_budget">hết ngân sách</string>
+    <string name="cap_out_of_stock">không đủ hàng tặng</string>
 </resources>

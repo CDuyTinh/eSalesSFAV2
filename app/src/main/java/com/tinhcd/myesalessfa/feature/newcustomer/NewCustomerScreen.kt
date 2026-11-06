@@ -155,7 +155,7 @@ private fun NewCustomerContent(
                             supportingText = {
                                 state.draft.nameError
                                     ?.takeIf { state.showErrors }
-                                    ?.let { Text(it) }
+                                    ?.let { Text(stringResource(R.string.err_outlet_name)) }
                             },
                             modifier = Modifier.fillMaxWidth(),
                         )
@@ -169,7 +169,7 @@ private fun NewCustomerContent(
                             supportingText = {
                                 state.draft.addressError
                                     ?.takeIf { state.showErrors }
-                                    ?.let { Text(it) }
+                                    ?.let { Text(stringResource(R.string.err_address)) }
                             },
                             modifier = Modifier.fillMaxWidth(),
                         )

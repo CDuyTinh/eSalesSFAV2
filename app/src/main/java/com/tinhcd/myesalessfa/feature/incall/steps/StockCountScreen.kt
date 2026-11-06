@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.activity.compose.BackHandler
+import com.tinhcd.myesalessfa.feature.common.label
 import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
@@ -285,7 +286,7 @@ private fun LegendBoard(
                     FilterChip(
                         selected = option == state.scope,
                         onClick = { onScopeChange(option) },
-                        label = { Text("${option.label} (${state.sizeOf(option)})") },
+                        label = { Text("${option.label()} (${state.sizeOf(option)})") },
                     )
                 }
             }

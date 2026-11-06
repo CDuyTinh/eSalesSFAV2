@@ -10,4 +10,16 @@
     <string name="permission_rationale_location">The app needs your location to confirm you are at the right outlet when you check in and clock in.</string>
     <string name="permission_rationale_microphone">The app needs the microphone to record the customer\'s feedback.</string>
     <string name="permission_rationale_notifications">The app needs notifications to tell you about approvals and assigned plans, and to keep location tracking running during working hours.</string>
+
+    <!-- Thành phần chung -->
+    <string name="core_1">"  Retry"</string>
+    <string name="core_2">Clear the search</string>
+    <string name="core_3">Back</string>
+    <string name="core_6">Update required</string>
+    <string name="core_7">A new version is available</string>
+    <string name="core_8">Update</string>
+
+    <!-- Thành phần chung (2) -->
+    <string name="core_10">Version %1$s is no longer supported. Please update to keep working.</string>
+    <string name="core_11">You are on version %1$s. Update to get the latest changes.</string>
 </resources>

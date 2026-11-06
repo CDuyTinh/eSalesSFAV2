@@ -8,7 +8,7 @@ package com.tinhcd.myesalessfa.domain.model
  * lệ" has to guess which rule they broke, and on a phone keyboard that is several
  * attempts.
  */
-enum class PasswordRule(val label: String) {
+enum class PasswordRule(val viLabel: String) {
     LENGTH("Ít nhất 8 ký tự"),
     LOWERCASE("Có chữ thường"),
     UPPERCASE("Có chữ hoa"),

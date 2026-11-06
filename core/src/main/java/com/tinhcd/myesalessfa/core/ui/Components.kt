@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.core.ui
 
 import androidx.compose.foundation.background
+import com.tinhcd.myesalessfa.core.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -75,7 +77,7 @@ fun ErrorBox(
         if (onRetry != null) {
             OutlinedButton(onClick = onRetry) {
                 Icon(Icons.Default.Refresh, contentDescription = null)
-                Text("  Thử lại")
+                Text(stringResource(R.string.core_1))
             }
         }
     }
@@ -92,7 +94,7 @@ fun ErrorBox(
 fun formatDong(amount: Long): String {
     val digits = amount.toString()
     val grouped = digits.reversed().chunked(3).joinToString(".").reversed()
-    return "$grouped đ"
+    return "${grouped} đ"
 }
 
 /**
@@ -199,7 +201,7 @@ fun SearchBox(
                 IconButton(onClick = { onQueryChanged("") }) {
                     Icon(
                         Icons.Default.Close,
-                        contentDescription = "Xoá từ khoá",
+                        contentDescription = stringResource(R.string.core_2),
                         modifier = Modifier.size(18.dp),
                     )
                 }
@@ -265,7 +267,7 @@ fun ButtonPair(
     onClick: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    backText: String = "Quay lại",
+    backText: String = stringResource(R.string.core_3),
     enabled: Boolean = true,
     loading: Boolean = false,
     height: Dp = 46.dp,

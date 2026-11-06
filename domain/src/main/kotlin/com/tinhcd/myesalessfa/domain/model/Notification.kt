@@ -7,7 +7,7 @@ package com.tinhcd.myesalessfa.domain.model
  * the other tables, and this says which. The screen uses it to label the item
  * and to decide where tapping it leads.
  */
-enum class NotificationKind(val wire: String, val label: String) {
+enum class NotificationKind(val wire: String, val viLabel: String) {
     PROMOTION("promotion", "Khuyến mãi"),
     MANUAL_PROMOTION("manual_promotion", "Khuyến mãi tay"),
     DISPLAY("display", "Trưng bày"),

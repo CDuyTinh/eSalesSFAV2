@@ -230,50 +230,54 @@ private fun Line(left: String, right: String?) {
     }
 }
 
+@Composable
 private fun kindLabel(p: CataloguePromotion): String {
     val scope = when (p.scope) {
-        PromotionScope.ORDER -> "Theo tổng đơn"
-        PromotionScope.GROUP -> if (p.isBundle) "Combo" else "Theo nhóm hàng"
-        else -> if (p.isBundle) "Combo" else "Theo sản phẩm"
+        PromotionScope.ORDER -> stringResource(R.string.sfc_39)
+        PromotionScope.GROUP -> if (p.isBundle) "Combo" else stringResource(R.string.sfc_40)
+        else -> if (p.isBundle) "Combo" else stringResource(R.string.sfc_41)
     }
     val reward = when (p.reward) {
-        PromotionReward.PERCENT -> "giảm %"
-        PromotionReward.FREE_ITEM -> "tặng hàng"
-        PromotionReward.AMOUNT_OR_ITEM -> "giảm tiền hoặc tặng hàng"
-        else -> "giảm tiền"
+        PromotionReward.PERCENT -> stringResource(R.string.sfc_42)
+        PromotionReward.FREE_ITEM -> stringResource(R.string.sfc_43)
+        PromotionReward.AMOUNT_OR_ITEM -> stringResource(R.string.sfc_44)
+        else -> stringResource(R.string.sfc_45)
     }
     return "$scope, $reward"
 }
 
+@Composable
 private fun period(p: CataloguePromotion): String? {
     val from = p.fromDate?.format(dayFormat) ?: return null
-    return p.toDate?.let { "$from – ${it.format(dayFormat)}" } ?: "từ ${from}"
+    return p.toDate?.let { "$from – ${it.format(dayFormat)}" } ?: stringResource(R.string.sfc_76, from)
 }
 
 /** "Mua 10 Thùng → tặng / giảm …": the threshold and what one lot of it pays. */
+@Composable
 private fun levelText(p: CataloguePromotion, l: CatalogueLevel): String {
     val threshold = when {
         p.isBundle -> "${l.breakQty.trim()} combo"
-        p.byQty -> "từ ${l.breakQty.trim()}"
-        else -> "từ ${formatDong(l.breakAmt.toLong())}"
+        p.byQty -> stringResource(R.string.sfc_76, l.breakQty.trim())
+        else -> stringResource(R.string.sfc_76, formatDong(l.breakAmt.toLong()))
     }
     val pays = when (p.reward) {
-        PromotionReward.PERCENT -> "giảm ${l.discAmt.trim()}%"
-        PromotionReward.FREE_ITEM -> "tặng hàng"
-        PromotionReward.AMOUNT_OR_ITEM -> "giảm ${formatDong(l.discAmt.toLong())} hoặc tặng hàng"
-        else -> "giảm ${formatDong(l.discAmt.toLong())}"
+        PromotionReward.PERCENT -> stringResource(R.string.sfc_77, l.discAmt.trim())
+        PromotionReward.FREE_ITEM -> stringResource(R.string.sfc_43)
+        PromotionReward.AMOUNT_OR_ITEM -> stringResource(R.string.sfc_78, formatDong(l.discAmt.toLong()))
+        else -> stringResource(R.string.sfc_79, formatDong(l.discAmt.toLong()))
     }
     val caps = listOfNotNull(
-        l.maxLot.takeIf { it > 0 }?.let { "tối đa ${it} suất/đơn" },
-        l.customerMaxLot?.let { "tối đa ${it} suất/KH" },
+        l.maxLot.takeIf { it > 0 }?.let { stringResource(R.string.sfc_80, it) },
+        l.customerMaxLot?.let { stringResource(R.string.sfc_81, it) },
     )
     return (listOf(threshold, pays) + caps).joinToString(" · ")
 }
 
 private fun Double.trim(): String = toBigDecimal().stripTrailingZeros().toPlainString()
 
+@Composable
 private fun budgetFigure(counts: String, value: Double): String = when (counts) {
-    "lots" -> "${value.trim()} suất"
-    "free_item" -> "${value.trim()} sản phẩm"
+    "lots" -> stringResource(R.string.sft_85, value.trim())
+    "free_item" -> stringResource(R.string.sfc_82, value.trim())
     else -> formatDong(value.toLong())
 }

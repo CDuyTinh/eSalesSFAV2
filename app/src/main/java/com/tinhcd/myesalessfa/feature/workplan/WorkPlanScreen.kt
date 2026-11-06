@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.workplan
 
 import androidx.compose.foundation.background
+import com.tinhcd.myesalessfa.feature.common.label
 import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
@@ -411,7 +412,7 @@ private fun StatusRow(
             FilterChip(
                 selected = selected == status,
                 onClick = { onStatusFilter(status) },
-                label = { Text("${status.label} ${board.count(status)}") },
+                label = { Text("${status.label()} ${board.count(status)}") },
             )
         }
     }
@@ -668,7 +669,7 @@ private fun HistoryCard(history: List<WorkPlanEvent>) {
                         modifier = Modifier.size(8.dp).padding(top = 4.dp),
                     ) {}
                     Column(Modifier.weight(1f)) {
-                        Text(event.status.label, style = MaterialTheme.typography.bodyMedium)
+                        Text(event.status.label(), style = MaterialTheme.typography.bodyMedium)
                         Text(
                             listOfNotNull(dayLabel(event.at), event.actor).joinToString(" · "),
                             style = MaterialTheme.typography.labelSmall,
@@ -905,7 +906,7 @@ private fun EditPage(
 
                 WorkPlanObjectKind.SALESPERSON, WorkPlanObjectKind.BRANCH -> item {
                     Notice(
-                        text = "Loại công việc này cần chọn ${draft.objectKind?.label?.lowercase()}" +
+                        text = stringResource(R.string.wp_need_object, draft.objectKind?.label().orEmpty().lowercase()) +
                             stringResource(R.string.sfb_248),
                         isError = false,
                         onDismiss = {},
@@ -1084,7 +1085,7 @@ private fun StatusPill(status: WorkPlanStatus) {
         color = statusColour(status).copy(alpha = 0.16f),
     ) {
         Text(
-            status.label,
+            status.label(),
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
             style = MaterialTheme.typography.labelSmall,
             color = statusColour(status),

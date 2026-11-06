@@ -11,7 +11,7 @@ package com.tinhcd.myesalessfa.domain.model
  */
 
 /** OM_Discount.DiscType. Also the order the server evaluates them in. */
-enum class PromotionScope(val wireValue: String, val label: String) {
+enum class PromotionScope(val wireValue: String, val viLabel: String) {
     LINE("line", "Theo sản phẩm"),
     GROUP("group", "Theo nhóm"),
     ORDER("order", "Theo đơn hàng"),

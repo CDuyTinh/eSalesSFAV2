@@ -30,7 +30,7 @@ data class ReportWindow(
 // Báo cáo đơn hàng
 // -----------------------------------------------------------------------------
 
-enum class OrderReportStatus(val wire: String, val label: String) {
+enum class OrderReportStatus(val wire: String, val viLabel: String) {
     NEW("new", "Chờ xử lý"),
     CONFIRMED("confirmed", "Đã xác nhận"),
     CANCELLED("cancelled", "Đã hủy");
@@ -112,7 +112,7 @@ data class SkuReport(
 // Báo cáo thương mại
 // -----------------------------------------------------------------------------
 
-enum class TradeReportKind(val wire: String, val label: String) {
+enum class TradeReportKind(val wire: String, val viLabel: String) {
     DISPLAY("display", "Trưng bày"),
     LOYALTY("loyalty", "Tích lũy");
 

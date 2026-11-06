@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.reports
 
 import androidx.compose.material.icons.filled.Storefront
+import com.tinhcd.myesalessfa.feature.common.label
 import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
@@ -188,7 +189,7 @@ private fun ReportsContent(
                 TopAppBar(
                     title = {
                         Column {
-                            Text(state.kind.label, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(stringResource(state.kind.label), maxLines = 1, overflow = TextOverflow.Ellipsis)
                             // The period is no longer on the page, so it is said here:
                             // a number without its dates is a number nobody can check.
                             Text(
@@ -298,8 +299,9 @@ private fun ReportsContent(
 private val HeaderOverlap = 44.dp
 
 /** The period the report on screen covers, as the toolbar states it. */
+@Composable
 private fun periodLabel(state: ReportsUiState): String = when (state.kind) {
-    ReportKind.ACTIVITIES -> "Ngày ${DateFormat.format(state.date)}"
+    ReportKind.ACTIVITIES -> stringResource(R.string.sfc_83, DateFormat.format(state.date))
     ReportKind.SALES -> MonthFormat.format(state.month)
     else -> "${DateFormat.format(state.window.fromDate)} - ${DateFormat.format(state.window.toDate)}"
 }
@@ -584,7 +586,7 @@ private fun CutSelector(selected: SalesCut, onSelect: (SalesCut) -> Unit) {
                 modifier = Modifier.clickable { onSelect(cut) },
             ) {
                 Text(
-                    text = cut.label,
+                    text = stringResource(cut.label),
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                 )
@@ -948,7 +950,7 @@ private fun <T> ChipRow(
     allLabel: String,
     values: List<T>,
     selected: T?,
-    label: (T) -> String,
+    label: @Composable (T) -> String,
     onSelect: (T?) -> Unit,
 ) {
     Row(
@@ -1077,7 +1079,7 @@ private fun OrdersTab(
                         allLabel = stringResource(R.string.sft_72, report.total),
                         values = report.presentStatuses,
                         selected = state.orderStatus,
-                        label = { "${it.label} ${report.count(it)}" },
+                        label = { "${it.label()} ${report.count(it)}" },
                         onSelect = onOrderStatus,
                     )
                 }
@@ -1148,7 +1150,7 @@ private fun OrderReportCard(row: OrderReportRow) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                SolidTag(row.status.label, orderColour(row.status))
+                SolidTag(row.status.label(), orderColour(row.status))
                 Text(
                     formatReportDate(row.orderDate),
                     style = MaterialTheme.typography.bodyMedium,
@@ -1399,7 +1401,7 @@ private fun TradeTab(
                         allLabel = stringResource(R.string.sft_72, report.total),
                         values = TradeReportKind.entries,
                         selected = state.tradeKind,
-                        label = { it.label },
+                        label = { it.label() },
                         onSelect = onTradeKind,
                     )
                 }
@@ -1446,7 +1448,7 @@ private fun TradeReportCard(row: TradeReportRow) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    SolidTag(row.kind.label, tradeColour(row.kind))
+                    SolidTag(row.kind.label(), tradeColour(row.kind))
                     row.levelName?.let {
                         Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }

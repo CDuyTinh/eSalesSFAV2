@@ -8,7 +8,7 @@ package com.tinhcd.myesalessfa.domain.model
  * `OM_MakingPlan` and called off in `OM_WorkingPlan`. That divergence is not
  * carried over.
  */
-enum class WorkPlanStatus(val wire: String, val label: String) {
+enum class WorkPlanStatus(val wire: String, val viLabel: String) {
     DRAFT("draft", "Nháp"),
     SUBMITTED("submitted", "Chờ duyệt"),
     APPROVED("approved", "Đã duyệt"),
@@ -26,7 +26,7 @@ enum class WorkPlanStatus(val wire: String, val label: String) {
 }
 
 /** Who or what a plan is with. Null on the category means the work has no object. */
-enum class WorkPlanObjectKind(val wire: String, val label: String) {
+enum class WorkPlanObjectKind(val wire: String, val viLabel: String) {
     CUSTOMER("customer", "Khách hàng"),
     SALESPERSON("salesperson", "Nhân viên"),
     BRANCH("branch", "Nhà phân phối");

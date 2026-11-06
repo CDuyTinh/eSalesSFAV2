@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.traderegis
 
 import androidx.compose.foundation.clickable
+import com.tinhcd.myesalessfa.feature.common.label
 import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
@@ -191,14 +192,14 @@ private fun ListPage(
                                 FilterChip(
                                     selected = state.kindFilter == kind,
                                     onClick = { onKind(kind) },
-                                    label = { Text("${kind.label} ${state.board.count(kind)}") },
+                                    label = { Text("${kind.label()} ${state.board.count(kind)}") },
                                 )
                             }
                             state.board.presentStatuses.forEach { status ->
                                 FilterChip(
                                     selected = state.statusFilter == status,
                                     onClick = { onStatus(status) },
-                                    label = { Text("${status.label} ${state.board.count(status)}") },
+                                    label = { Text("${status.label()} ${state.board.count(status)}") },
                                 )
                             }
                         }
@@ -347,7 +348,7 @@ private fun RegistrationCard(row: TradeRegistration) {
                     )
                 }
 
-                StatusPill(row.status.label, statusColour(row.status))
+                StatusPill(row.status.label(), statusColour(row.status))
             }
 
             Text(
@@ -693,10 +694,11 @@ private fun statusColour(status: TradeRegistrationStatus): Color = when (status)
     TradeRegistrationStatus.REJECTED -> MaterialTheme.status.danger
 }
 
+@Composable
 private fun windowLabel(from: String?, to: String?): String? = when {
     from != null && to != null -> "$from - $to"
-    from != null -> "từ ${from}"
-    to != null -> "đến ${to}"
+    from != null -> stringResource(R.string.sfc_76, from)
+    to != null -> stringResource(R.string.sfc_88, to)
     else -> null
 }
 
