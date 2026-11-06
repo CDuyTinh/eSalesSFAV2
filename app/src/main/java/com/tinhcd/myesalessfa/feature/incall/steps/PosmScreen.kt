@@ -1,6 +1,9 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import android.Manifest
+import androidx.compose.ui.res.stringResource
+import com.tinhcd.myesalessfa.core.R as CoreR
+import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -102,11 +105,14 @@ fun PosmScreen(
     // The manifest declares CAMERA, which makes ACTION_IMAGE_CAPTURE require the
     // grant on top of the FileProvider uri. Asked for on entry, so the rep is not
     // interrupted by a dialog after framing the shot.
-    val cameraPermission = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { }
+    // Asked on entry, as before, and again from the capture button: refused,
+    // the button explains why rather than opening a camera that cannot start.
+    val cameraPermission = rememberPermissionRequest(
+        listOf(Manifest.permission.CAMERA),
+        stringResource(CoreR.string.permission_rationale_camera),
+    )
 
-    LaunchedEffect(Unit) { cameraPermission.launch(Manifest.permission.CAMERA) }
+    LaunchedEffect(Unit) { cameraPermission.launch() }
 
     LaunchedEffect(state.finished) {
         if (state.finished) onDone()
@@ -163,7 +169,7 @@ fun PosmScreen(
                 capturing = state.capturing,
                 submitting = state.submitting,
                 error = state.error,
-                onCapture = { takePicture.launch(viewModel.newPhotoTarget().uri) },
+                onCapture = { cameraPermission.launch { takePicture.launch(viewModel.newPhotoTarget().uri) } },
                 onRemove = viewModel::onRemovePhoto,
                 onCountedQtyChange = viewModel::onCountedQtyChange,
                 onConditionChange = viewModel::onConditionChange,
@@ -192,7 +198,7 @@ fun PosmScreen(
                 error = state.error,
                 onQty = viewModel::onMovementQty,
                 onNote = viewModel::onMovementNote,
-                onCapture = { takePicture.launch(viewModel.newPhotoTarget().uri) },
+                onCapture = { cameraPermission.launch { takePicture.launch(viewModel.newPhotoTarget().uri) } },
                 onRemovePhoto = viewModel::onRemovePhoto,
                 onSubmit = viewModel::submitMovement,
                 onBack = back,

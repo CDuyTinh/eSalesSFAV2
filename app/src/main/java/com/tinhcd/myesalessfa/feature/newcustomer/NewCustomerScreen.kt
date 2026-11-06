@@ -1,6 +1,11 @@
 package com.tinhcd.myesalessfa.feature.newcustomer
 
 import androidx.compose.foundation.clickable
+import com.tinhcd.myesalessfa.core.R as CoreR
+import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
+import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.LaunchedEffect
+import android.Manifest
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -68,6 +73,15 @@ fun NewCustomerScreen(
     viewModel: NewCustomerViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    // Never asked for here before: the screen relied on an earlier one having
+    // been granted, and on a phone where it was not, the fix was silently missing.
+    val locationPermission = rememberPermissionRequest(
+        listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+        stringResource(CoreR.string.permission_rationale_location),
+        anyOf = true,
+    )
+    LaunchedEffect(Unit) { locationPermission.launch(viewModel::captureLocation) }
 
     NewCustomerContent(
         state = state,

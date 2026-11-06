@@ -1,6 +1,9 @@
 package com.tinhcd.myesalessfa.feature.photo
 
 import android.Manifest
+import androidx.compose.ui.res.stringResource
+import com.tinhcd.myesalessfa.core.R as CoreR
+import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -40,10 +43,11 @@ fun rememberCameraCapture(newTarget: () -> Uri, onTaken: (saved: Boolean) -> Uni
     val takePicture = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture(),
     ) { saved -> onTaken(saved) }
-    val permission = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { granted -> if (granted) takePicture.launch(newTarget()) }
-    return { permission.launch(Manifest.permission.CAMERA) }
+    val permission = rememberPermissionRequest(
+        listOf(Manifest.permission.CAMERA),
+        stringResource(CoreR.string.permission_rationale_camera),
+    )
+    return { permission.launch { takePicture.launch(newTarget()) } }
 }
 
 /**
