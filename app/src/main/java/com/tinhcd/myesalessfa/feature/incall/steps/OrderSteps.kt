@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.compose.foundation.Canvas
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -39,9 +41,9 @@ import com.tinhcd.myesalessfa.core.ui.theme.brand
 @Composable
 internal fun OrderSteps(current: Int, modifier: Modifier = Modifier) {
     val steps = listOf(
-        Icons.Default.ShoppingCart to "Giỏ hàng",
-        Icons.Default.LocalShipping to "Xác nhận",
-        Icons.Default.Info to "Thông tin",
+        Icons.Default.ShoppingCart to stringResource(R.string.order_basket),
+        Icons.Default.LocalShipping to stringResource(R.string.step_confirm),
+        Icons.Default.Info to stringResource(R.string.step_info),
     )
     val onHeader = MaterialTheme.brand.onHeader
 

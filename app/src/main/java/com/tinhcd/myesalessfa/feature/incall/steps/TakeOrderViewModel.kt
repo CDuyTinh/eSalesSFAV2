@@ -1,6 +1,9 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.lifecycle.SavedStateHandle
+import com.tinhcd.myesalessfa.core.ui.uiText
+import com.tinhcd.myesalessfa.core.ui.UiText
+import com.tinhcd.myesalessfa.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.DataResult
@@ -121,7 +124,7 @@ data class TakeOrderUiState(
      */
     val cartSyncFailed: Boolean = false,
     val submitting: Boolean = false,
-    val error: String? = null,
+    val error: UiText? = null,
     val finished: Boolean = false,
     /** Thông tin liên hệ on the confirmation page; null until loaded or if unreadable. */
     val contact: CustomerInfo? = null,
@@ -342,7 +345,7 @@ class TakeOrderViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(loading = false, error = "Không tải được danh mục sản phẩm")
+                    it.copy(loading = false, error = uiText(R.string.order_catalogue_failed))
                 }
             }
         }
@@ -379,8 +382,7 @@ class TakeOrderViewModel @Inject constructor(
         if (unpriced.isNotEmpty()) {
             _state.update {
                 it.copy(
-                    error = "Sản phẩm chưa có giá, bỏ khỏi giỏ hàng trước khi gửi: " +
-                        unpriced.joinToString { line -> line.productName },
+                    error = uiText(R.string.order_unpriced, unpriced.joinToString { line -> line.productName }),
                 )
             }
             return
@@ -394,7 +396,7 @@ class TakeOrderViewModel @Inject constructor(
         if (cartons < minCartons - 1e-9) {
             _state.update {
                 it.copy(
-                    error = "Đơn hàng phải đạt tối thiểu ${cases(minCartons)} thùng (hiện có ${cases(cartons)} thùng)",
+                    error = uiText(R.string.order_min_cartons, cases(minCartons), cases(cartons)),
                 )
             }
             return
@@ -436,7 +438,7 @@ class TakeOrderViewModel @Inject constructor(
     fun commitDraft() {
         val current = _state.value
         if (current.draftQty.isEmpty()) {
-            _state.update { it.copy(error = "Nhập số lượng cho ít nhất một sản phẩm") }
+            _state.update { it.copy(error = uiText(R.string.order_need_qty)) }
             return
         }
 
@@ -552,7 +554,7 @@ class TakeOrderViewModel @Inject constructor(
         val unit = product.units.firstOrNull { it.unit.uomCode == editing.uomCode } ?: return
 
         if (editing.qty <= 0) {
-            _state.update { it.copy(error = "Nhập số lượng lớn hơn 0") }
+            _state.update { it.copy(error = uiText(R.string.order_qty_positive)) }
             return
         }
 
@@ -610,7 +612,7 @@ class TakeOrderViewModel @Inject constructor(
                 }
 
                 is DataResult.Failure -> _state.update {
-                    it.copy(submitting = false, error = "Không lưu được đơn hàng")
+                    it.copy(submitting = false, error = uiText(R.string.order_save_failed))
                 }
             }
         }

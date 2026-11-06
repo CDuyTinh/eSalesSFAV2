@@ -1,6 +1,10 @@
 package com.tinhcd.myesalessfa.feature.route
 
 import androidx.lifecycle.ViewModel
+import com.tinhcd.myesalessfa.core.ui.uiText
+import com.tinhcd.myesalessfa.core.ui.UiText
+import com.tinhcd.myesalessfa.R
+import androidx.annotation.StringRes
 import androidx.lifecycle.viewModelScope
 import com.tinhcd.myesalessfa.domain.DataResult
 import com.tinhcd.myesalessfa.domain.model.RouteStop
@@ -28,19 +32,19 @@ import javax.inject.Inject
  * [DONE] deliberately covers both endings a visit can have. A rep sorting the
  * day's work asks "which ones are behind me", not "which ones ended in an order".
  */
-enum class RouteFilter(val label: String) {
-    ALL("Tất cả"),
-    PLANNED("Chưa ghé"),
-    IN_PROGRESS("Đang viếng thăm"),
-    DONE("Đã hoàn thành"),
-    CLOSED("Đóng cửa"),
+enum class RouteFilter(@StringRes val label: Int) {
+    ALL(R.string.filter_all),
+    PLANNED(R.string.visit_planned),
+    IN_PROGRESS(R.string.filter_visiting),
+    DONE(R.string.visit_completed),
+    CLOSED(R.string.visit_closed),
 }
 
 data class RouteUiState(
     val loading: Boolean = true,
     val stops: List<RouteStop> = emptyList(),
     val me: Salesperson? = null,
-    val error: String? = null,
+    val error: UiText? = null,
     /** What the rep typed in the search box. Matched against the loaded stops. */
     val query: String = "",
     val filter: RouteFilter = RouteFilter.ALL,
@@ -139,7 +143,7 @@ class RouteViewModel @Inject constructor(
 
                 is DataResult.Failure ->
                     _state.update {
-                        it.copy(loading = false, error = "Không tải được tuyến hôm nay")
+                        it.copy(loading = false, error = uiText(R.string.route_load_failed))
                     }
             }
         }

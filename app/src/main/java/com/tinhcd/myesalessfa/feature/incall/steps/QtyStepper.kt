@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.compose.foundation.border
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,7 +63,7 @@ internal fun QtyStepper(
     ) {
         StepperButton(
             icon = Icons.Default.Remove,
-            description = "Giảm",
+            description = stringResource(R.string.qty_decrease),
             enabled = (qty ?: 0) > 0,
             onClick = { onQtyChange((qty ?: 0) - 1) },
         )
@@ -105,7 +107,7 @@ internal fun QtyStepper(
 
         StepperButton(
             icon = Icons.Default.Add,
-            description = "Tăng",
+            description = stringResource(R.string.qty_increase),
             enabled = true,
             onClick = { onQtyChange((qty ?: 0) + 1) },
         )

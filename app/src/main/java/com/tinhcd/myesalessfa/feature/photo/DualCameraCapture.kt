@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.photo
 
 import android.widget.Toast
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -151,7 +153,7 @@ private fun CameraStep(
                 override fun onError(exception: ImageCaptureException) {
                     File(path).delete()
                     shooting = false
-                    Toast.makeText(context, "Chụp ảnh lỗi, thử lại", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.camera_shot_failed), Toast.LENGTH_SHORT).show()
                 }
             },
         )
@@ -169,17 +171,17 @@ private fun CameraStep(
                 .padding(horizontal = 4.dp, vertical = 6.dp),
         ) {
             IconButton(onClick = onClose) {
-                Icon(Icons.Default.Close, contentDescription = "Đóng", tint = Color.White)
+                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_close), tint = Color.White)
             }
             Column(Modifier.weight(1f)) {
                 Text(
-                    if (front) "Bước 2/2 · Ảnh nhân viên" else "Bước 1/2 · Ảnh cửa hàng",
+                    stringResource(if (front) R.string.camera_step_staff else R.string.camera_step_outlet),
                     color = Color.White,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
-                    if (front) "Camera trước" else "Camera sau",
+                    stringResource(if (front) R.string.camera_front else R.string.camera_back),
                     color = Color.White.copy(alpha = 0.8f),
                     style = MaterialTheme.typography.labelSmall,
                 )
@@ -200,7 +202,7 @@ private fun CameraStep(
                 shopPreview?.let {
                     AsyncImage(
                         model = File(it),
-                        contentDescription = "Ảnh cửa hàng",
+                        contentDescription = stringResource(R.string.photo_outlet),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .size(56.dp)

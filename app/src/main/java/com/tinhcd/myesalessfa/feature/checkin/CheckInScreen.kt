@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.checkin
 
 import android.Manifest
+import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.R as CoreR
 import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
@@ -143,7 +144,7 @@ fun CheckInScreen(
         when {
             state.loading -> SkeletonDetailCard(rows = 4)
             state.customer == null -> ErrorBox(
-                state.error ?: "Không tìm thấy khách hàng trong tuyến hôm nay",
+                state.error?.asString() ?: stringResource(R.string.checkin_not_on_route),
             )
 
             else -> Column(Modifier.fillMaxSize()) {
@@ -198,7 +199,7 @@ fun CheckInScreen(
                     if (state.error != null) {
                         Spacer(Modifier.height(12.dp))
                         Text(
-                            state.error.orEmpty(),
+                            state.error?.asString().orEmpty(),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodyMedium,
                         )
@@ -210,7 +211,7 @@ fun CheckInScreen(
                     // than "Check-in". It names what happens next instead of the
                     // record being written, which is the half the rep cares about.
                     PrimaryButton(
-                        text = "Bắt đầu viếng thăm",
+                        text = stringResource(R.string.checkin_start_visit),
                         onClick = viewModel::submit,
                         enabled = state.canSubmit,
                         loading = state.submitting,
@@ -253,14 +254,14 @@ private fun CheckInHeader(customer: Customer?, onClose: () -> Unit) {
             IconButton(onClick = onClose) {
                 Icon(
                     Icons.Default.Close,
-                    contentDescription = "Đóng",
+                    contentDescription = stringResource(R.string.action_close),
                     tint = MaterialTheme.brand.onHeader,
                 )
             }
 
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = customer?.name ?: "Check-in",
+                    text = customer?.name ?: stringResource(R.string.checkin_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.brand.onHeader,
@@ -312,7 +313,7 @@ private fun CheckInHeader(customer: Customer?, onClose: () -> Unit) {
                         )
                         Spacer(Modifier.width(6.dp))
                         Text(
-                            text = "Bản đồ",
+                            text = stringResource(R.string.checkin_map),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.brand.onHeader,
                         )
@@ -352,13 +353,13 @@ private fun DistanceRow(gate: CheckInGate?, locating: Boolean, onRefresh: () -> 
     }
 
     val value = when {
-        locating -> "Đang lấy vị trí…"
-        distance != null -> "${groupDigits(distance.roundToInt())} m"
-        else -> "Chưa lấy được vị trí"
+        locating -> stringResource(R.string.checkin_locating)
+        distance != null -> stringResource(R.string.checkin_distance_m, groupDigits(distance.roundToInt()))
+        else -> stringResource(R.string.checkin_no_fix)
     }
 
     InfoRow(
-        label = "Khoảng cách",
+        label = stringResource(R.string.checkin_distance),
         value = value,
         valueColor = if (distance == null && !locating) scheme.error else scheme.onSurface,
     ) {
@@ -378,7 +379,7 @@ private fun DistanceRow(gate: CheckInGate?, locating: Boolean, onRefresh: () -> 
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         Icons.Default.LocationOn,
-                        contentDescription = "Lấy lại vị trí",
+                        contentDescription = stringResource(R.string.checkin_relocate),
                         tint = MaterialTheme.status.onStatus,
                         modifier = Modifier.size(16.dp),
                     )
@@ -412,7 +413,7 @@ private fun ReasonRow(
     Column {
         InfoRow(
             label = kind.label(),
-            value = selected?.name ?: "Chọn lý do",
+            value = selected?.name ?: stringResource(R.string.checkin_pick_reason),
             valueColor = if (selected == null) {
                 MaterialTheme.colorScheme.error
             } else {
@@ -429,7 +430,7 @@ private fun ReasonRow(
 
         if (reasons.isEmpty()) {
             Text(
-                text = "Chưa tải được danh sách lý do. Kiểm tra kết nối rồi thử lại.",
+                text = stringResource(R.string.checkin_reasons_failed),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
@@ -519,7 +520,7 @@ private fun CheckInPhotoArea(
     val primary = MaterialTheme.colorScheme.primary
     Column(Modifier.padding(16.dp)) {
         Text(
-            text = if (required) "Hình check-in (bắt buộc)" else "Hình check-in",
+            text = stringResource(if (required) R.string.checkin_photo_required else R.string.checkin_photo),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -537,7 +538,7 @@ private fun CheckInPhotoArea(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(28.dp))
                     Spacer(Modifier.height(8.dp))
-                    Text("Đang ghép ảnh…", style = MaterialTheme.typography.labelMedium)
+                    Text(stringResource(R.string.checkin_merging), style = MaterialTheme.typography.labelMedium)
                 }
             }
 
@@ -559,9 +560,9 @@ private fun CheckInPhotoArea(
                     modifier = Modifier.size(44.dp),
                 )
                 Spacer(Modifier.height(8.dp))
-                Text("Chụp hình", style = MaterialTheme.typography.bodyLarge, color = primary)
+                Text(stringResource(R.string.checkin_take_photo), style = MaterialTheme.typography.bodyLarge, color = primary)
                 Text(
-                    "Camera sau chụp cửa hàng, camera trước chụp nhân viên",
+                    stringResource(R.string.checkin_photo_hint),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -571,14 +572,14 @@ private fun CheckInPhotoArea(
             else -> Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))) {
                 AsyncImage(
                     model = File(shopPath),
-                    contentDescription = "Ảnh cửa hàng",
+                    contentDescription = stringResource(R.string.photo_outlet),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxWidth().aspectRatio(3f / 4f),
                 )
                 selfiePath?.let {
                     AsyncImage(
                         model = File(it),
-                        contentDescription = "Ảnh nhân viên",
+                        contentDescription = stringResource(R.string.photo_staff),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .padding(10.dp)
@@ -606,7 +607,7 @@ private fun CheckInPhotoArea(
                         )
                         Spacer(Modifier.width(6.dp))
                         Text(
-                            "Chụp lại",
+                            stringResource(R.string.photo_retake),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onPrimary,
                         )
@@ -622,7 +623,7 @@ private fun CheckInPhotoArea(
 private fun NoteBlock(value: String, onValueChange: (String) -> Unit) {
     Column(Modifier.padding(16.dp)) {
         Text(
-            text = "Ghi chú",
+            text = stringResource(R.string.note_label),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -630,7 +631,7 @@ private fun NoteBlock(value: String, onValueChange: (String) -> Unit) {
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            placeholder = { Text("Nhập ghi chú nếu có") },
+            placeholder = { Text(stringResource(R.string.note_hint)) },
             shape = RoundedCornerShape(12.dp),
             minLines = 2,
             modifier = Modifier.fillMaxWidth(),
@@ -679,12 +680,6 @@ private fun InfoRow(
     }
 }
 
-private fun ReasonKind.label(): String = when (this) {
-    ReasonKind.GPS_OUT_OF_RANGE -> "Lý do ngoài bán kính"
-    ReasonKind.GPS_LOW_ACCURACY -> "Lý do vị trí kém chính xác"
-    ReasonKind.GPS_UNAVAILABLE -> "Lý do không có vị trí"
-    else -> "Lý do"
-}
 
 /**
  * 21710 -> "21.710". Dots, the Vietnamese convention, and built by hand for the

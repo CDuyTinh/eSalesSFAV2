@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.activity.compose.BackHandler
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -138,10 +140,10 @@ fun TakeOrderScreen(
         topBar = {
             when (state.page) {
                 TakeOrderPage.BASKET -> StepHeader(
-                    title = "Giỏ hàng",
+                    title = stringResource(R.string.order_basket),
                     subtitle = listOfNotNull(
                         state.customerName.ifBlank { null },
-                        state.order.lines.size.takeIf { it > 0 }?.let { "$it mặt hàng" },
+                        state.order.lines.size.takeIf { it > 0 }?.let { stringResource(R.string.order_item_count, it) },
                     ).joinToString(" - "),
                     onBack = onDone,
                     below = { OrderSteps(current = 0) },
@@ -150,14 +152,14 @@ fun TakeOrderScreen(
                 TakeOrderPage.PRODUCTS -> ProductsHeader(state, viewModel)
 
                 TakeOrderPage.CONFIRM -> StepHeader(
-                    title = "Xác nhận đơn hàng",
+                    title = stringResource(R.string.order_confirm_title),
                     subtitle = state.customerName,
                     onBack = viewModel::openBasket,
                     below = { OrderSteps(current = 1) },
                 )
 
                 TakeOrderPage.DONE -> StepHeader(
-                    title = "Thông tin đơn hàng",
+                    title = stringResource(R.string.order_info_title),
                     subtitle = state.customerName,
                     onBack = viewModel::close,
                     below = { OrderSteps(current = 2) },
@@ -170,7 +172,7 @@ fun TakeOrderScreen(
                 state.loading -> SkeletonList(count = 7, lines = 1)
 
                 state.catalogue.isEmpty() -> ErrorBox(
-                    state.error ?: "Danh mục sản phẩm trống. Đăng nhập lại để tải về.",
+                    state.error?.asString() ?: stringResource(R.string.order_catalogue_empty),
                     onRetry = viewModel::load,
                 )
 
@@ -210,10 +212,10 @@ private fun BasketPage(state: TakeOrderUiState, viewModel: TakeOrderViewModel) {
         // the whole reason the safety net is invisible is that it usually works.
         val cartWarning = when {
             state.cartUnavailable ->
-                "Không đọc được giỏ hàng đã lưu. Vẫn đặt được, chỉ bắt đầu từ trống."
+                stringResource(R.string.order_cart_unreadable)
 
             state.cartSyncFailed ->
-                "Chưa lưu được giỏ hàng lên hệ thống. Gửi đơn ngay để khỏi mất."
+                stringResource(R.string.order_cart_unsynced)
 
             else -> null
         }
@@ -254,7 +256,7 @@ private fun BasketPage(state: TakeOrderUiState, viewModel: TakeOrderViewModel) {
                     if (suggestions.isNotEmpty()) {
                         item(key = "sugg-head") {
                             Text(
-                                "Mua thêm để được khuyến mãi",
+                                stringResource(R.string.order_buy_more_heading),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 4.dp),
@@ -272,7 +274,7 @@ private fun BasketPage(state: TakeOrderUiState, viewModel: TakeOrderViewModel) {
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp),
-            ) { Icon(Icons.Default.Add, contentDescription = "Thêm sản phẩm") }
+            ) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.order_add_product)) }
         }
 
         BasketFooter(
@@ -284,18 +286,18 @@ private fun BasketPage(state: TakeOrderUiState, viewModel: TakeOrderViewModel) {
     pendingDelete?.let { line ->
         AlertDialog(
             onDismissRequest = { pendingDelete = null },
-            title = { Text("Bỏ sản phẩm") },
-            text = { Text("Bỏ ${line.productName} khỏi giỏ hàng?") },
+            title = { Text(stringResource(R.string.order_remove_title)) },
+            text = { Text(stringResource(R.string.order_remove_body, line.productName)) },
             confirmButton = {
                 TextButton(
                     onClick = {
                         viewModel.removeLine(line)
                         pendingDelete = null
                     },
-                ) { Text("Bỏ") }
+                ) { Text(stringResource(R.string.order_remove)) }
             },
             dismissButton = {
-                TextButton(onClick = { pendingDelete = null }) { Text("Đóng") }
+                TextButton(onClick = { pendingDelete = null }) { Text(stringResource(R.string.action_close)) }
             },
         )
     }
@@ -315,9 +317,9 @@ private fun EmptyBasket() {
             modifier = Modifier.size(48.dp),
         )
         Spacer(Modifier.height(12.dp))
-        Text("Giỏ hàng chưa có sản phẩm", style = MaterialTheme.typography.bodyLarge)
+        Text(stringResource(R.string.order_basket_empty), style = MaterialTheme.typography.bodyLarge)
         Text(
-            "Bấm + để chọn sản phẩm",
+            stringResource(R.string.order_basket_empty_hint),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -356,7 +358,7 @@ private fun BasketCard(line: OrderLine, onEdit: () -> Unit, onDelete: () -> Unit
                     IconButton(onClick = onDelete, modifier = Modifier.size(28.dp)) {
                         Icon(
                             Icons.Default.Cancel,
-                            contentDescription = "Bỏ ${line.productName}",
+                            contentDescription = stringResource(R.string.order_remove_item, line.productName),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp),
                         )
@@ -384,7 +386,7 @@ private fun BasketCard(line: OrderLine, onEdit: () -> Unit, onDelete: () -> Unit
                     IconButton(onClick = onEdit, modifier = Modifier.size(28.dp)) {
                         Icon(
                             Icons.Default.Edit,
-                            contentDescription = "Sửa ${line.productName}",
+                            contentDescription = stringResource(R.string.order_edit_item, line.productName),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp),
                         )
@@ -414,7 +416,7 @@ private fun BasketFooter(state: TakeOrderUiState, onConfirm: () -> Unit) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "Tổng tiền",
+                    stringResource(R.string.order_total),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
@@ -430,7 +432,7 @@ private fun BasketFooter(state: TakeOrderUiState, onConfirm: () -> Unit) {
 
             if (state.error != null) {
                 Text(
-                    state.error,
+                    state.error.asString(),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.padding(top = 8.dp),
@@ -438,7 +440,7 @@ private fun BasketFooter(state: TakeOrderUiState, onConfirm: () -> Unit) {
             }
 
             PrimaryButton(
-                text = "Xác nhận",
+                text = stringResource(R.string.order_confirm),
                 onClick = onConfirm,
                 enabled = state.order.canSubmit,
                 height = 44.dp,
@@ -458,7 +460,7 @@ private fun ProductsHeader(state: TakeOrderUiState, viewModel: TakeOrderViewMode
     var filterOpen by remember { mutableStateOf(false) }
 
     StepHeader(
-        title = "Danh sách sản phẩm",
+        title = stringResource(R.string.order_products),
         subtitle = state.customerName,
         onBack = viewModel::openBasket,
         actions = {
@@ -466,14 +468,14 @@ private fun ProductsHeader(state: TakeOrderUiState, viewModel: TakeOrderViewMode
             // list that it is narrowed without opening either sheet to check.
             HeaderAction(
                 icon = Icons.Default.SwapVert,
-                description = "Sắp xếp",
+                description = stringResource(R.string.order_sort),
                 badge = if (state.sort == ProductSort.DEFAULT) null else "1",
                 tint = MaterialTheme.brand.onHeader,
                 onClick = { sortOpen = true },
             )
             HeaderAction(
                 icon = Icons.Default.FilterList,
-                description = "Lọc nhóm hàng",
+                description = stringResource(R.string.order_filter_group),
                 badge = state.categories.size.takeIf { it > 0 }?.toString(),
                 tint = MaterialTheme.brand.onHeader,
                 onClick = { filterOpen = true },
@@ -483,7 +485,7 @@ private fun ProductsHeader(state: TakeOrderUiState, viewModel: TakeOrderViewMode
             SearchBox(
                 query = state.query,
                 onQueryChanged = viewModel::onQueryChange,
-                placeholder = "Tìm tên hoặc mã sản phẩm",
+                placeholder = stringResource(R.string.order_search_hint),
             )
         },
     )
@@ -528,7 +530,7 @@ private fun ProductsPage(state: TakeOrderUiState, viewModel: TakeOrderViewModel)
 
         val visible = state.visible
         if (visible.isEmpty()) {
-            Box(Modifier.weight(1f)) { ErrorBox("Không tìm thấy sản phẩm nào") }
+            Box(Modifier.weight(1f)) { ErrorBox(stringResource(R.string.order_no_products)) }
         } else {
             LazyColumn(
                 modifier = Modifier.weight(1f),
@@ -592,7 +594,7 @@ private fun ProductRow(
                         append(product.product.code)
                         append(" | ")
                         append(unit.unit.uomName)
-                        if (available != null) append(" (Tồn kho: $available)")
+                        if (available != null) append(stringResource(R.string.order_in_stock, available))
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -600,9 +602,7 @@ private fun ProductRow(
 
                 if (suggestion != null) {
                     Text(
-                        text = "Thiếu ${suggestion.shortfallBaseQty} " +
-                            "${product.product.baseUomCode.lowercase()} - gợi ý " +
-                            suggestion.parts.describe(),
+                        text = stringResource(R.string.order_shortfall, suggestion.shortfallBaseQty, product.product.baseUomCode.lowercase(), suggestion.parts.describe()),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.padding(top = 2.dp),
@@ -626,7 +626,7 @@ private fun ProductRow(
                         // mistaken for the unit price above it.
                         if (qty > 0) {
                             Text(
-                                text = "Thành tiền ${formatDong(qty * unit.price)}",
+                                text = stringResource(R.string.order_line_amount, formatDong(qty * unit.price)),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary,
                             )
@@ -681,14 +681,14 @@ private fun ProductsFooter(state: TakeOrderUiState, onCommit: () -> Unit) {
         Column(Modifier.padding(16.dp)) {
             if (state.error != null) {
                 Text(
-                    state.error,
+                    state.error.asString(),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
             }
             PrimaryButton(
-                text = "Cập nhật giỏ hàng",
+                text = stringResource(R.string.order_update_basket),
                 onClick = onCommit,
                 enabled = state.hasDraft,
                 height = 44.dp,
@@ -731,15 +731,15 @@ private fun SuggestionBanner(state: TakeOrderUiState, onApply: () -> Unit) {
             // a product the rep cannot see.
             Column(Modifier.weight(1f)) {
                 Text(
-                    "${state.suggestions.size} mặt hàng dưới định mức",
+                    stringResource(R.string.order_below_par, state.suggestions.size),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
                     if (state.suggestionsApplied) {
-                        "Đã thêm $totalLines dòng vào giỏ - sửa lại nếu cần"
+                        stringResource(R.string.order_suggestions_added, totalLines)
                     } else {
-                        "Từ phiếu kiểm tồn · sẽ thêm $totalLines dòng"
+                        stringResource(R.string.order_suggestions_pending, totalLines)
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -751,7 +751,7 @@ private fun SuggestionBanner(state: TakeOrderUiState, onApply: () -> Unit) {
                     onClick = onApply,
                     contentPadding = PaddingValues(horizontal = 14.dp),
                     modifier = Modifier.height(36.dp),
-                ) { Text("Áp dụng") }
+                ) { Text(stringResource(R.string.order_apply)) }
             }
         }
     }
@@ -780,17 +780,17 @@ private fun ConfirmPage(
             // The legacy's order: where it goes and who to call, what is being
             // sold, what it earns, and the totals last — the figure the rep
             // reads back to the customer is the one the page ends on.
-            item { SectionHeader("Địa chỉ giao hàng", Icons.Default.LocalShipping) }
+            item { SectionHeader(stringResource(R.string.order_ship_to), Icons.Default.LocalShipping) }
             item { ShipAddressCard(state, viewModel::onShipAddress) }
 
-            item { SectionHeader("Thông tin liên hệ", Icons.Default.Person) }
+            item { SectionHeader(stringResource(R.string.order_contact), Icons.Default.Person) }
             item { ContactCard(state) }
 
-            item { SectionHeader("Sản phẩm đặt hàng", Icons.Default.ShoppingCart) }
+            item { SectionHeader(stringResource(R.string.order_lines), Icons.Default.ShoppingCart) }
             item { LinesCard(state.basketLines) }
 
             if (!state.order.promotions.isEmpty) {
-                item { SectionHeader("Khuyến mãi", Icons.Default.LocalOffer) }
+                item { SectionHeader(stringResource(R.string.order_promotions), Icons.Default.LocalOffer) }
 
                 val promos = state.order.promotions
 
@@ -851,9 +851,9 @@ private fun ConfirmPage(
             items(caps, key = { "cap-" + it.sequenceId + it.breakId }) { cap ->
                 PromotionNote(
                     if (cap.requestedAmount != null) {
-                        "${cap.programName} – ${cap.breakName}: giảm ${formatDong(cap.grantedAmount ?: 0)} thay vì ${formatDong(cap.requestedAmount ?: 0)} (${cap.reasons})"
+                        stringResource(R.string.order_cap_amount, cap.programName, cap.breakName, formatDong(cap.grantedAmount ?: 0), formatDong(cap.requestedAmount ?: 0), cap.reasons)
                     } else {
-                        "${cap.programName} – ${cap.breakName}: được ${cap.grantedLots ?: 0}/${cap.requestedLots ?: 0} suất (${cap.reasons})"
+                        stringResource(R.string.order_cap_lots, cap.programName, cap.breakName, cap.grantedLots ?: 0, cap.requestedLots ?: 0, cap.reasons)
                     },
                 )
             }
@@ -866,14 +866,14 @@ private fun ConfirmPage(
                     overs,
                     key = { "budget-" + it.sequenceId + it.breakName },
                 ) { over ->
-                    PromotionNote("${over.programName} không áp dụng được: đã hết ngân sách")
+                    PromotionNote(stringResource(R.string.order_out_of_budget, over.programName))
                 }
             }
 
             // Trả thưởng trưng bày: what a display programme still owes this
             // outlet, paid on this order if the rep switches it on.
             if (state.order.promotions.displayRewards.isNotEmpty()) {
-                item { SectionHeader("Trả thưởng trưng bày", Icons.Default.EmojiEvents) }
+                item { SectionHeader(stringResource(R.string.order_display_rewards), Icons.Default.EmojiEvents) }
 
                 items(
                     state.order.promotions.displayRewards,
@@ -889,7 +889,7 @@ private fun ConfirmPage(
             }
 
             if (state.order.promotions.manualCatalogue.isNotEmpty()) {
-                item { SectionHeader("Khuyến mãi tay", Icons.Default.Sell) }
+                item { SectionHeader(stringResource(R.string.order_manual_promotions), Icons.Default.Sell) }
 
                 items(
                     state.order.promotions.manualCatalogue,
@@ -907,11 +907,11 @@ private fun ConfirmPage(
 
             val gifts = giftLines(state)
             if (gifts.isNotEmpty()) {
-                item { SectionHeader("Sản phẩm khuyến mãi", Icons.Default.CardGiftcard) }
+                item { SectionHeader(stringResource(R.string.order_gift_lines), Icons.Default.CardGiftcard) }
                 item { GiftLinesCard(gifts) }
             }
 
-            item { SectionHeader("Tổng kết đơn hàng", Icons.Default.Receipt) }
+            item { SectionHeader(stringResource(R.string.order_summary), Icons.Default.Receipt) }
             item { OrderSummaryCard(state, viewModel::onNoteChange) }
         }
 
@@ -919,17 +919,17 @@ private fun ConfirmPage(
             Column(Modifier.padding(16.dp)) {
                 if (state.error != null) {
                     Text(
-                        state.error,
+                        state.error.asString(),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.padding(bottom = 8.dp),
                     )
                 }
                 ButtonPair(
-                    text = "Gửi đơn hàng",
+                    text = stringResource(R.string.order_send),
                     onClick = viewModel::submit,
                     onBack = onDone,
-                    backText = "Để sau",
+                    backText = stringResource(R.string.order_later),
                     enabled = state.order.canSubmit,
                     loading = state.submitting,
                     height = 44.dp,
@@ -948,21 +948,21 @@ private fun OrderSummaryCard(state: TakeOrderUiState, onNoteChange: ((String) ->
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(16.dp)) {
-            AmountRow("Tổng số mặt hàng", state.order.lines.size.toString())
-            AmountRow("Tổng số lượng", state.order.totalQty.toString())
+            AmountRow(stringResource(R.string.order_line_count), state.order.lines.size.toString())
+            AmountRow(stringResource(R.string.order_total_qty), state.order.totalQty.toString())
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
-            AmountRow("Tiền hàng (chưa VAT)", formatDong(state.order.subTotal))
-            AmountRow("Thuế VAT", formatDong(state.order.vatAmount))
+            AmountRow(stringResource(R.string.order_subtotal), formatDong(state.order.subTotal))
+            AmountRow(stringResource(R.string.order_vat), formatDong(state.order.vatAmount))
             if (state.order.discountAmount > 0) {
                 AmountRow(
-                    label = "Khuyến mãi",
+                    label = stringResource(R.string.order_promotions),
                     value = "-" + formatDong(state.order.discountAmount),
                     valueColor = MoneyGreen,
                 )
             }
             Spacer(Modifier.height(8.dp))
             AmountRow(
-                label = "Tổng cộng",
+                label = stringResource(R.string.order_grand_total),
                 value = formatDong(state.order.totalAmount),
                 emphasise = true,
             )
@@ -970,7 +970,7 @@ private fun OrderSummaryCard(state: TakeOrderUiState, onNoteChange: ((String) ->
             if (onNoteChange == null) {
                 if (state.order.note.isNotBlank()) {
                     Text(
-                        "Ghi chú: " + state.order.note,
+                        stringResource(R.string.order_note_line, state.order.note),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 12.dp),
@@ -981,7 +981,7 @@ private fun OrderSummaryCard(state: TakeOrderUiState, onNoteChange: ((String) ->
             OutlinedTextField(
                 value = state.order.note,
                 onValueChange = onNoteChange,
-                placeholder = { Text("Ghi chú đơn hàng") },
+                placeholder = { Text(stringResource(R.string.order_note_hint)) },
                 shape = RoundedCornerShape(12.dp),
                 minLines = 2,
                 modifier = Modifier
@@ -1003,8 +1003,7 @@ private fun ConfirmLineRow(line: OrderLine) {
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
-                    "${line.productCode} | ${line.qty} ${line.uomName} x " +
-                        formatDong(line.unitPrice),
+                    stringResource(R.string.order_line_detail, line.productCode, line.qty, line.uomName, formatDong(line.unitPrice)),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1054,7 +1053,7 @@ private fun EditLineSheet(state: TakeOrderUiState, viewModel: TakeOrderViewModel
 
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
 
-            Text("Đơn vị tính", style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.order_uom), style = MaterialTheme.typography.bodyLarge)
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(top = 8.dp),
@@ -1074,13 +1073,12 @@ private fun EditLineSheet(state: TakeOrderUiState, viewModel: TakeOrderViewModel
             // office turns on `isEnableEditPrice`; no such switch exists here, and
             // an editable field the server would overwrite is worse than none.
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Đơn giá", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.order_unit_price), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
                 Text(formatDong(unit.price), style = MaterialTheme.typography.bodyLarge)
             }
             if (unit.unit.conversionRate > 1) {
                 Text(
-                    "1 ${unit.unit.uomName} = ${unit.unit.conversionRate} " +
-                        product.product.baseUomCode.lowercase(),
+                    stringResource(R.string.order_conversion, unit.unit.uomName, unit.unit.conversionRate, product.product.baseUomCode.lowercase()),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1089,7 +1087,7 @@ private fun EditLineSheet(state: TakeOrderUiState, viewModel: TakeOrderViewModel
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Số lượng", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.order_qty), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
                 // The same control as the catalogue row and the count sheet. A
                 // rep who has just typed quantities down a list should not meet
                 // a different-shaped box for the same number one tap later.
@@ -1102,7 +1100,7 @@ private fun EditLineSheet(state: TakeOrderUiState, viewModel: TakeOrderViewModel
 
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 12.dp)) {
                 Text(
-                    "Thành tiền",
+                    stringResource(R.string.order_amount),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f),
                 )
@@ -1115,7 +1113,7 @@ private fun EditLineSheet(state: TakeOrderUiState, viewModel: TakeOrderViewModel
             }
 
             PrimaryButton(
-                text = "Cập nhật",
+                text = stringResource(R.string.order_update),
                 onClick = viewModel::applyEdit,
                 enabled = editing.qty > 0,
                 modifier = Modifier.padding(top = 16.dp),
@@ -1141,7 +1139,7 @@ private fun SortSheet(
     ) {
         Column(Modifier.navigationBarsPadding()) {
             Text(
-                "Sắp xếp theo",
+                stringResource(R.string.order_sort_by),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 12.dp),
@@ -1273,7 +1271,7 @@ private fun PromotionCard(
             val percent = promo.percent
             if (percent != null) {
                 Text(
-                    "Giảm ${percent.toInt()}%",
+                    stringResource(R.string.order_percent_off, percent.toInt()),
                     style = MaterialTheme.typography.labelSmall,
                     color = MoneyGreen,
                 )
@@ -1285,7 +1283,7 @@ private fun PromotionCard(
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     PromotionOption(
-                        text = "Nhận tiền",
+                        text = stringResource(R.string.order_take_money),
                         selected = takingAmount,
                         onClick = {
                             onChoice(PromotionChoice(promo.sequenceId, takeAmount = true))
@@ -1293,7 +1291,7 @@ private fun PromotionCard(
                         modifier = Modifier.weight(1f),
                     )
                     PromotionOption(
-                        text = "Nhận quà",
+                        text = stringResource(R.string.order_take_gift),
                         selected = !takingAmount,
                         onClick = {
                             val first = promo.gifts.firstOrNull { it.chosen }
@@ -1323,7 +1321,7 @@ private fun PromotionCard(
 
                 if (promo.needsChoice) {
                     Text(
-                        "Chọn một phần quà",
+                        stringResource(R.string.order_pick_gift),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -1414,7 +1412,7 @@ private fun GiftRow(
             // Silence is the ordinary case and deserves no line of its own.
             if (selected && gift.isShort) {
                 Text(
-                    "Kho chỉ còn ${gift.availableQty} ${gift.uomName}",
+                    stringResource(R.string.order_gift_short, gift.availableQty, gift.uomName),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -1465,7 +1463,7 @@ private fun SuggestionCard(suggestion: PromotionSuggestion) {
             Column(Modifier.weight(1f)) {
                 Text(
                     buildString {
-                        append("Mua thêm ")
+                        append(stringResource(R.string.order_buy_more))
                         if (suggestion.isByQty) {
                             append(suggestion.neededQty)
                             suggestion.uomCode?.let { append(" ").append(it) }
@@ -1476,7 +1474,7 @@ private fun SuggestionCard(suggestion: PromotionSuggestion) {
                         } else {
                             append(formatDong(suggestion.neededAmount))
                             if (suggestion.scope == PromotionScope.ORDER) {
-                                append(" cho đơn hàng")
+                                append(stringResource(R.string.order_for_order))
                             }
                         }
                     },
@@ -1486,11 +1484,11 @@ private fun SuggestionCard(suggestion: PromotionSuggestion) {
 
                 Text(
                     buildString {
-                        append("để ")
+                        append(stringResource(R.string.order_to))
                         val gifts = suggestion.rewardItems
                         when {
                             gifts.isNotEmpty() -> {
-                                append("được tặng ")
+                                append(stringResource(R.string.order_get_gift))
                                 append(
                                     gifts.joinToString(", ") { g ->
                                         "${g.qty} ${g.uomCode} ${g.productName}"
@@ -1499,12 +1497,12 @@ private fun SuggestionCard(suggestion: PromotionSuggestion) {
                             }
 
                             suggestion.reward == PromotionReward.PERCENT ->
-                                append("được giảm ${suggestion.rewardAmount}%")
+                                append(stringResource(R.string.order_get_percent, suggestion.rewardAmount))
 
                             suggestion.rewardAmount > 0 ->
-                                append("được giảm ${formatDong(suggestion.rewardAmount)}")
+                                append(stringResource(R.string.order_get_amount, formatDong(suggestion.rewardAmount)))
 
-                            else -> append("đạt ${suggestion.breakName}")
+                            else -> append(stringResource(R.string.order_reach, suggestion.breakName))
                         }
                     },
                     style = MaterialTheme.typography.labelSmall,
@@ -1558,14 +1556,14 @@ private fun ManualPromotionCard(
                             append(promo.code)
                             when (promo.type) {
                                 ManualPromotionType.PERCENT ->
-                                    append(" | giảm ${promo.value}%")
+                                    append(stringResource(R.string.order_manual_percent, promo.value))
 
                                 ManualPromotionType.AMOUNT -> {
                                     append(" | ")
                                     // "Up to" is the whole meaning of an editable
                                     // entry, and hiding it would make a ceiling
                                     // look like a fixed amount.
-                                    if (promo.allowEdit) append("tối đa ")
+                                    if (promo.allowEdit) append(stringResource(R.string.order_manual_up_to))
                                     append(formatDong(promo.value))
                                 }
 
@@ -1602,7 +1600,7 @@ private fun ManualPromotionCard(
                 Spacer(Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "Số tiền",
+                        stringResource(R.string.order_money),
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.weight(1f),
                     )
@@ -1622,7 +1620,7 @@ private fun ManualPromotionCard(
                 }
                 Text(
                     formatDong(applied?.amount ?: promo.value) +
-                        " (tối đa ${formatDong(promo.value)})",
+                        stringResource(R.string.order_up_to, formatDong(promo.value)),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1664,8 +1662,8 @@ private fun ShipAddressCard(
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             ShipAddressRow(
                 selected = chosen == null,
-                title = state.customerName.ifBlank { "Cửa hàng" },
-                subtitle = listOfNotNull("Giao tại cửa hàng", state.contact?.address ?: state.customerAddress).joinToString(" · "),
+                title = state.customerName.ifBlank { stringResource(R.string.order_outlet) },
+                subtitle = listOfNotNull(stringResource(R.string.order_deliver_at_outlet), state.contact?.address ?: state.customerAddress).joinToString(" · "),
                 onClick = { onShipAddress(null) },
             )
 
@@ -1676,7 +1674,7 @@ private fun ShipAddressCard(
                     subtitle = listOfNotNull(
                         address.address,
                         address.phone,
-                        address.taxCode?.let { "MST $it" },
+                        address.taxCode?.let { stringResource(R.string.order_tax_code, it) },
                     ).joinToString(" · "),
                     onClick = { onShipAddress(address.id) },
                 )
@@ -1748,12 +1746,12 @@ private fun PromotionNote(text: String) {
 private fun ProposalHeader(first: EarnedPromotion) {
     Column(Modifier.padding(top = 4.dp)) {
         Text(
-            first.proposalName ?: "Chọn 1 chương trình",
+            first.proposalName ?: stringResource(R.string.order_pick_one_program),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Medium,
         )
         Text(
-            first.proposalDescr?.takeIf { it.isNotBlank() } ?: "Đơn hàng chỉ được hưởng 1 chương trình trong nhóm",
+            first.proposalDescr?.takeIf { it.isNotBlank() } ?: stringResource(R.string.order_one_program_only),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -1779,11 +1777,10 @@ private fun DisplayRewardCard(
                 Text(reward.programName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
                 Text(
                     reward.levelName + " | " + when (reward.type) {
-                        DisplayRewardType.AMOUNT -> "còn ${formatDong(reward.amountLeft)}"
+                        DisplayRewardType.AMOUNT -> stringResource(R.string.order_reward_left, formatDong(reward.amountLeft))
                         DisplayRewardType.PERCENT ->
-                            "giảm ${reward.percent.toBigDecimal().stripTrailingZeros().toPlainString()}% " +
-                                "(${formatDong(Math.round(gross * reward.percent / 100))})"
-                        DisplayRewardType.GOODS -> "tặng ${reward.qtyLeft} ${reward.uomName.orEmpty()} ${reward.productName.orEmpty()}"
+                            stringResource(R.string.order_reward_percent, reward.percent.toBigDecimal().stripTrailingZeros().toPlainString(), formatDong(Math.round(gross * reward.percent / 100)))
+                        DisplayRewardType.GOODS -> stringResource(R.string.order_reward_goods, reward.qtyLeft, reward.uomName.orEmpty(), reward.productName.orEmpty())
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1854,10 +1851,10 @@ private fun ContactCard(state: TakeOrderUiState) {
     val contact = state.contact
     val shipTo = state.shipAddresses.firstOrNull { it.id == state.order.shipAddressId }
     SectionCard {
-        InfoLine("Khách hàng", contact?.let { "${it.name} (${it.code})" } ?: state.customerName)
-        InfoLine("Người liên hệ", shipTo?.recipient ?: contact?.contactName)
-        InfoLine("Điện thoại", shipTo?.phone ?: contact?.phone ?: state.customerPhone)
-        InfoLine("Địa chỉ", shipTo?.address ?: contact?.address ?: state.customerAddress)
+        InfoLine(stringResource(R.string.order_customer), contact?.let { "${it.name} (${it.code})" } ?: state.customerName)
+        InfoLine(stringResource(R.string.order_contact_person), shipTo?.recipient ?: contact?.contactName)
+        InfoLine(stringResource(R.string.order_phone), shipTo?.phone ?: contact?.phone ?: state.customerPhone)
+        InfoLine(stringResource(R.string.order_address), shipTo?.address ?: contact?.address ?: state.customerAddress)
     }
 }
 
@@ -1926,13 +1923,13 @@ private fun DonePage(state: TakeOrderUiState, onClose: () -> Unit) {
                         )
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            "Đặt hàng thành công",
+                            stringResource(R.string.order_success),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MoneyGreen,
                         )
                         Text(
-                            "${state.order.lines.size} mặt hàng · ${formatDong(state.order.totalAmount)}",
+                            stringResource(R.string.order_done_summary, state.order.lines.size, formatDong(state.order.totalAmount)),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -1940,32 +1937,32 @@ private fun DonePage(state: TakeOrderUiState, onClose: () -> Unit) {
                 }
             }
 
-            item { SectionHeader("Địa chỉ giao hàng", Icons.Default.LocalShipping) }
+            item { SectionHeader(stringResource(R.string.order_ship_to), Icons.Default.LocalShipping) }
             item {
                 SectionCard {
-                    InfoLine("Giao đến", shipTo?.recipient ?: state.customerName)
-                    InfoLine("Địa chỉ", shipTo?.address ?: state.contact?.address ?: state.customerAddress)
-                    InfoLine("Điện thoại", shipTo?.phone ?: state.contact?.phone ?: state.customerPhone)
-                    if (shipTo == null) InfoLine("Hình thức", "Giao tại cửa hàng")
+                    InfoLine(stringResource(R.string.order_deliver_to), shipTo?.recipient ?: state.customerName)
+                    InfoLine(stringResource(R.string.order_address), shipTo?.address ?: state.contact?.address ?: state.customerAddress)
+                    InfoLine(stringResource(R.string.order_phone), shipTo?.phone ?: state.contact?.phone ?: state.customerPhone)
+                    if (shipTo == null) InfoLine(stringResource(R.string.order_delivery_mode), stringResource(R.string.order_deliver_at_outlet))
                 }
             }
 
-            item { SectionHeader("Sản phẩm đặt hàng", Icons.Default.ShoppingCart) }
+            item { SectionHeader(stringResource(R.string.order_lines), Icons.Default.ShoppingCart) }
             item { LinesCard(state.order.lines) }
 
             val gifts = giftLines(state)
             if (gifts.isNotEmpty()) {
-                item { SectionHeader("Sản phẩm khuyến mãi", Icons.Default.CardGiftcard) }
+                item { SectionHeader(stringResource(R.string.order_gift_lines), Icons.Default.CardGiftcard) }
                 item { GiftLinesCard(gifts) }
             }
 
-            item { SectionHeader("Tổng kết đơn hàng", Icons.Default.Receipt) }
+            item { SectionHeader(stringResource(R.string.order_summary), Icons.Default.Receipt) }
             item { OrderSummaryCard(state, onNoteChange = null) }
         }
 
         Surface(shadowElevation = 8.dp) {
             Box(Modifier.padding(16.dp)) {
-                PrimaryButton(text = "Đóng", onClick = onClose, height = 44.dp)
+                PrimaryButton(text = stringResource(R.string.action_close), onClick = onClose, height = 44.dp)
             }
         }
     }
