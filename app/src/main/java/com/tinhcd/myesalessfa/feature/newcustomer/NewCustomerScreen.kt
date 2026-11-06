@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.newcustomer
 
 import androidx.compose.foundation.clickable
+import com.tinhcd.myesalessfa.R
 import com.tinhcd.myesalessfa.core.R as CoreR
 import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
 import androidx.compose.ui.res.stringResource
@@ -125,7 +126,7 @@ private fun NewCustomerContent(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clip(HeaderShape),
-                title = { Text("Khách hàng mới") },
+                title = { Text(stringResource(R.string.sfa_73)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.brand.header,
                     titleContentColor = MaterialTheme.brand.onHeader,
@@ -142,13 +143,13 @@ private fun NewCustomerContent(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     item {
-                        SectionTitle("Thông tin bắt buộc")
+                        SectionTitle(stringResource(R.string.sfa_87))
                     }
                     item {
                         OutlinedTextField(
                             value = state.draft.name,
                             onValueChange = onName,
-                            label = { Text("Tên cửa hàng") },
+                            label = { Text(stringResource(R.string.sfa_86)) },
                             singleLine = true,
                             isError = state.showErrors && state.draft.nameError != null,
                             supportingText = {
@@ -163,7 +164,7 @@ private fun NewCustomerContent(
                         OutlinedTextField(
                             value = state.draft.address,
                             onValueChange = onAddress,
-                            label = { Text("Địa chỉ") },
+                            label = { Text(stringResource(R.string.order_address)) },
                             isError = state.showErrors && state.draft.addressError != null,
                             supportingText = {
                                 state.draft.addressError
@@ -176,19 +177,19 @@ private fun NewCustomerContent(
 
                     item { PositionLine(state = state, onRefresh = onRefreshLocation) }
 
-                    item { SectionTitle("Thông tin thêm") }
+                    item { SectionTitle(stringResource(R.string.sfa_88)) }
                     item {
                         OutlinedTextField(
                             value = state.draft.phone,
                             onValueChange = onPhone,
-                            label = { Text("Số điện thoại") },
+                            label = { Text(stringResource(R.string.sfa_89)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
                     item {
                         Picker(
-                            label = "Tỉnh / Thành phố",
+                            label = stringResource(R.string.sfa_90),
                             options = state.options.provinces,
                             selectedId = state.draft.provinceId,
                             onSelect = onProvince,
@@ -196,25 +197,25 @@ private fun NewCustomerContent(
                     }
                     item {
                         Picker(
-                            label = "Quận / Huyện",
+                            label = stringResource(R.string.sfa_91),
                             options = state.districts,
                             selectedId = state.draft.districtId,
                             onSelect = onDistrict,
-                            emptyHint = "Chọn tỉnh trước",
+                            emptyHint = stringResource(R.string.sfb_150),
                         )
                     }
                     item {
                         Picker(
-                            label = "Phường / Xã",
+                            label = stringResource(R.string.sfa_92),
                             options = state.wards,
                             selectedId = state.draft.wardId,
                             onSelect = onWard,
-                            emptyHint = "Chọn quận trước",
+                            emptyHint = stringResource(R.string.sfb_151),
                         )
                     }
                     item {
                         Picker(
-                            label = "Nhóm khách hàng",
+                            label = stringResource(R.string.sfa_93),
                             options = state.options.classes,
                             selectedId = state.draft.classId,
                             onSelect = onClass,
@@ -222,7 +223,7 @@ private fun NewCustomerContent(
                     }
                     item {
                         Picker(
-                            label = "Kênh bán",
+                            label = stringResource(R.string.sfa_94),
                             options = state.options.channels,
                             selectedId = state.draft.channelId,
                             onSelect = onChannel,
@@ -230,7 +231,7 @@ private fun NewCustomerContent(
                     }
                     item {
                         Picker(
-                            label = "Loại cửa hàng",
+                            label = stringResource(R.string.sfa_95),
                             options = state.options.shopTypes,
                             selectedId = state.draft.shopTypeId,
                             onSelect = onShopType,
@@ -240,7 +241,7 @@ private fun NewCustomerContent(
                         OutlinedTextField(
                             value = state.draft.note,
                             onValueChange = onNote,
-                            label = { Text("Ghi chú cho văn phòng") },
+                            label = { Text(stringResource(R.string.sfa_96)) },
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
@@ -251,7 +252,7 @@ private fun NewCustomerContent(
 
                     item {
                         ButtonPair(
-                            text = "Gửi đăng ký",
+                            text = stringResource(R.string.sfa_49),
                             onClick = onSubmit,
                             onBack = onBack,
                             loading = state.submitting,
@@ -293,9 +294,9 @@ private fun PositionLine(state: NewCustomerUiState, onRefresh: () -> Unit) {
     val point = state.draft.point
     val scheme = MaterialTheme.colorScheme
     val (text, color) = when {
-        state.locating -> "Đang lấy vị trí..." to scheme.onSurfaceVariant
-        point != null -> "Đã ghi vị trí cửa hàng" to scheme.primary
-        else -> "Chưa lấy được vị trí — vẫn gửi đăng ký được" to scheme.secondary
+        state.locating -> stringResource(R.string.sfb_152) to scheme.onSurfaceVariant
+        point != null -> stringResource(R.string.sfb_153) to scheme.primary
+        else -> stringResource(R.string.sfb_154) to scheme.secondary
     }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -311,7 +312,7 @@ private fun PositionLine(state: NewCustomerUiState, onRefresh: () -> Unit) {
             color = color,
             modifier = Modifier.padding(horizontal = 8.dp).weight(1f),
         )
-        OutlinedButton(onClick = onRefresh, enabled = !state.locating) { Text("Lấy lại") }
+        OutlinedButton(onClick = onRefresh, enabled = !state.locating) { Text(stringResource(R.string.sfa_97)) }
     }
 }
 
@@ -342,7 +343,7 @@ private fun Picker(
             readOnly = true,
             enabled = false,
             label = { Text(label) },
-            placeholder = { Text(if (enabled) "Chọn" else emptyHint.orEmpty()) },
+            placeholder = { Text(if (enabled) stringResource(R.string.sfa_72) else emptyHint.orEmpty()) },
             trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
             modifier = Modifier
                 .fillMaxWidth()
@@ -351,7 +352,7 @@ private fun Picker(
 
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             DropdownMenuItem(
-                text = { Text("Bỏ trống") },
+                text = { Text(stringResource(R.string.sfa_98)) },
                 onClick = {
                     onSelect(null)
                     open = false
@@ -381,13 +382,13 @@ private fun RegisteredDialog(customer: RegisteredCustomer, onDismiss: () -> Unit
         onDismissRequest = onDismiss,
         confirmButton = { TextButton(onClick = onDismiss) { Text("Xong") } },
         icon = { Icon(Icons.Default.Check, contentDescription = null) },
-        title = { Text("Đã gửi đăng ký") },
+        title = { Text(stringResource(R.string.sfa_99)) },
         text = {
             Column {
                 Text("${customer.name} — mã ${customer.code}")
                 Text(
-                    text = "Cửa hàng đã xuất hiện trong tuyến hôm nay để bán ngay. " +
-                        "Văn phòng sẽ duyệt sau.",
+                    text = stringResource(R.string.sfa_100) +
+                        stringResource(R.string.sfb_155),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp),

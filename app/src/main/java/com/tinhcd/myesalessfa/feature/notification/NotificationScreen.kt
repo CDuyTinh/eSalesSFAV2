@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.notification
 
 import androidx.compose.foundation.clickable
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -105,7 +107,7 @@ private fun NotificationContent(
                 modifier = Modifier.clip(HeaderShape),
                 title = {
                     Column {
-                        Text("Thông báo")
+                        Text(stringResource(R.string.action_notifications))
                         if (state.feed.unread > 0) {
                             Text(
                                 "${state.feed.unread} chưa đọc",
@@ -116,12 +118,12 @@ private fun NotificationContent(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Quay lại")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = onMarkAll, enabled = state.canMarkAll) {
-                        Icon(Icons.Default.DoneAll, contentDescription = "Đánh dấu đã đọc hết")
+                        Icon(Icons.Default.DoneAll, contentDescription = stringResource(R.string.sfa_101))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -191,7 +193,7 @@ private fun FilterRow(
         FilterChip(
             selected = selected == null,
             onClick = { onFilter(null) },
-            label = { Text("Tất cả") },
+            label = { Text(stringResource(R.string.filter_all)) },
         )
 
         feed.presentKinds.forEach { kind ->
@@ -205,7 +207,7 @@ private fun FilterRow(
         FilterChip(
             selected = unreadOnly,
             onClick = { onUnreadOnly(!unreadOnly) },
-            label = { Text("Chưa đọc") },
+            label = { Text(stringResource(R.string.sfa_102)) },
             colors = FilterChipDefaults.filterChipColors(
                 selectedContainerColor = MaterialTheme.colorScheme.errorContainer,
                 selectedLabelColor = MaterialTheme.colorScheme.onErrorContainer,
@@ -330,7 +332,7 @@ private fun EmptyFeed(unreadOnly: Boolean) {
             tint = MaterialTheme.colorScheme.outline,
         )
         Text(
-            text = if (unreadOnly) "Đã đọc hết" else "Chưa có thông báo nào",
+            text = if (unreadOnly) stringResource(R.string.sfb_161) else stringResource(R.string.sfb_162),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
         )

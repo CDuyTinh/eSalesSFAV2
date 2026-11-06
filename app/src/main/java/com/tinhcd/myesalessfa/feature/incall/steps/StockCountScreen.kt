@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.activity.compose.BackHandler
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -100,7 +102,7 @@ fun StockCountScreen(
     Scaffold(
         topBar = {
             StepHeader(
-                title = "Kiểm tồn cửa hàng",
+                title = stringResource(R.string.sfa_50),
                 subtitle = listOfNotNull(
                     state.customerName.ifBlank { null },
                     state.count.countedProducts
@@ -111,7 +113,7 @@ fun StockCountScreen(
                 actions = {
                     HeaderAction(
                         icon = Icons.Default.FilterList,
-                        description = "Lọc nhóm hàng",
+                        description = stringResource(R.string.order_filter_group),
                         badge = state.categories.size.takeIf { it > 0 }?.toString(),
                         tint = MaterialTheme.brand.onHeader,
                         onClick = { filterOpen = true },
@@ -125,7 +127,7 @@ fun StockCountScreen(
                 state.loading -> SkeletonList(count = 7, lines = 1)
 
                 state.catalogue.isEmpty() -> ErrorBox(
-                    state.error ?: "Danh mục sản phẩm trống. Đăng nhập lại để tải về.",
+                    state.error ?: stringResource(R.string.order_catalogue_empty),
                     onRetry = viewModel::load,
                 )
 
@@ -139,7 +141,7 @@ fun StockCountScreen(
                         // missing "last time" as the outlet never having been
                         // counted, which is a different conclusion entirely.
                         Text(
-                            "Không tải được số liệu kỳ trước. Vẫn kiểm được, chỉ không so sánh được.",
+                            stringResource(R.string.sfb_119),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.error,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
@@ -149,7 +151,7 @@ fun StockCountScreen(
                     SearchBox(
                         query = state.query,
                         onQueryChanged = viewModel::onQueryChange,
-                        placeholder = "Tìm sản phẩm",
+                        placeholder = stringResource(R.string.sfa_51),
                         // Outlined here, unlike on the blue header bands, because
                         // this one sits on the page ground: a white box on a
                         // near-white page needs an edge to read as a field.
@@ -169,7 +171,7 @@ fun StockCountScreen(
 
                     val visible = state.visible
                     if (visible.isEmpty()) {
-                        ErrorBox("Không tìm thấy sản phẩm nào")
+                        ErrorBox(stringResource(R.string.order_no_products))
                     } else {
                         LazyColumn(
                             modifier = Modifier.weight(1f),
@@ -214,11 +216,11 @@ fun StockCountScreen(
     if (confirmLeave) {
         AlertDialog(
             onDismissRequest = { confirmLeave = false },
-            title = { Text("Chưa gửi phiếu kiểm tồn") },
+            title = { Text(stringResource(R.string.sfa_52)) },
             text = {
                 Text(
                     "Đã kiểm ${state.count.countedProducts} mặt hàng nhưng chưa gửi. " +
-                        "Thoát bây giờ sẽ mất hết.",
+                        stringResource(R.string.sfb_63),
                 )
             },
             confirmButton = {
@@ -227,10 +229,10 @@ fun StockCountScreen(
                         confirmLeave = false
                         onDone()
                     },
-                ) { Text("Thoát") }
+                ) { Text(stringResource(R.string.sfa_14)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmLeave = false }) { Text("Ở lại") }
+                TextButton(onClick = { confirmLeave = false }) { Text(stringResource(R.string.sfa_15)) }
             },
         )
     }
@@ -264,9 +266,9 @@ private fun LegendBoard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                LegendDot("Kỳ trước", PreviousInk)
-                LegendDot("Tồn hiện tại", CountedGreen)
-                LegendDot("Định mức", ParBlue)
+                LegendDot(stringResource(R.string.sfb_120), PreviousInk)
+                LegendDot(stringResource(R.string.sfb_121), CountedGreen)
+                LegendDot(stringResource(R.string.sfb_122), ParBlue)
             }
 
             Spacer(Modifier.size(10.dp))
@@ -297,7 +299,7 @@ private fun LegendBoard(
             if (state.purchased.isEmpty()) {
                 Spacer(Modifier.size(6.dp))
                 Text(
-                    "Chưa có lịch sử mua của cửa hàng này - đang hiện cả danh mục",
+                    stringResource(R.string.sfb_123),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -371,7 +373,7 @@ private fun StockRow(
                         ) {
                             Icon(
                                 Icons.Default.Close,
-                                contentDescription = "Bỏ kiểm sản phẩm này",
+                                contentDescription = stringResource(R.string.sfa_53),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(18.dp),
                             )
@@ -535,7 +537,7 @@ private fun ProductThumb(required: Boolean) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
                 Icons.Default.Inventory2,
-                contentDescription = if (required) "Hàng bắt buộc" else null,
+                contentDescription = if (required) stringResource(R.string.sfb_124) else null,
                 tint = if (required) {
                     MaterialTheme.colorScheme.onPrimaryContainer
                 } else {
@@ -576,7 +578,7 @@ private fun OutOfStockToggle(checked: Boolean, onToggle: () -> Unit) {
             } else {
                 Icons.Default.RadioButtonUnchecked
             },
-            contentDescription = "Hết hàng",
+            contentDescription = stringResource(R.string.sfa_54),
             tint = if (checked) {
                 MaterialTheme.colorScheme.error
             } else {
@@ -621,11 +623,11 @@ private fun StockFooter(
             Row(Modifier.fillMaxWidth()) {
                 FooterStat(
                     value = state.count.countedProducts.toString(),
-                    label = "Đã kiểm",
+                    label = stringResource(R.string.sfa_55),
                 )
                 FooterStat(
                     value = state.count.outOfStockCount.toString(),
-                    label = "Hết hàng",
+                    label = stringResource(R.string.sfa_54),
                     tint = if (state.count.outOfStockCount > 0) scheme.error else null,
                 )
                 if (compliance.required > 0) {
@@ -636,7 +638,7 @@ private fun StockFooter(
                         // rep's omission on the outlet's record.
                         value = "${compliance.available}/" +
                             "${compliance.available + compliance.outOfStock}",
-                        label = "Bắt buộc có sẵn",
+                        label = stringResource(R.string.sfa_56),
                         tint = if (compliance.outOfStock > 0) scheme.error else null,
                     )
                 }
@@ -669,7 +671,7 @@ private fun StockFooter(
             // above a list the rep is working down, and the list is what they
             // came for.
             ButtonPair(
-                text = "Gửi phiếu",
+                text = stringResource(R.string.sfa_57),
                 onClick = onSubmit,
                 onBack = onBack,
                 enabled = state.count.canSubmit,

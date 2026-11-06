@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.workplan
 
 import androidx.compose.foundation.background
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -171,10 +173,10 @@ private fun ListPage(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clip(HeaderShape),
-                title = { Text("Kế hoạch làm việc") },
+                title = { Text(stringResource(R.string.sfa_178)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Quay lại")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -186,7 +188,7 @@ private fun ListPage(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onNew) {
-                Icon(Icons.Default.Add, contentDescription = "Lập kế hoạch")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.sfa_179))
             }
         },
     ) { padding ->
@@ -288,7 +290,7 @@ private fun MonthCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = { onMonth(month.minusMonths(1)) }) {
-                    Icon(Icons.Default.ChevronLeft, contentDescription = "Tháng trước")
+                    Icon(Icons.Default.ChevronLeft, contentDescription = stringResource(R.string.sfa_180))
                 }
                 Text(
                     "Tháng ${month.monthValue}/${month.year}",
@@ -296,7 +298,7 @@ private fun MonthCard(
                     fontWeight = FontWeight.Bold,
                 )
                 IconButton(onClick = { onMonth(month.plusMonths(1)) }) {
-                    Icon(Icons.Default.ChevronRight, contentDescription = "Tháng sau")
+                    Icon(Icons.Default.ChevronRight, contentDescription = stringResource(R.string.sfa_181))
                 }
             }
 
@@ -453,13 +455,13 @@ private fun PlanCard(plan: WorkPlan, onClick: () -> Unit) {
                     Label(Icons.Default.Groups, plan.objectCount.toString())
                 }
                 if (plan.fieldTraining) {
-                    Label(Icons.Default.School, "Kèm cặp")
+                    Label(Icons.Default.School, stringResource(R.string.sfb_241))
                 }
             }
 
             if (plan.assignedToMe) {
                 Text(
-                    "Được giao",
+                    stringResource(R.string.sfb_242),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -492,19 +494,19 @@ private fun DetailPage(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clip(HeaderShape),
-                title = { Text("Chi tiết kế hoạch") },
+                title = { Text(stringResource(R.string.sfa_182)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Quay lại")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
                     if (detail?.plan?.canEdit == true) {
                         IconButton(onClick = onEdit) {
-                            Icon(Icons.Default.Edit, contentDescription = "Sửa")
+                            Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.sfa_77))
                         }
                         IconButton(onClick = { confirmingDelete = true }) {
-                            Icon(Icons.Default.DeleteOutline, contentDescription = "Xóa")
+                            Icon(Icons.Default.DeleteOutline, contentDescription = stringResource(R.string.sfa_78))
                         }
                     }
                 },
@@ -538,12 +540,12 @@ private fun DetailPage(
                     item { HeadCard(detail) }
 
                     if (detail.objects.isNotEmpty()) {
-                        item { SectionTitle("Đối tượng") }
+                        item { SectionTitle(stringResource(R.string.sfa_183)) }
                         items(detail.objects, key = { it.targetId }) { ObjectRow(it) }
                     }
 
                     if (detail.history.isNotEmpty()) {
-                        item { SectionTitle("Diễn biến") }
+                        item { SectionTitle(stringResource(R.string.sfa_184)) }
                         item { HistoryCard(detail.history) }
                     }
 
@@ -574,13 +576,13 @@ private fun DetailPage(
     if (confirmingDelete) {
         AlertDialog(
             onDismissRequest = { confirmingDelete = false },
-            title = { Text("Xóa kế hoạch nháp?") },
-            text = { Text("Kế hoạch chưa gửi duyệt sẽ bị xóa hẳn.") },
+            title = { Text(stringResource(R.string.sfa_185)) },
+            text = { Text(stringResource(R.string.sfa_186)) },
             confirmButton = {
-                TextButton(onClick = { confirmingDelete = false; onDelete() }) { Text("Xóa") }
+                TextButton(onClick = { confirmingDelete = false; onDelete() }) { Text(stringResource(R.string.sfa_78)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmingDelete = false }) { Text("Bỏ qua") }
+                TextButton(onClick = { confirmingDelete = false }) { Text(stringResource(R.string.sfa_83)) }
             },
         )
     }
@@ -609,16 +611,16 @@ private fun HeadCard(detail: WorkPlanDetail) {
                 StatusPill(plan.status)
             }
 
-            Field("Loại công việc", plan.categoryName)
-            Field("Thời gian", windowLabel(plan.fromAt, plan.toAt))
-            plan.place?.takeIf { it.isNotBlank() }?.let { Field("Địa điểm", it) }
-            plan.note?.takeIf { it.isNotBlank() }?.let { Field("Ghi chú", it) }
-            plan.result?.takeIf { it.isNotBlank() }?.let { Field("Kết quả", it) }
-            plan.reason?.takeIf { it.isNotBlank() }?.let { Field("Lý do", it) }
+            Field(stringResource(R.string.sfa_189), plan.categoryName)
+            Field(stringResource(R.string.sfb_243), windowLabel(plan.fromAt, plan.toAt))
+            plan.place?.takeIf { it.isNotBlank() }?.let { Field(stringResource(R.string.sfa_190), it) }
+            plan.note?.takeIf { it.isNotBlank() }?.let { Field(stringResource(R.string.note_label), it) }
+            plan.result?.takeIf { it.isNotBlank() }?.let { Field(stringResource(R.string.sfa_175), it) }
+            plan.reason?.takeIf { it.isNotBlank() }?.let { Field(stringResource(R.string.reason_generic), it) }
 
             if (plan.assignedToMe) {
                 Text(
-                    "Kế hoạch được giao — bạn thực hiện, không sửa nội dung",
+                    stringResource(R.string.sfb_244),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -698,7 +700,7 @@ private fun ActionRow(
                 enabled = !working,
                 modifier = Modifier.weight(1f),
             ) {
-                Text("Hủy kế hoạch", maxLines = 1)
+                Text(stringResource(R.string.sfa_187), maxLines = 1)
             }
         }
 
@@ -708,7 +710,7 @@ private fun ActionRow(
                 enabled = !working,
                 modifier = Modifier.weight(1f),
             ) {
-                Text("Gửi duyệt", maxLines = 1)
+                Text(stringResource(R.string.sfa_188), maxLines = 1)
             }
         }
 
@@ -718,7 +720,7 @@ private fun ActionRow(
                 enabled = !working,
                 modifier = Modifier.weight(1f),
             ) {
-                Text("Hoàn thành", maxLines = 1)
+                Text(stringResource(R.string.sfa_25), maxLines = 1)
             }
         }
     }
@@ -736,12 +738,12 @@ private fun ReasonDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (completing) "Hoàn thành kế hoạch" else "Hủy kế hoạch") },
+        title = { Text(if (completing) stringResource(R.string.sfb_245) else stringResource(R.string.sfa_187)) },
         text = {
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
-                label = { Text(if (completing) "Kết quả" else "Lý do hủy") },
+                label = { Text(if (completing) stringResource(R.string.sfa_175) else stringResource(R.string.sfb_246)) },
                 minLines = 3,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -751,10 +753,10 @@ private fun ReasonDialog(
                 onClick = { onConfirm(text) },
                 enabled = text.isNotBlank(),
             ) {
-                Text("Xác nhận")
+                Text(stringResource(R.string.order_confirm))
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Bỏ qua") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.sfa_83)) } },
     )
 }
 
@@ -782,10 +784,10 @@ private fun EditPage(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clip(HeaderShape),
-                title = { Text(if (draft.id == null) "Lập kế hoạch" else "Sửa kế hoạch") },
+                title = { Text(if (draft.id == null) stringResource(R.string.sfa_179) else stringResource(R.string.sfb_247)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Quay lại")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -805,7 +807,7 @@ private fun EditPage(
                 item { Notice(text = it, isError = true, onDismiss = {}) }
             }
 
-            item { SectionTitle("Loại công việc") }
+            item { SectionTitle(stringResource(R.string.sfa_189)) }
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -825,7 +827,7 @@ private fun EditPage(
                 OutlinedTextField(
                     value = draft.content,
                     onValueChange = onContent,
-                    label = { Text("Nội dung") },
+                    label = { Text(stringResource(R.string.sfa_36)) },
                     minLines = 2,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -843,7 +845,7 @@ private fun EditPage(
                 OutlinedTextField(
                     value = draft.place,
                     onValueChange = onPlace,
-                    label = { Text("Địa điểm") },
+                    label = { Text(stringResource(R.string.sfa_190)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -852,7 +854,7 @@ private fun EditPage(
                 OutlinedTextField(
                     value = draft.note,
                     onValueChange = onNote,
-                    label = { Text("Ghi chú") },
+                    label = { Text(stringResource(R.string.note_label)) },
                     minLines = 2,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -869,7 +871,7 @@ private fun EditPage(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             SectionTitle("Khách hàng (${draft.objects.size})")
-                            TextButton(onClick = onOpenPicker) { Text("Chọn") }
+                            TextButton(onClick = onOpenPicker) { Text(stringResource(R.string.sfa_72)) }
                         }
                     }
                     items(draft.objects, key = { it.targetId }) { target ->
@@ -894,7 +896,7 @@ private fun EditPage(
                                     }
                                 }
                                 IconButton(onClick = { onRemoveObject(target.targetId) }) {
-                                    Icon(Icons.Default.DeleteOutline, contentDescription = "Bỏ")
+                                    Icon(Icons.Default.DeleteOutline, contentDescription = stringResource(R.string.order_remove))
                                 }
                             }
                         }
@@ -904,7 +906,7 @@ private fun EditPage(
                 WorkPlanObjectKind.SALESPERSON, WorkPlanObjectKind.BRANCH -> item {
                     Notice(
                         text = "Loại công việc này cần chọn ${draft.objectKind?.label?.lowercase()}" +
-                            ", chức năng chọn chưa có trong bản này.",
+                            stringResource(R.string.sfb_248),
                         isError = false,
                         onDismiss = {},
                     )
@@ -919,7 +921,7 @@ private fun EditPage(
                     enabled = state.canSave,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Lưu")
+                    Text(stringResource(R.string.sfa_46))
                 }
             }
         }
@@ -955,7 +957,7 @@ private fun DayAndTime(fromAt: String, toAt: String, onWindow: (String, String) 
                         onWindow(atLocal(next, from), atLocal(next, to))
                     }
                 },
-                label = { Text("Ngày (yyyy-MM-dd)") },
+                label = { Text(stringResource(R.string.sfa_191)) },
                 modifier = Modifier.fillMaxWidth(),
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -964,7 +966,7 @@ private fun DayAndTime(fromAt: String, toAt: String, onWindow: (String, String) 
                     onValueChange = { next ->
                         if (next.length == 5) onWindow(atLocal(day, next), toAt)
                     },
-                    label = { Text("Từ") },
+                    label = { Text(stringResource(R.string.sfa_192)) },
                     modifier = Modifier.weight(1f),
                 )
                 OutlinedTextField(
@@ -972,7 +974,7 @@ private fun DayAndTime(fromAt: String, toAt: String, onWindow: (String, String) 
                     onValueChange = { next ->
                         if (next.length == 5) onWindow(fromAt, atLocal(day, next))
                     },
-                    label = { Text("Đến") },
+                    label = { Text(stringResource(R.string.sfa_193)) },
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -1010,7 +1012,7 @@ private fun PickerPage(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clip(HeaderShape),
-                title = { Text("Chọn khách hàng") },
+                title = { Text(stringResource(R.string.sfa_157)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Xong")
@@ -1028,7 +1030,7 @@ private fun PickerPage(
             OutlinedTextField(
                 value = state.pickerQuery,
                 onValueChange = onQuery,
-                label = { Text("Tìm theo tên hoặc mã") },
+                label = { Text(stringResource(R.string.sfa_158)) },
                 modifier = Modifier.fillMaxWidth().padding(12.dp),
             )
 
@@ -1172,7 +1174,7 @@ private fun EmptyList(hasDay: Boolean) {
             tint = MaterialTheme.colorScheme.outline,
         )
         Text(
-            if (hasDay) "Ngày này chưa có kế hoạch" else "Tháng này chưa có kế hoạch",
+            if (hasDay) stringResource(R.string.sfb_249) else stringResource(R.string.sfb_250),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
         )

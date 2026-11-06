@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.dailytarget
 
 import androidx.compose.foundation.layout.Arrangement
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -100,7 +102,7 @@ private fun DailyTargetContent(
                 modifier = Modifier.clip(HeaderShape),
                 title = {
                     Column {
-                        Text("Chỉ tiêu ngày")
+                        Text(stringResource(R.string.sfa_5))
                         Text(
                             text = DateFormat.format(plan.date),
                             style = MaterialTheme.typography.labelSmall,
@@ -111,7 +113,7 @@ private fun DailyTargetContent(
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Quay lại",
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
                 },
@@ -129,7 +131,7 @@ private fun DailyTargetContent(
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
                             Column(Modifier.weight(1f)) {
                                 Text(
-                                    text = "Tổng chỉ tiêu",
+                                    text = stringResource(R.string.sfa_6),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -149,7 +151,7 @@ private fun DailyTargetContent(
                         PrimaryButton(
                             // Disabled when nothing changed, which is also how the
                             // rep can tell their last save went through.
-                            text = if (plan.canSave) "Lưu chỉ tiêu" else "Đã lưu",
+                            text = if (plan.canSave) stringResource(R.string.sfb_52) else stringResource(R.string.sfb_53),
                             onClick = onSave,
                             enabled = plan.canSave,
                             loading = state.saving,
@@ -166,7 +168,7 @@ private fun DailyTargetContent(
                     ErrorBox(state.error, onRetry = onRetry)
 
                 plan.stops.isEmpty() ->
-                    ErrorBox("Không có khách hàng nào trong tuyến hôm nay")
+                    ErrorBox(stringResource(R.string.route_empty))
 
                 else -> LazyColumn(
                     contentPadding = PaddingValues(16.dp),
@@ -174,7 +176,7 @@ private fun DailyTargetContent(
                 ) {
                     state.error?.let { message -> item { Notice(message, error = true) } }
                     if (state.saved) {
-                        item { Notice("Đã lưu chỉ tiêu cho hôm nay.", error = false) }
+                        item { Notice(stringResource(R.string.sfa_7), error = false) }
                     }
 
                     items(plan.stops, key = { it.customerId }) { stop ->
@@ -242,7 +244,7 @@ private fun StopCard(
                         "Lần gần nhất bạn bán: ${formatMoney(it)}" +
                             (stop.lastDate?.let { d -> " · ${DateFormat.format(d)}" } ?: "")
                     }
-                    ?: "Bạn chưa bán tại điểm này lần nào",
+                    ?: stringResource(R.string.sfb_54),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -255,14 +257,14 @@ private fun StopCard(
                     onValueChange = { text ->
                         onAmountChanged(text.filter { it.isDigit() }.toLongOrNull() ?: 0L)
                     },
-                    label = { Text("Chỉ tiêu (VND)") },
+                    label = { Text(stringResource(R.string.sfa_8)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f),
                 )
                 if (suggestion != null) {
                     Spacer(Modifier.width(8.dp))
-                    TextButton(onClick = onUseSuggestion) { Text("Dùng lần trước") }
+                    TextButton(onClick = onUseSuggestion) { Text(stringResource(R.string.sfa_9)) }
                 }
             }
         }

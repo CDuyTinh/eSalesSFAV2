@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.workday
 
 import androidx.compose.foundation.background
+import com.tinhcd.myesalessfa.R
 import com.tinhcd.myesalessfa.core.R as CoreR
 import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
 import androidx.compose.ui.res.stringResource
@@ -132,7 +133,7 @@ private fun WorkDayContent(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clip(HeaderShape),
-                title = { Text(if (state.closing) "Kết thúc ngày" else "Bắt đầu ngày") },
+                title = { Text(if (state.closing) stringResource(R.string.sfb_227) else stringResource(R.string.sfb_228)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.brand.header,
                     titleContentColor = MaterialTheme.brand.onHeader,
@@ -145,7 +146,7 @@ private fun WorkDayContent(
             when {
                 state.loading -> SkeletonList(count = 2, lines = 3)
                 day == null -> ErrorBox(
-                    state.error ?: "Không tải được thông tin chấm công",
+                    state.error ?: stringResource(R.string.sfb_229),
                     onRetry = onRetry,
                 )
 
@@ -181,7 +182,7 @@ private fun WorkDayContent(
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         ) {
                             PhotoBlock(
-                                title = "Ảnh chấm công",
+                                title = stringResource(R.string.sfa_161),
                                 path = state.photoLocalPath,
                                 required = state.policy.photoRequired,
                                 busy = state.capturing,
@@ -200,13 +201,13 @@ private fun WorkDayContent(
                     if (state.closing && !day.canCloseDay) {
                         Notice(
                             "Còn ${day.openVisits} cuộc viếng thăm chưa check-out. " +
-                                "Đóng các cuộc đó trước khi kết thúc ngày.",
+                                stringResource(R.string.sfb_230),
                         )
                     }
 
                     if (day.state == WorkDayState.CLOSED) {
                         Text(
-                            text = "Ngày bán hàng hôm nay đã kết thúc.",
+                            text = stringResource(R.string.sfa_162),
                             style = MaterialTheme.typography.bodyLarge,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth(),
@@ -214,10 +215,10 @@ private fun WorkDayContent(
                         OutlinedButton(
                             onClick = onBack,
                             modifier = Modifier.fillMaxWidth(),
-                        ) { Text("Quay lại") }
+                        ) { Text(stringResource(R.string.action_back)) }
                     } else {
                         ButtonPair(
-                            text = if (state.closing) "Kết thúc ngày" else "Bắt đầu ngày",
+                            text = if (state.closing) stringResource(R.string.sfb_227) else stringResource(R.string.sfb_228),
                             onClick = onSubmit,
                             onBack = onBack,
                             enabled = state.canSubmit,
@@ -301,11 +302,11 @@ private fun DayCard(day: WorkDay, lateAfter: LocalTime?) {
             )
 
             PunchLine(
-                label = "Bắt đầu",
+                label = stringResource(R.string.sfa_163),
                 epochMs = day.checkInAtEpochMs,
                 late = day.isLate(lateAfter),
             )
-            PunchLine(label = "Kết thúc", epochMs = day.checkOutAtEpochMs, late = false)
+            PunchLine(label = stringResource(R.string.sfa_164), epochMs = day.checkOutAtEpochMs, late = false)
         }
     }
 }
@@ -338,7 +339,7 @@ private fun PunchLine(label: String, epochMs: Long?, late: Boolean) {
                 modifier = Modifier.padding(start = 8.dp),
             ) {
                 Text(
-                    text = "muộn",
+                    text = stringResource(R.string.sfa_165),
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                 )
@@ -351,7 +352,7 @@ private fun PunchLine(label: String, epochMs: Long?, late: Boolean) {
 private fun LocationLine(gate: CheckInGate?, locating: Boolean, onRefresh: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
     val (text, color) = when {
-        locating -> "Đang lấy vị trí..." to scheme.onSurfaceVariant
+        locating -> stringResource(R.string.sfb_152) to scheme.onSurfaceVariant
         gate is CheckInGate.Allowed ->
             "Trong bán kính cho phép (${gate.distanceM.roundToInt()} m)" to scheme.primary
 
@@ -360,8 +361,8 @@ private fun LocationLine(gate: CheckInGate?, locating: Boolean, onRefresh: () ->
             "Cần chọn lý do$d" to scheme.secondary
         }
 
-        gate is CheckInGate.Blocked -> "Không thể chấm công tại vị trí này" to scheme.error
-        else -> "Chưa xác định vị trí" to scheme.onSurfaceVariant
+        gate is CheckInGate.Blocked -> stringResource(R.string.sfb_231) to scheme.error
+        else -> stringResource(R.string.sfb_232) to scheme.onSurfaceVariant
     }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -381,7 +382,7 @@ private fun LocationLine(gate: CheckInGate?, locating: Boolean, onRefresh: () ->
             color = color,
             modifier = Modifier.padding(horizontal = 8.dp).weight(1f),
         )
-        OutlinedButton(onClick = onRefresh, enabled = !locating) { Text("Làm mới") }
+        OutlinedButton(onClick = onRefresh, enabled = !locating) { Text(stringResource(R.string.sfa_166)) }
     }
 }
 
@@ -400,7 +401,7 @@ private fun ReasonPicker(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (reasons.isEmpty()) {
-            Notice("Chưa tải được danh sách lý do. Kiểm tra kết nối rồi thử lại.")
+            Notice(stringResource(R.string.checkin_reasons_failed))
         }
         reasons.forEach { reason ->
             Row(

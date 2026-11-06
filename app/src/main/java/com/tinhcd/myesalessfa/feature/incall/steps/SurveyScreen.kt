@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import androidx.compose.foundation.layout.Arrangement
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -70,11 +72,11 @@ fun SurveyScreen(
             // no way back in it, which was survivable while it was the step itself
             // and is not now that market_info reaches it from a list.
             StepHeader(
-                title = survey?.definition?.name ?: "Khảo sát",
+                title = survey?.definition?.name ?: stringResource(R.string.sfb_125),
                 subtitle = if (survey != null && survey.definition.isScored) {
                     "Điểm ${survey.totalScore}/${survey.definition.maxScore}" +
                         if (survey.definition.passScore > 0) {
-                            if (survey.isPassing) " - Đạt" else " - Chưa đạt"
+                            if (survey.isPassing) stringResource(R.string.sfb_126) else stringResource(R.string.sfb_127)
                         } else {
                             ""
                         }
@@ -89,7 +91,7 @@ fun SurveyScreen(
             when {
                 state.loading -> SkeletonForm(fields = 4)
                 survey == null -> ErrorBox(
-                    state.error ?: "Không có bộ câu hỏi",
+                    state.error ?: stringResource(R.string.sfb_128),
                     onRetry = viewModel::load,
                 )
 
@@ -131,7 +133,7 @@ fun SurveyScreen(
                             OutlinedTextField(
                                 value = survey.note,
                                 onValueChange = viewModel::onNoteChange,
-                                label = { Text("Ghi chú chung (tùy chọn)") },
+                                label = { Text(stringResource(R.string.sfa_58)) },
                                 minLines = 2,
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -193,12 +195,12 @@ private fun QuestionCard(
                         FilterChip(
                             selected = answer?.bool == true,
                             onClick = { viewModel.onYesNo(question.id, true) },
-                            label = { Text("Có") },
+                            label = { Text(stringResource(R.string.sfa_59)) },
                         )
                         FilterChip(
                             selected = answer?.bool == false,
                             onClick = { viewModel.onYesNo(question.id, false) },
-                            label = { Text("Không") },
+                            label = { Text(stringResource(R.string.sfa_60)) },
                         )
                     }
 
@@ -263,7 +265,7 @@ private fun QuestionCard(
 
             if (question.isRequired && !answered) {
                 Text(
-                    "Chưa trả lời",
+                    stringResource(R.string.sfb_129),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(top = 4.dp),
@@ -286,7 +288,7 @@ private fun SurveyFooter(
             if (survey.definition.isScored) {
                 Row(Modifier.fillMaxWidth()) {
                     Text(
-                        "Điểm",
+                        stringResource(R.string.sfb_130),
                         modifier = Modifier.weight(1f),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -322,7 +324,7 @@ private fun SurveyFooter(
             }
 
             ButtonPair(
-                text = "Hoàn thành",
+                text = stringResource(R.string.sfa_25),
                 onClick = onSubmit,
                 onBack = onBack,
                 enabled = survey.canSubmit,

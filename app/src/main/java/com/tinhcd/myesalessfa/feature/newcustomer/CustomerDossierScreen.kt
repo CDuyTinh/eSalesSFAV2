@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.newcustomer
 
 import android.Manifest
+import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.R as CoreR
 import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
@@ -170,10 +171,10 @@ private fun ListPage(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clip(HeaderShape),
-                title = { Text("Khách hàng mới") },
+                title = { Text(stringResource(R.string.sfa_73)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Quay lại")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -185,7 +186,7 @@ private fun ListPage(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onRegisterNew) {
-                Icon(Icons.Default.Add, contentDescription = "Đăng ký khách hàng mới")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.sfa_74))
             }
         },
     ) { padding ->
@@ -199,7 +200,7 @@ private fun ListPage(
                     OutlinedTextField(
                         value = state.query,
                         onValueChange = onQuery,
-                        label = { Text("Tìm theo tên, mã hoặc số điện thoại") },
+                        label = { Text(stringResource(R.string.sfa_75)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth().padding(12.dp),
                     )
@@ -356,19 +357,19 @@ private fun DetailPage(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clip(HeaderShape),
-                title = { Text("Chi tiết hồ sơ") },
+                title = { Text(stringResource(R.string.sfa_76)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Quay lại")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
                     if (detail?.row?.canEdit == true) {
                         IconButton(onClick = onEdit) {
-                            Icon(Icons.Default.Edit, contentDescription = "Sửa")
+                            Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.sfa_77))
                         }
                         IconButton(onClick = { confirmingDelete = true }) {
-                            Icon(Icons.Default.DeleteOutline, contentDescription = "Xóa")
+                            Icon(Icons.Default.DeleteOutline, contentDescription = stringResource(R.string.sfa_78))
                         }
                     }
                 },
@@ -401,7 +402,7 @@ private fun DetailPage(
 
                     item { HeadCard(detail) }
 
-                    item { SectionTitle("Ảnh hồ sơ") }
+                    item { SectionTitle(stringResource(R.string.sfa_79)) }
 
                     items(state.board.photoTypes, key = { it.id }) { type ->
                         PhotoSlot(
@@ -418,7 +419,7 @@ private fun DetailPage(
                     if (state.missingPhotos.isNotEmpty() && detail.row.canEdit) {
                         item {
                             Notice(
-                                text = "Còn thiếu ảnh bắt buộc: " +
+                                text = stringResource(R.string.sfa_80) +
                                     state.missingPhotos.joinToString(", ") { it.name },
                                 isError = false,
                                 onDismiss = {},
@@ -433,13 +434,13 @@ private fun DetailPage(
     if (confirmingDelete) {
         AlertDialog(
             onDismissRequest = { confirmingDelete = false },
-            title = { Text("Xóa hồ sơ?") },
-            text = { Text("Hồ sơ chưa duyệt sẽ bị xóa hẳn cùng ảnh đã chụp.") },
+            title = { Text(stringResource(R.string.sfa_81)) },
+            text = { Text(stringResource(R.string.sfa_82)) },
             confirmButton = {
-                TextButton(onClick = { confirmingDelete = false; onDelete() }) { Text("Xóa") }
+                TextButton(onClick = { confirmingDelete = false; onDelete() }) { Text(stringResource(R.string.sfa_78)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmingDelete = false }) { Text("Bỏ qua") }
+                TextButton(onClick = { confirmingDelete = false }) { Text(stringResource(R.string.sfa_83)) }
             },
         )
     }
@@ -468,13 +469,13 @@ private fun HeadCard(detail: CustomerRegistrationDetail) {
                 StatusPill(row.status)
             }
 
-            Field("Mã", row.code)
-            row.address?.takeIf { it.isNotBlank() }?.let { Field("Địa chỉ", it) }
-            row.phone?.takeIf { it.isNotBlank() }?.let { Field("Điện thoại", it) }
-            detail.contactName?.takeIf { it.isNotBlank() }?.let { Field("Người liên hệ", it) }
-            row.note?.takeIf { it.isNotBlank() }?.let { Field("Ghi chú", it) }
-            Field("Ngày gửi", row.createdAt.take(10))
-            row.decisionNote?.takeIf { it.isNotBlank() }?.let { Field("Phản hồi", it) }
+            Field(stringResource(R.string.sfb_138), row.code)
+            row.address?.takeIf { it.isNotBlank() }?.let { Field(stringResource(R.string.order_address), it) }
+            row.phone?.takeIf { it.isNotBlank() }?.let { Field(stringResource(R.string.account_phone), it) }
+            detail.contactName?.takeIf { it.isNotBlank() }?.let { Field(stringResource(R.string.order_contact_person), it) }
+            row.note?.takeIf { it.isNotBlank() }?.let { Field(stringResource(R.string.note_label), it) }
+            Field(stringResource(R.string.sfb_139), row.createdAt.take(10))
+            row.decisionNote?.takeIf { it.isNotBlank() }?.let { Field(stringResource(R.string.sfb_140), it) }
 
             if (!row.canEdit) {
                 Text(
@@ -511,8 +512,8 @@ private fun PhotoSlot(
                     Text(
                         listOfNotNull(
                             type.code,
-                            if (type.isRequired) "bắt buộc" else null,
-                            if (type.isAvatar) "ảnh đại diện" else null,
+                            if (type.isRequired) stringResource(R.string.sfb_141) else null,
+                            if (type.isAvatar) stringResource(R.string.sfb_142) else null,
                         ).joinToString(" · "),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.outline,
@@ -523,7 +524,7 @@ private fun PhotoSlot(
                     IconButton(onClick = onCapture, enabled = !capturing) {
                         Icon(
                             Icons.Default.CameraAlt,
-                            contentDescription = if (photo == null) "Chụp ảnh" else "Chụp lại",
+                            contentDescription = if (photo == null) stringResource(R.string.photo_take) else stringResource(R.string.photo_retake),
                         )
                     }
                 }
@@ -546,13 +547,13 @@ private fun PhotoSlot(
                 // this slot looks like, which is the whole point of configuring it.
                 type.sampleUrl != null -> Column {
                     Text(
-                        "Ảnh mẫu",
+                        stringResource(R.string.sfa_84),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.outline,
                     )
                     AsyncImage(
                         model = type.sampleUrl,
-                        contentDescription = "Ảnh mẫu",
+                        contentDescription = stringResource(R.string.sfa_84),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -562,7 +563,7 @@ private fun PhotoSlot(
                 }
 
                 else -> Text(
-                    "Chưa có ảnh",
+                    stringResource(R.string.sfb_143),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline,
                 )
@@ -590,10 +591,10 @@ private fun EditPage(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clip(HeaderShape),
-                title = { Text("Sửa hồ sơ") },
+                title = { Text(stringResource(R.string.sfa_85)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Quay lại")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -617,7 +618,7 @@ private fun EditPage(
                 OutlinedTextField(
                     value = draft.name,
                     onValueChange = onName,
-                    label = { Text("Tên cửa hàng") },
+                    label = { Text(stringResource(R.string.sfa_86)) },
                     isError = draft.nameError != null,
                     supportingText = draft.nameError?.let { { Text(it) } },
                     singleLine = true,
@@ -629,7 +630,7 @@ private fun EditPage(
                 OutlinedTextField(
                     value = draft.address,
                     onValueChange = onAddress,
-                    label = { Text("Địa chỉ") },
+                    label = { Text(stringResource(R.string.order_address)) },
                     isError = draft.addressError != null,
                     supportingText = draft.addressError?.let { { Text(it) } },
                     modifier = Modifier.fillMaxWidth(),
@@ -640,7 +641,7 @@ private fun EditPage(
                 OutlinedTextField(
                     value = draft.phone,
                     onValueChange = onPhone,
-                    label = { Text("Điện thoại") },
+                    label = { Text(stringResource(R.string.account_phone)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -650,7 +651,7 @@ private fun EditPage(
                 OutlinedTextField(
                     value = draft.note,
                     onValueChange = onNote,
-                    label = { Text("Ghi chú") },
+                    label = { Text(stringResource(R.string.note_label)) },
                     minLines = 2,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -662,7 +663,7 @@ private fun EditPage(
                     enabled = state.canSave,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Lưu")
+                    Text(stringResource(R.string.sfa_46))
                 }
             }
         }
@@ -756,7 +757,7 @@ private fun EmptyDossier(searching: Boolean) {
             tint = MaterialTheme.colorScheme.outline,
         )
         Text(
-            if (searching) "Không tìm thấy hồ sơ nào" else "Chưa gửi hồ sơ khách hàng mới nào",
+            if (searching) stringResource(R.string.sfb_144) else stringResource(R.string.sfb_145),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
         )

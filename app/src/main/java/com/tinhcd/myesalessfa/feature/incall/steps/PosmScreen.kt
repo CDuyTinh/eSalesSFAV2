@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import android.Manifest
+import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.R as CoreR
 import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
@@ -146,15 +147,15 @@ fun PosmScreen(
             StepHeader(
                 title = when {
                     onChecking -> state.check?.item?.itemName.orEmpty()
-                    state.page == PosmPage.REGISTER -> "Đăng ký POSM"
+                    state.page == PosmPage.REGISTER -> stringResource(R.string.sfa_40)
                     state.page == PosmPage.MOVE -> state.movement?.kind?.label.orEmpty()
                     else -> state.title.ifBlank { "POSM" }
                 },
                 onBack = back,
                 subtitle = when {
                     onChecking -> state.check?.item?.programName
-                    state.page == PosmPage.REGISTER -> "Chọn số lượng cần xin cho cửa hàng"
-                    state.page == PosmPage.MOVE -> "Cần ít nhất một ảnh làm bằng chứng"
+                    state.page == PosmPage.REGISTER -> stringResource(R.string.sfb_100)
+                    state.page == PosmPage.MOVE -> stringResource(R.string.sfb_101)
                     state.placed.isEmpty() -> null
                     else -> "Đã kiểm ${state.checkedCount}/${state.placed.size} vật phẩm"
                 },
@@ -222,11 +223,11 @@ fun PosmScreen(
     if (confirmLeave) {
         AlertDialog(
             onDismissRequest = { confirmLeave = false },
-            title = { Text("Chưa lưu phiếu kiểm POSM") },
+            title = { Text(stringResource(R.string.sfa_37)) },
             text = {
                 Text(
                     "Đã chụp ${state.check?.photoCount ?: 0} ảnh nhưng chưa lưu. " +
-                        "Thoát bây giờ sẽ mất hết.",
+                        stringResource(R.string.sfb_63),
                 )
             },
             confirmButton = {
@@ -235,10 +236,10 @@ fun PosmScreen(
                         confirmLeave = false
                         viewModel.onLeaveItem()
                     },
-                ) { Text("Thoát") }
+                ) { Text(stringResource(R.string.sfa_14)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmLeave = false }) { Text("Ở lại") }
+                TextButton(onClick = { confirmLeave = false }) { Text(stringResource(R.string.sfa_15)) }
             },
         )
     }
@@ -266,7 +267,7 @@ private fun PosmList(
         Box(Modifier.weight(1f)) {
             when {
                 state.tab == PosmTab.IN_USE && state.placed.isEmpty() -> EmptyNote(
-                    "Cửa hàng này chưa nhận vật phẩm POSM nào.",
+                    stringResource(R.string.sfb_102),
                 )
 
                 state.tab == PosmTab.IN_USE -> LazyColumn(
@@ -298,7 +299,7 @@ private fun PosmList(
                 }
 
                 state.registrations.isEmpty() -> EmptyNote(
-                    "Cửa hàng này chưa đăng ký chương trình POSM nào.",
+                    stringResource(R.string.sfb_103),
                 )
 
                 else -> LazyColumn(
@@ -348,11 +349,11 @@ private fun PosmList(
                                 .height(44.dp),
                         ) {
                             Icon(Icons.Default.AddCircleOutline, contentDescription = null)
-                            Text("  Đăng ký POSM cho cửa hàng")
+                            Text(stringResource(R.string.sfa_38))
                         }
                         Spacer(Modifier.height(8.dp))
                         ButtonPair(
-                            text = "Không có POSM",
+                            text = stringResource(R.string.sfa_39),
                             onClick = onCompleteEmpty,
                             onBack = onBack,
                             loading = state.submitting,
@@ -361,7 +362,7 @@ private fun PosmList(
                     }
 
                     state.nothingPlaced -> ButtonPair(
-                        text = "Không có POSM",
+                        text = stringResource(R.string.sfa_39),
                         onClick = onCompleteEmpty,
                         onBack = onBack,
                         loading = state.submitting,
@@ -369,7 +370,7 @@ private fun PosmList(
                     )
 
                     canRegister -> ButtonPair(
-                        text = "Đăng ký POSM",
+                        text = stringResource(R.string.sfa_40),
                         onClick = onRegister,
                         onBack = onBack,
                         height = 44.dp,
@@ -380,7 +381,7 @@ private fun PosmList(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(44.dp),
-                    ) { Text("Quay lại") }
+                    ) { Text(stringResource(R.string.action_back)) }
                 }
             }
         }
@@ -396,7 +397,7 @@ private fun TabRow(selected: PosmTab, onSelect: (PosmTab) -> Unit, registered: I
             .padding(horizontal = 16.dp, vertical = 10.dp),
     ) {
         TabButton(
-            text = "Đang sử dụng",
+            text = stringResource(R.string.sfa_41),
             selected = selected == PosmTab.IN_USE,
             onClick = { onSelect(PosmTab.IN_USE) },
             modifier = Modifier.weight(1f),
@@ -509,7 +510,7 @@ private fun PosmItemCard(item: PosmAtCustomer, onClick: () -> Unit, onRecall: ()
                 if (condition != null) {
                     StatusChip(condition.label, conditionColour(condition))
                 } else {
-                    StatusChip("Chưa kiểm", MaterialTheme.colorScheme.outline)
+                    StatusChip(stringResource(R.string.sfb_104), MaterialTheme.colorScheme.outline)
                 }
             }
 
@@ -531,7 +532,7 @@ private fun PosmItemCard(item: PosmAtCustomer, onClick: () -> Unit, onRecall: ()
             // A text button rather than one more filled control: taking a fridge
             // back is the rarer act on this card, and the common one is opening
             // the check by tapping anywhere on it.
-            TextButton(onClick = onRecall) { Text("Thu hồi") }
+            TextButton(onClick = onRecall) { Text(stringResource(R.string.sfa_42)) }
         }
     }
 }
@@ -561,10 +562,10 @@ private fun RegistrationCard(registration: PosmRegistration, onDeliver: () -> Un
 
                 when {
                     registration.isPending ->
-                        StatusChip("Chờ duyệt", MaterialTheme.colorScheme.tertiary)
+                        StatusChip(stringResource(R.string.sfa_20), MaterialTheme.colorScheme.tertiary)
 
-                    registration.isRejected -> StatusChip("Từ chối", Bad)
-                    else -> StatusChip("Đã duyệt", Good)
+                    registration.isRejected -> StatusChip(stringResource(R.string.sfb_105), Bad)
+                    else -> StatusChip(stringResource(R.string.sfb_15), Good)
                 }
             }
 
@@ -575,9 +576,9 @@ private fun RegistrationCard(registration: PosmRegistration, onDeliver: () -> Un
             // Three numbers, because the gap between them is the whole story: what
             // was asked for, what was allowed, what actually arrived.
             Row {
-                QtyCell("Đăng ký", registration.registeredQty, Modifier.weight(1f))
-                QtyCell("Được duyệt", registration.approvedQty, Modifier.weight(1f))
-                QtyCell("Đã giao", registration.deliveredQty, Modifier.weight(1f))
+                QtyCell(stringResource(R.string.sfb_28), registration.registeredQty, Modifier.weight(1f))
+                QtyCell(stringResource(R.string.sfb_106), registration.approvedQty, Modifier.weight(1f))
+                QtyCell(stringResource(R.string.sfb_107), registration.deliveredQty, Modifier.weight(1f))
             }
 
             if (registration.awaitingDelivery > 0) {
@@ -595,7 +596,7 @@ private fun RegistrationCard(registration: PosmRegistration, onDeliver: () -> Un
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(40.dp),
-                ) { Text("Giao cho cửa hàng") }
+                ) { Text(stringResource(R.string.sfa_43)) }
             }
         }
     }
@@ -677,7 +678,7 @@ private fun CheckForm(
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            "Số lượng đã cấp",
+                            stringResource(R.string.sfb_108),
                             style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.weight(1f),
                         )
@@ -692,7 +693,7 @@ private fun CheckForm(
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            "Số lượng thực tế",
+                            stringResource(R.string.sfb_109),
                             style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.weight(1f),
                         )
@@ -714,7 +715,7 @@ private fun CheckForm(
                     }
 
                     Spacer(Modifier.height(12.dp))
-                    Text("Tình trạng", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.sfa_44), style = MaterialTheme.typography.bodyLarge)
                     Spacer(Modifier.height(6.dp))
 
                     // Three buttons rather than a picker: there are exactly three
@@ -734,7 +735,7 @@ private fun CheckForm(
             OutlinedTextField(
                 value = check.remark,
                 onValueChange = onRemarkChange,
-                label = { Text("Ghi chú (tùy chọn)") },
+                label = { Text(stringResource(R.string.sfa_19)) },
                 minLines = 2,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -742,7 +743,7 @@ private fun CheckForm(
             OutlinedTextField(
                 value = check.suggestion,
                 onValueChange = onSuggestionChange,
-                label = { Text("Đề xuất (tùy chọn)") },
+                label = { Text(stringResource(R.string.sfa_45)) },
                 minLines = 2,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -779,7 +780,7 @@ private fun CheckForm(
                         .height(44.dp),
                 ) {
                     Icon(Icons.Default.PhotoCamera, contentDescription = null)
-                    Text(if (check.photos.isEmpty()) "  Chụp ảnh" else "  Chụp thêm ảnh")
+                    Text(if (check.photos.isEmpty()) stringResource(R.string.sfb_64) else stringResource(R.string.sfb_65))
                 }
             } else {
                 Text(
@@ -802,13 +803,13 @@ private fun CheckForm(
             Column(Modifier.padding(16.dp)) {
                 when {
                     check.countedQty == null -> Text(
-                        "Nhập số lượng thực tế để lưu",
+                        stringResource(R.string.sfb_110),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                     )
 
                     check.condition == null -> Text(
-                        "Chọn tình trạng để lưu",
+                        stringResource(R.string.sfb_111),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -831,7 +832,7 @@ private fun CheckForm(
                 Spacer(Modifier.height(8.dp))
 
                 ButtonPair(
-                    text = "Lưu",
+                    text = stringResource(R.string.sfa_46),
                     onClick = onSubmit,
                     onBack = onBack,
                     enabled = check.canSubmit,
@@ -918,7 +919,7 @@ private fun PosmPhotoThumbnail(photo: PosmPhoto, onRemove: () -> Unit) {
             // needs to see the shot they just took to judge whether to keep it.
             AsyncImage(
                 model = File(photo.localPath),
-                contentDescription = "Ảnh POSM",
+                contentDescription = stringResource(R.string.sfa_47),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -929,7 +930,7 @@ private fun PosmPhotoThumbnail(photo: PosmPhoto, onRemove: () -> Unit) {
                     .align(Alignment.TopEnd)
                     .padding(2.dp)
                     .size(28.dp),
-            ) { Icon(Icons.Default.Close, contentDescription = "Bỏ ảnh này") }
+            ) { Icon(Icons.Default.Close, contentDescription = stringResource(R.string.sfa_23)) }
 
             Row(
                 modifier = Modifier
@@ -1030,7 +1031,7 @@ private fun RegisterForm(
                 OutlinedTextField(
                     value = draft.reason,
                     onValueChange = onReason,
-                    label = { Text("Lý do cửa hàng cần (tùy chọn)") },
+                    label = { Text(stringResource(R.string.sfa_48)) },
                     minLines = 2,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1051,7 +1052,7 @@ private fun RegisterForm(
                 }
 
                 ButtonPair(
-                    text = "Gửi đăng ký",
+                    text = stringResource(R.string.sfa_49),
                     onClick = onSubmit,
                     onBack = onBack,
                     enabled = draft.canSubmit && !submitting,
@@ -1100,7 +1101,7 @@ private fun RegisterLineCard(
                 }
 
                 if (entry.isPending) {
-                    StatusChip("Chờ duyệt", MaterialTheme.colorScheme.tertiary)
+                    StatusChip(stringResource(R.string.sfa_20), MaterialTheme.colorScheme.tertiary)
                 }
             }
 
@@ -1108,7 +1109,7 @@ private fun RegisterLineCard(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    if (room == 0) "Đã đủ số lượng cho phép" else "Số lượng xin",
+                    if (room == 0) stringResource(R.string.sfb_112) else stringResource(R.string.sfb_113),
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (room == 0) {
                         MaterialTheme.colorScheme.onSurfaceVariant
@@ -1199,7 +1200,7 @@ private fun MovementForm(
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                if (delivering) "Số lượng giao" else "Số lượng thu hồi",
+                                if (delivering) stringResource(R.string.sfb_114) else stringResource(R.string.sfb_115),
                                 style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.weight(1f),
                             )
@@ -1242,14 +1243,14 @@ private fun MovementForm(
                         .height(44.dp),
                 ) {
                     Icon(Icons.Default.PhotoCamera, contentDescription = null)
-                    Text(if (draft.photos.isEmpty()) "  Chụp ảnh" else "  Chụp thêm ảnh")
+                    Text(if (draft.photos.isEmpty()) stringResource(R.string.sfb_64) else stringResource(R.string.sfb_65))
                 }
             }
 
             OutlinedTextField(
                 value = draft.note,
                 onValueChange = onNote,
-                label = { Text("Ghi chú (tùy chọn)") },
+                label = { Text(stringResource(R.string.sfa_19)) },
                 minLines = 2,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -1275,7 +1276,7 @@ private fun MovementForm(
                     Spacer(Modifier.height(6.dp))
                 } else if (draft.movingLines.isEmpty()) {
                     Text(
-                        "Chưa chọn số lượng",
+                        stringResource(R.string.sfb_116),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -1283,7 +1284,7 @@ private fun MovementForm(
                 }
 
                 ButtonPair(
-                    text = if (delivering) "Xác nhận giao" else "Xác nhận thu hồi",
+                    text = if (delivering) stringResource(R.string.sfb_117) else stringResource(R.string.sfb_118),
                     onClick = onSubmit,
                     onBack = onBack,
                     enabled = draft.canSubmit && !submitting && !capturing,

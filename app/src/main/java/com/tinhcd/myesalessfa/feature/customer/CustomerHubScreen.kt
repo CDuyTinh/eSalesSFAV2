@@ -1,6 +1,9 @@
 package com.tinhcd.myesalessfa.feature.customer
 
 import android.content.Intent
+import androidx.annotation.StringRes
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
@@ -86,11 +89,11 @@ import com.tinhcd.myesalessfa.feature.incall.InCallTab
  * The check-in itself did not move. It is still the chip on the route card,
  * which is where a rep working a fifty-stop day expects it.
  */
-private enum class HubTab(val title: String) {
-    WORK("Công việc"),
-    INFO("Thông tin"),
-    ORDERS("Lịch sử đơn hàng"),
-    PROGRAMS("Chương trình"),
+private enum class HubTab(@StringRes val title: Int) {
+    WORK(R.string.hub_work),
+    INFO(R.string.step_info),
+    ORDERS(R.string.hub_orders),
+    PROGRAMS(R.string.hub_programs),
 }
 
 /**
@@ -223,7 +226,7 @@ private fun CustomerBanner(info: CustomerInfo?, onBack: () -> Unit) {
 
         CircleButton(
             icon = Icons.AutoMirrored.Filled.ArrowBack,
-            contentDescription = "Quay lại",
+            contentDescription = stringResource(R.string.action_back),
             onClick = onBack,
             modifier = Modifier
                 .align(Alignment.TopStart)
@@ -240,7 +243,7 @@ private fun CustomerBanner(info: CustomerInfo?, onBack: () -> Unit) {
         ) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = info?.name ?: "Đang tải…",
+                    text = info?.name ?: stringResource(R.string.sfb_6),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
@@ -281,7 +284,7 @@ private fun CustomerBanner(info: CustomerInfo?, onBack: () -> Unit) {
             if (lat != null && lng != null) {
                 CircleButton(
                     icon = Icons.Default.Map,
-                    contentDescription = "Xem trên bản đồ",
+                    contentDescription = stringResource(R.string.sfa_1),
                     onClick = {
                         // Hands off to whatever map the phone has, with the
                         // shop's name as the pin label. Nothing in this app
@@ -405,7 +408,7 @@ private fun TabPills(
                         .padding(horizontal = 4.dp, vertical = 8.dp),
                 ) {
                     Text(
-                        text = tab.title,
+                        text = stringResource(tab.title),
                         textAlign = TextAlign.Center,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
@@ -453,7 +456,7 @@ private fun ProgramsTab(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (state.joined.isNotEmpty()) {
-                item(key = "h-joined") { SectionLabel("Đang tham gia") }
+                item(key = "h-joined") { SectionLabel(stringResource(R.string.sfb_7)) }
                 items(state.joined, key = { "j-" + it.programId }) { program ->
                     JoinedProgramCard(program)
                 }
@@ -462,7 +465,7 @@ private fun ProgramsTab(
             if (state.open.isNotEmpty()) {
                 item(key = "h-open") {
                     SectionLabel(
-                        if (state.joined.isEmpty()) "Có thể đăng ký" else "Chương trình khác",
+                        if (state.joined.isEmpty()) stringResource(R.string.sfb_8) else stringResource(R.string.sfb_9),
                     )
                 }
                 items(state.open, key = { "o-" + it.programId }) { offer ->
@@ -478,14 +481,14 @@ private fun ProgramsTab(
             }
 
             if (state.loyaltyJoined.isNotEmpty()) {
-                item(key = "h-ljoined") { SectionLabel("Tích lũy đang chạy") }
+                item(key = "h-ljoined") { SectionLabel(stringResource(R.string.sfb_10)) }
                 items(state.loyaltyJoined, key = { "lj-" + it.programId }) { program ->
                     LoyaltyJoinedCard(program)
                 }
             }
 
             if (state.loyaltyOpen.isNotEmpty()) {
-                item(key = "h-lopen") { SectionLabel("Tích lũy có thể đăng ký") }
+                item(key = "h-lopen") { SectionLabel(stringResource(R.string.sfb_11)) }
                 items(state.loyaltyOpen, key = { "lo-" + it.programId }) { offer ->
                     LoyaltyOpenCard(
                         offer = offer,
@@ -501,8 +504,8 @@ private fun ProgramsTab(
             if (state.isEmpty) {
                 item(key = "empty") {
                     Text(
-                        "Cửa hàng này chưa tham gia chương trình nào, và hôm nay " +
-                            "cũng không có chương trình nào đang mở đăng ký.",
+                        stringResource(R.string.sfb_12) +
+                            stringResource(R.string.sfb_13),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 24.dp),
@@ -524,7 +527,7 @@ private fun ProgramsTab(
                 Text(
                     // Said plainly. A rep who sees only display programmes here
                     // should know why, rather than conclude the shop is in nothing.
-                    "Chương trình POSM xem ở bước POSM trong cuộc viếng thăm.",
+                    stringResource(R.string.sfb_14),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
@@ -567,17 +570,17 @@ private fun JoinedProgramCard(program: DisplayProgram) {
                 }
 
                 if (program.isPending) {
-                    ProgramChip("Chờ duyệt", MaterialTheme.colorScheme.tertiary)
+                    ProgramChip(stringResource(R.string.sfa_20), MaterialTheme.colorScheme.tertiary)
                 } else {
-                    ProgramChip("Đã duyệt", MaterialTheme.status.success)
+                    ProgramChip(stringResource(R.string.sfb_15), MaterialTheme.status.success)
                 }
             }
 
             Spacer(Modifier.height(8.dp))
             Text(
-                "Chỉ tiêu " + program.requiredFaces + " mặt" +
+                stringResource(R.string.sfb_16) + program.requiredFaces + stringResource(R.string.sfb_17) +
                     if (program.bonusAmount > 0) {
-                        " · thưởng " + formatDong(program.bonusAmount)
+                        stringResource(R.string.sfb_18) + formatDong(program.bonusAmount)
                     } else {
                         ""
                     },
@@ -589,8 +592,8 @@ private fun JoinedProgramCard(program: DisplayProgram) {
             // the display step; this is the same number read back.
             if (program.isScored) {
                 Text(
-                    "Lần chấm gần nhất: " + (program.countedFaces ?: 0) + " mặt · " +
-                        (if (program.achieved == true) "đạt" else "chưa đạt"),
+                    stringResource(R.string.sfb_19) + (program.countedFaces ?: 0) + stringResource(R.string.sfb_20) +
+                        (if (program.achieved == true) stringResource(R.string.sfb_21) else stringResource(R.string.sfb_22)),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (program.achieved == true) {
                         MaterialTheme.status.success
@@ -629,14 +632,14 @@ private fun OpenProgramCard(
                     )
                     Text(
                         offer.programCode +
-                            (offer.regisToDate?.let { " | hạn đăng ký " + it } ?: ""),
+                            (offer.regisToDate?.let { stringResource(R.string.sfb_23) + it } ?: ""),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
 
                 if (!offer.anyAvailable) {
-                    ProgramChip("Hết suất", MaterialTheme.colorScheme.outline)
+                    ProgramChip(stringResource(R.string.sfb_24), MaterialTheme.colorScheme.outline)
                 }
             }
 
@@ -654,7 +657,7 @@ private fun OpenProgramCard(
             if (!expanded) {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "Chạm để chọn mức",
+                    stringResource(R.string.sfb_25),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -672,10 +675,10 @@ private fun OpenProgramCard(
                     Column(Modifier.weight(1f)) {
                         Text(level.levelName, style = MaterialTheme.typography.bodyMedium)
                         Text(
-                            level.requiredFaces.toString() + " mặt" +
+                            level.requiredFaces.toString() + stringResource(R.string.sfb_17) +
                                 (
                                     if (level.bonusAmount > 0) {
-                                        " · thưởng " + formatDong(level.bonusAmount)
+                                        stringResource(R.string.sfb_18) + formatDong(level.bonusAmount)
                                     } else {
                                         ""
                                     }
@@ -683,7 +686,7 @@ private fun OpenProgramCard(
                                 // Only where a ceiling exists. "Còn 5 suất" on a
                                 // level nobody is rationing would be a number the
                                 // rep could not act on.
-                                (level.slotsLeft?.let { " · còn " + it + " suất" } ?: ""),
+                                (level.slotsLeft?.let { stringResource(R.string.sfb_26) + it + stringResource(R.string.sfb_27) } ?: ""),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -692,7 +695,7 @@ private fun OpenProgramCard(
                     OutlinedButton(
                         onClick = { onRegister(level.levelId) },
                         enabled = level.available && canRegister && !registering,
-                    ) { Text(if (level.available) "Đăng ký" else "Hết suất") }
+                    ) { Text(if (level.available) stringResource(R.string.sfb_28) else stringResource(R.string.sfb_24)) }
                 }
             }
 
@@ -700,7 +703,7 @@ private fun OpenProgramCard(
                 Text(
                     // The registration belongs to the call it was agreed on, so
                     // outside one the list is readable and the button is not.
-                    "Cần đang trong cuộc viếng thăm mới đăng ký được.",
+                    stringResource(R.string.sfb_29),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
 import android.Manifest
+import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.R as CoreR
 import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
@@ -140,7 +141,7 @@ fun DisplayAuditScreen(
             StepHeader(
                 title = when {
                     onScoring && state.audit.program != null -> state.audit.program!!.programName
-                    else -> state.title.ifBlank { "Chấm trưng bày" }
+                    else -> state.title.ifBlank { stringResource(R.string.sfb_62) }
                 },
                 onBack = back,
                 subtitle = if (state.programs.isEmpty()) {
@@ -178,11 +179,11 @@ fun DisplayAuditScreen(
     if (confirmLeave) {
         AlertDialog(
             onDismissRequest = { confirmLeave = false },
-            title = { Text("Chưa gửi ảnh trưng bày") },
+            title = { Text(stringResource(R.string.sfa_13)) },
             text = {
                 Text(
                     "Đã chụp ${state.audit.photoCount} ảnh nhưng chưa gửi. " +
-                        "Thoát bây giờ sẽ mất hết.",
+                        stringResource(R.string.sfb_63),
                 )
             },
             confirmButton = {
@@ -191,10 +192,10 @@ fun DisplayAuditScreen(
                         confirmLeave = false
                         if (state.programs.isNotEmpty()) viewModel.onLeaveProgram() else onDone()
                     },
-                ) { Text("Thoát") }
+                ) { Text(stringResource(R.string.sfa_14)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmLeave = false }) { Text("Ở lại") }
+                TextButton(onClick = { confirmLeave = false }) { Text(stringResource(R.string.sfa_15)) }
             },
         )
     }
@@ -229,7 +230,7 @@ private fun ProgramList(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(44.dp),
-                ) { Text("Quay lại") }
+                ) { Text(stringResource(R.string.action_back)) }
             }
         }
     }
@@ -294,16 +295,16 @@ private fun ProgramCard(program: DisplayProgram, onClick: () -> Unit) {
                     // The verdict, not the count: a display can miss the target
                     // and still be built right, which is the whole reason the rep
                     // is asked rather than the arithmetic.
-                    program.achieved == true -> StatusPill("Đạt", Pass)
-                    program.achieved == false -> StatusPill("Không đạt", Fail)
+                    program.achieved == true -> StatusPill(stringResource(R.string.sfa_16), Pass)
+                    program.achieved == false -> StatusPill(stringResource(R.string.sfa_17), Fail)
                     // Signed up and waiting on head office. Still audited: refusing
                     // to score it is how a rep gets blamed for the paperwork.
                     program.isPending -> StatusPill(
-                        "Chờ duyệt",
+                        stringResource(R.string.sfa_20),
                         MaterialTheme.colorScheme.tertiary,
                     )
 
-                    else -> StatusPill("Chưa chấm", MaterialTheme.colorScheme.outline)
+                    else -> StatusPill(stringResource(R.string.sfa_18), MaterialTheme.colorScheme.outline)
                 }
             }
 
@@ -384,7 +385,7 @@ private fun AuditForm(
 
             Text(
                 buildString {
-                    append("Ảnh trưng bày")
+                    append(stringResource(R.string.sfa_22))
                     if (audit.photoMin > 0) append(" - tối thiểu ${audit.photoMin}")
                     append(", tối đa ${audit.photoMax}")
                 },
@@ -423,7 +424,7 @@ private fun AuditForm(
                         .height(44.dp),
                 ) {
                     Icon(Icons.Default.PhotoCamera, contentDescription = null)
-                    Text(if (audit.photos.isEmpty()) "  Chụp ảnh" else "  Chụp thêm ảnh")
+                    Text(if (audit.photos.isEmpty()) stringResource(R.string.sfb_64) else stringResource(R.string.sfb_65))
                 }
             } else {
                 // Gone rather than greyed. A disabled button reads as something the
@@ -438,7 +439,7 @@ private fun AuditForm(
             OutlinedTextField(
                 value = audit.note,
                 onValueChange = onNoteChange,
-                label = { Text("Ghi chú (tùy chọn)") },
+                label = { Text(stringResource(R.string.sfa_19)) },
                 minLines = 3,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -464,7 +465,7 @@ private fun AuditForm(
                     )
 
                     audit.program != null && audit.achieved == null -> Text(
-                        "Chọn Đạt hoặc Không đạt để gửi",
+                        stringResource(R.string.sfb_66),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -481,7 +482,7 @@ private fun AuditForm(
                 Spacer(Modifier.height(8.dp))
 
                 ButtonPair(
-                    text = if (audit.program == null) "Hoàn thành" else "Gửi",
+                    text = if (audit.program == null) stringResource(R.string.sfa_25) else stringResource(R.string.sfb_67),
                     onClick = onSubmit,
                     onBack = onBack,
                     enabled = audit.canSubmit,
@@ -525,10 +526,10 @@ private fun ScoreCard(
                     modifier = Modifier.weight(1f),
                 )
                 if (program.isPending) {
-                    StatusPill("Chờ duyệt", MaterialTheme.colorScheme.tertiary)
+                    StatusPill(stringResource(R.string.sfa_20), MaterialTheme.colorScheme.tertiary)
                 } else if (!program.registered) {
                     // No signup behind it: the programme applies to the whole route.
-                    StatusPill("Áp dụng chung", MaterialTheme.colorScheme.outline)
+                    StatusPill(stringResource(R.string.sfa_21), MaterialTheme.colorScheme.outline)
                 }
             }
 
@@ -547,7 +548,7 @@ private fun ScoreCard(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "Số mặt đăng ký",
+                    stringResource(R.string.sfb_68),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f),
                 )
@@ -562,7 +563,7 @@ private fun ScoreCard(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "Số mặt thực tế",
+                    stringResource(R.string.sfb_69),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f),
                 )
@@ -586,21 +587,21 @@ private fun ScoreCard(
             Spacer(Modifier.height(12.dp))
 
             Text(
-                "Đánh giá",
+                stringResource(R.string.sfb_70),
                 style = MaterialTheme.typography.bodyLarge,
             )
             Spacer(Modifier.height(6.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 VerdictButton(
-                    text = "Đạt",
+                    text = stringResource(R.string.sfa_16),
                     tint = Pass,
                     selected = achieved == true,
                     onClick = { onAchievedChange(true) },
                     modifier = Modifier.weight(1f),
                 )
                 VerdictButton(
-                    text = "Không đạt",
+                    text = stringResource(R.string.sfa_17),
                     tint = Fail,
                     selected = achieved == false,
                     onClick = { onAchievedChange(false) },
@@ -666,7 +667,7 @@ private fun PhotoThumbnail(photo: AuditPhoto, onRemove: () -> Unit) {
             // needs to see the shot they just took to judge whether to keep it.
             AsyncImage(
                 model = File(photo.localPath),
-                contentDescription = "Ảnh trưng bày",
+                contentDescription = stringResource(R.string.sfa_22),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -677,7 +678,7 @@ private fun PhotoThumbnail(photo: AuditPhoto, onRemove: () -> Unit) {
                     .align(Alignment.TopEnd)
                     .padding(2.dp)
                     .size(28.dp),
-            ) { Icon(Icons.Default.Close, contentDescription = "Bỏ ảnh này") }
+            ) { Icon(Icons.Default.Close, contentDescription = stringResource(R.string.sfa_23)) }
 
             Row(
                 modifier = Modifier
@@ -729,7 +730,7 @@ private fun StandardCard(program: DisplayProgram) {
     ) {
         Column(Modifier.padding(14.dp)) {
             Text(
-                "Chuẩn của mức này",
+                stringResource(R.string.sfb_71),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -770,7 +771,7 @@ private fun StandardCard(program: DisplayProgram) {
             if (program.requiredItems.isNotEmpty()) {
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    "Hàng cần trưng bày",
+                    stringResource(R.string.sfb_72),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -793,7 +794,7 @@ private fun StandardCard(program: DisplayProgram) {
                         // what they are counting.
                         if (!item.isRequired) {
                             Text(
-                                "tùy chọn  ",
+                                stringResource(R.string.sfb_73),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

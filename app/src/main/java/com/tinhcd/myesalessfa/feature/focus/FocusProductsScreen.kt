@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.focus
 
 import androidx.compose.foundation.background
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -79,12 +81,12 @@ private fun FocusProductsContent(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clip(HeaderShape),
-                title = { Text("Sản phẩm trọng tâm") },
+                title = { Text(stringResource(R.string.sfa_11)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Quay lại",
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
                 },
@@ -101,7 +103,7 @@ private fun FocusProductsContent(
                 state.loading -> SkeletonList(count = 5)
                 state.error != null -> ErrorBox(state.error, onRetry = onRetry)
                 state.products.isEmpty() ->
-                    ErrorBox("Hiện không có sản phẩm trọng tâm nào đang chạy")
+                    ErrorBox(stringResource(R.string.sfa_12))
 
                 else -> LazyColumn(
                     contentPadding = PaddingValues(16.dp),
@@ -111,7 +113,7 @@ private fun FocusProductsContent(
                         item {
                             Text(
                                 text = "Đạt chỉ tiêu ${state.onTrack}/${state.measuredCount} " +
-                                    "sản phẩm có định mức",
+                                    stringResource(R.string.sfb_58),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

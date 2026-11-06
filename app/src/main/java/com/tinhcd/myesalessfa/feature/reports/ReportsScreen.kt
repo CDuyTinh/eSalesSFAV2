@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.reports
 
 import androidx.compose.material.icons.filled.Storefront
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -200,16 +202,16 @@ private fun ReportsContent(
                         IconButton(onClick = onBack) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Quay lại",
+                                contentDescription = stringResource(R.string.action_back),
                             )
                         }
                     },
                     actions = {
                         IconButton(onClick = { filtering = true }) {
-                            Icon(Icons.Default.FilterList, contentDescription = "Bộ lọc")
+                            Icon(Icons.Default.FilterList, contentDescription = stringResource(R.string.sfa_131))
                         }
                         IconButton(onClick = onRefresh, enabled = !state.loading) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Tải lại")
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_reload))
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -323,7 +325,7 @@ private fun ActivitiesTab(state: ReportsUiState) {
                 if (report.rows.isEmpty()) {
                     item {
                         Text(
-                            text = "Không có cuộc viếng thăm nào trong ngày này",
+                            text = stringResource(R.string.sfa_132),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
@@ -348,7 +350,7 @@ private fun ActivitiesTab(state: ReportsUiState) {
 private fun ActivitySummaryCard(summary: ActivitySummary) {
     SummaryCard {
         Text(
-            "Doanh số trong ngày (VND)",
+            stringResource(R.string.sfb_188),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -361,21 +363,21 @@ private fun ActivitySummaryCard(summary: ActivitySummary) {
         // One height per row: a tile with a share under it would otherwise stand taller.
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.height(IntrinsicSize.Min)) {
             StatTile(
-                label = "Ghé / KH",
+                label = stringResource(R.string.sfa_133),
                 value = "${summary.visited}/${summary.planned}",
                 colors = Kpi.Blue,
                 footer = summary.coverage?.let { "${(it * 100).toInt()}%" },
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
             StatTile(
-                label = "Có đơn",
+                label = stringResource(R.string.sfa_134),
                 value = summary.strike.toString(),
                 colors = Kpi.Green,
                 footer = summary.strikeRate?.let { "${(it * 100).toInt()}%" },
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
             StatTile(
-                label = "Không đơn",
+                label = stringResource(R.string.sfa_135),
                 value = summary.nonStrike.toString(),
                 colors = Kpi.Orange,
                 modifier = Modifier.weight(1f).fillMaxHeight(),
@@ -383,13 +385,13 @@ private fun ActivitySummaryCard(summary: ActivitySummary) {
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.height(IntrinsicSize.Min)) {
             StatTile(
-                label = "Đóng cửa",
+                label = stringResource(R.string.visit_closed),
                 value = summary.closed.toString(),
                 colors = Kpi.Slate,
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
             StatTile(
-                label = "Ngoài tuyến",
+                label = stringResource(R.string.sfa_136),
                 value = summary.unplanned.toString(),
                 colors = Kpi.Violet,
                 modifier = Modifier.weight(1f).fillMaxHeight(),
@@ -426,7 +428,7 @@ private fun ActivityRowCard(row: ActivityRow) {
                 val checkIn = row.checkInAtEpochMs
                 when {
                     closed -> Text(
-                        "Đã đóng cửa",
+                        stringResource(R.string.sfb_189),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -443,7 +445,7 @@ private fun ActivityRowCard(row: ActivityRow) {
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(top = 10.dp),
             )
-            InfoLine(Icons.Default.Route, if (row.planned) "Trong tuyến" else "Ngoài tuyến")
+            InfoLine(Icons.Default.Route, if (row.planned) stringResource(R.string.sfb_190) else stringResource(R.string.sfa_136))
             row.address?.takeIf { it.isNotBlank() }?.let { InfoLine(Icons.Default.LocationOn, it) }
         }
 
@@ -547,7 +549,7 @@ private fun SalesTotalCard(report: SalesReport) {
             val gap = report.gap
             Text(
                 text = when {
-                    target == null -> "Chưa được giao chỉ tiêu tháng này"
+                    target == null -> stringResource(R.string.dashboard_no_target)
                     gap != null && gap > 0 ->
                         "Chỉ tiêu ${formatMoney(target)} · còn ${formatMoney(gap)}"
 
@@ -628,7 +630,7 @@ private fun CustomerSalesCard(row: CustomerSales) {
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             Row {
                 Text(
-                    "Doanh số chờ xử lý",
+                    stringResource(R.string.sfb_191),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
@@ -652,7 +654,7 @@ private fun ProductSalesCard(row: ProductSales) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
         Text(
             buildAnnotatedString {
-                withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) { append("SL chờ xử lý: ") }
+                withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) { append(stringResource(R.string.sfb_192)) }
                 withStyle(SpanStyle(color = ReportBlue)) { append("${row.pendingQty} ${row.baseUom}") }
             },
             style = MaterialTheme.typography.bodyMedium,
@@ -697,7 +699,7 @@ private fun ProductSalesBody(row: ProductSales) {
 @Composable
 private fun EmptyCut() {
     Text(
-        text = "Chưa có đơn hàng nào trong tháng này",
+        text = stringResource(R.string.sfa_137),
         style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
@@ -783,7 +785,7 @@ private fun TimeInOut(time: String, checkIn: Boolean) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             if (checkIn) Icons.AutoMirrored.Filled.Login else Icons.AutoMirrored.Filled.Logout,
-            contentDescription = if (checkIn) "Vào" else "Ra",
+            contentDescription = if (checkIn) stringResource(R.string.sfb_194) else "Ra",
             modifier = Modifier.size(15.dp),
             tint = if (checkIn) ReportBlue else ReportRed,
         )
@@ -884,9 +886,10 @@ private fun parseReportInstant(raw: String): LocalDateTime? {
 }
 
 /** The time in the shop, as the card's lower line says it. */
+@Composable
 private fun ActivityRow.stayLabel(): String = when {
     minutes != null -> "$minutes phút"
-    checkInAtEpochMs != null && checkOutAtEpochMs == null -> "Đang viếng thăm"
+    checkInAtEpochMs != null && checkOutAtEpochMs == null -> stringResource(R.string.shell_visiting)
     else -> status.label()
 }
 
@@ -1021,7 +1024,7 @@ private fun OrdersTab(
 
     Column(Modifier.fillMaxSize()) {
         if (report == null) {
-            ReportEmpty(Icons.Default.ReceiptLong, state.error ?: "Đang tải báo cáo đơn hàng")
+            ReportEmpty(Icons.Default.ReceiptLong, state.error ?: stringResource(R.string.sfb_195))
             return@Column
         }
 
@@ -1034,7 +1037,7 @@ private fun OrdersTab(
             item {
                 SummaryCard {
                     Text(
-                        "Doanh số kỳ này (VND)",
+                        stringResource(R.string.sfb_196),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -1047,19 +1050,19 @@ private fun OrdersTab(
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         StatTile(
-                            label = "Số đơn",
+                            label = stringResource(R.string.sfa_138),
                             value = report.total.toString(),
                             colors = Kpi.Green,
                             modifier = Modifier.weight(1f),
                         )
                         StatTile(
-                            label = "Đã xác nhận",
+                            label = stringResource(R.string.sfa_139),
                             value = report.count(OrderReportStatus.CONFIRMED).toString(),
                             colors = Kpi.Blue,
                             modifier = Modifier.weight(1f),
                         )
                         StatTile(
-                            label = "TB / đơn",
+                            label = stringResource(R.string.sfa_140),
                             value = compactMoney(average),
                             colors = Kpi.Violet,
                             modifier = Modifier.weight(1f),
@@ -1097,12 +1100,12 @@ private fun LazyListScope.orderRows(rows: LazyPagingItems<OrderReportRow>) {
         }
 
         is LoadState.Error -> {
-            item { PageError("Không tải được danh sách đơn hàng", onRetry = rows::retry) }
+            item { PageError(stringResource(R.string.sfb_197), onRetry = rows::retry) }
             return
         }
 
         is LoadState.NotLoading -> if (rows.itemCount == 0) {
-            item { ReportEmpty(Icons.Default.ReceiptLong, "Kỳ này chưa có đơn hàng") }
+            item { ReportEmpty(Icons.Default.ReceiptLong, stringResource(R.string.sfb_198)) }
             return
         }
     }
@@ -1118,7 +1121,7 @@ private fun LazyListScope.orderRows(rows: LazyPagingItems<OrderReportRow>) {
             }
         }
 
-        is LoadState.Error -> item { PageError("Không tải được trang tiếp theo", onRetry = rows::retry) }
+        is LoadState.Error -> item { PageError(stringResource(R.string.sfb_199), onRetry = rows::retry) }
         is LoadState.NotLoading -> Unit
     }
 }
@@ -1127,7 +1130,7 @@ private fun LazyListScope.orderRows(rows: LazyPagingItems<OrderReportRow>) {
 private fun PageError(message: String, onRetry: () -> Unit) {
     Column(Modifier.fillMaxWidth().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
-        TextButton(onClick = onRetry) { Text("Thử lại") }
+        TextButton(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
     }
 }
 
@@ -1177,7 +1180,7 @@ private fun OrderReportCard(row: OrderReportRow) {
             }
             Row {
                 Text(
-                    "Tổng số lượng",
+                    stringResource(R.string.order_total_qty),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
@@ -1186,7 +1189,7 @@ private fun OrderReportCard(row: OrderReportRow) {
             }
             InfoLine(
                 Icons.Default.ShoppingCart,
-                if (row.inRoute) "Đơn trong tuyến" else "Đơn ngoài tuyến",
+                if (row.inRoute) stringResource(R.string.sfb_200) else stringResource(R.string.sfb_201),
                 topPadding = 0.dp,
             )
         }
@@ -1215,7 +1218,7 @@ private fun SkuTab(
         OutlinedTextField(
             value = state.skuQuery,
             onValueChange = onSkuQuery,
-            placeholder = { Text("Tìm theo tên hoặc mã sản phẩm") },
+            placeholder = { Text(stringResource(R.string.sfa_141)) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             singleLine = true,
             shape = RoundedCornerShape(12.dp),
@@ -1229,7 +1232,7 @@ private fun SkuTab(
         )
 
         if (report == null) {
-            ReportEmpty(Icons.Default.Inventory2, state.error ?: "Đang tải báo cáo SKU")
+            ReportEmpty(Icons.Default.Inventory2, state.error ?: stringResource(R.string.sfb_202))
             return@Column
         }
 
@@ -1240,7 +1243,7 @@ private fun SkuTab(
             item {
                 SummaryCard {
                     Text(
-                        "Thành tiền kỳ này (VND)",
+                        stringResource(R.string.sfb_203),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -1252,19 +1255,19 @@ private fun SkuTab(
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         StatTile(
-                            label = "Số SKU",
+                            label = stringResource(R.string.sfa_142),
                             value = report.skuCount.toString(),
                             colors = Kpi.Blue,
                             modifier = Modifier.weight(1f),
                         )
                         StatTile(
-                            label = "Đã xác nhận",
+                            label = stringResource(R.string.sfa_139),
                             value = report.qtyConfirmed.toString(),
                             colors = Kpi.Green,
                             modifier = Modifier.weight(1f),
                         )
                         StatTile(
-                            label = "Chờ xử lý",
+                            label = stringResource(R.string.sfa_143),
                             value = report.qtyPending.toString(),
                             colors = Kpi.Orange,
                             modifier = Modifier.weight(1f),
@@ -1277,8 +1280,8 @@ private fun SkuTab(
                 item {
                     ReportEmpty(
                         Icons.Default.Inventory2,
-                        if (state.skuQuery.isNotBlank()) "Không tìm thấy sản phẩm nào"
-                        else "Kỳ này chưa bán mặt hàng nào",
+                        if (state.skuQuery.isNotBlank()) stringResource(R.string.order_no_products)
+                        else stringResource(R.string.sfb_204),
                     )
                 }
             } else {
@@ -1317,7 +1320,7 @@ private fun SkuReportCard(row: SkuReportRow) {
                     Text(
                         buildAnnotatedString {
                             withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
-                                append("Đã xác nhận: ")
+                                append(stringResource(R.string.sfb_205))
                             }
                             withStyle(SpanStyle(color = ReportGreen)) { append(row.qtyConfirmed.toString()) }
                         },
@@ -1342,7 +1345,7 @@ private fun TradeTab(
 
     Column(Modifier.fillMaxSize()) {
         if (report == null) {
-            ReportEmpty(Icons.Default.Workspaces, state.error ?: "Đang tải báo cáo thương mại")
+            ReportEmpty(Icons.Default.Workspaces, state.error ?: stringResource(R.string.sfb_206))
             return@Column
         }
 
@@ -1355,7 +1358,7 @@ private fun TradeTab(
             item {
                 SummaryCard {
                     Text(
-                        "Lượt đăng ký chương trình",
+                        stringResource(R.string.sfb_207),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -1367,13 +1370,13 @@ private fun TradeTab(
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         StatTile(
-                            label = "Trưng bày",
+                            label = stringResource(R.string.sfa_144),
                             value = report.displayCount.toString(),
                             colors = Kpi.Violet,
                             modifier = Modifier.weight(1f),
                         )
                         StatTile(
-                            label = "Tích lũy",
+                            label = stringResource(R.string.sfa_145),
                             value = report.loyaltyCount.toString(),
                             colors = Kpi.Green,
                             modifier = Modifier.weight(1f),
@@ -1381,7 +1384,7 @@ private fun TradeTab(
                         StatTile(
                             // Outlets, not sign-ups: one shop in three
                             // programmes is one shop reached.
-                            label = "Khách hàng",
+                            label = stringResource(R.string.order_customer),
                             value = report.customerCount.toString(),
                             colors = Kpi.Blue,
                             modifier = Modifier.weight(1f),
@@ -1404,7 +1407,7 @@ private fun TradeTab(
 
             if (rows.isEmpty()) {
                 item {
-                    ReportEmpty(Icons.Default.Workspaces, "Kỳ này chưa đăng ký chương trình nào")
+                    ReportEmpty(Icons.Default.Workspaces, stringResource(R.string.sfb_208))
                 }
             } else {
                 items(rows, key = { it.kind.wire + it.customerCode + it.programCode }) { row ->
@@ -1472,7 +1475,7 @@ private fun WorkResultTab(
 
     Column(Modifier.fillMaxSize()) {
         if (report == null) {
-            ReportEmpty(Icons.Default.TaskAlt, state.error ?: "Đang tải báo cáo kết quả công việc")
+            ReportEmpty(Icons.Default.TaskAlt, state.error ?: stringResource(R.string.sfb_209))
             return@Column
         }
 
@@ -1489,7 +1492,7 @@ private fun WorkResultTab(
                     ) {
                         Column {
                             Text(
-                                "Kế hoạch đã kết thúc",
+                                stringResource(R.string.sfb_210),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -1514,13 +1517,13 @@ private fun WorkResultTab(
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         StatTile(
-                            label = "Hoàn thành",
+                            label = stringResource(R.string.sfa_25),
                             value = report.completed.toString(),
                             colors = Kpi.Green,
                             modifier = Modifier.weight(1f),
                         )
                         StatTile(
-                            label = "Đã hủy",
+                            label = stringResource(R.string.sfa_146),
                             value = report.cancelled.toString(),
                             colors = Kpi.Slate,
                             modifier = Modifier.weight(1f),
@@ -1530,7 +1533,7 @@ private fun WorkResultTab(
             }
 
             if (report.items.isEmpty()) {
-                item { ReportEmpty(Icons.Default.TaskAlt, "Kỳ này chưa có kế hoạch nào kết thúc") }
+                item { ReportEmpty(Icons.Default.TaskAlt, stringResource(R.string.sfb_211)) }
             } else {
                 items(report.items, key = { it.id }) { row -> WorkResultCard(row) }
             }
@@ -1550,7 +1553,7 @@ private fun WorkResultCard(row: WorkResultRow) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
             // The legacy colours: a completed plan is settled business, grey; a
             // cancelled one is what a reader is looking for, red.
-            SolidTag(if (done) "Hoàn thành" else "Đã hủy", if (done) ReportGrey else ReportRed)
+            SolidTag(if (done) stringResource(R.string.sfa_25) else stringResource(R.string.sfa_146), if (done) ReportGrey else ReportRed)
             Text(
                 row.content,
                 style = MaterialTheme.typography.titleMedium,
@@ -1568,13 +1571,14 @@ private fun WorkResultCard(row: WorkResultRow) {
 private fun clockOf(epochMs: Long): String = ClockFormat
     .format(Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()))
 
+@Composable
 private fun VisitStatus.label(): String = when (this) {
-    VisitStatus.PLANNED -> "Chưa ghé"
-    VisitStatus.IN_PROGRESS -> "Đang viếng thăm"
-    VisitStatus.COMPLETED -> "Đã hoàn thành"
-    VisitStatus.NO_ORDER -> "Không đặt hàng"
-    VisitStatus.CLOSED -> "Đóng cửa"
-    VisitStatus.ABANDONED -> "Bỏ dở - không check-out"
+    VisitStatus.PLANNED -> stringResource(R.string.visit_planned)
+    VisitStatus.IN_PROGRESS -> stringResource(R.string.shell_visiting)
+    VisitStatus.COMPLETED -> stringResource(R.string.visit_completed)
+    VisitStatus.NO_ORDER -> stringResource(R.string.visit_no_order)
+    VisitStatus.CLOSED -> stringResource(R.string.visit_closed)
+    VisitStatus.ABANDONED -> stringResource(R.string.visit_abandoned)
 }
 
 // -----------------------------------------------------------------------------

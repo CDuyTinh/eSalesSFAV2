@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.reports
 
 import androidx.activity.compose.BackHandler
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -93,8 +95,8 @@ internal fun ReportFilterScreen(
     var draftTo by rememberSaveable { mutableStateOf(window.toDate) }
 
     val windowError = when {
-        draftTo.isAfter(today) -> "Không chọn được ngày trong tương lai"
-        draftFrom.isAfter(draftTo) -> "Từ ngày phải trước hoặc bằng Đến ngày"
+        draftTo.isAfter(today) -> stringResource(R.string.sfb_179)
+        draftFrom.isAfter(draftTo) -> stringResource(R.string.sfb_180)
         else -> null
     }
     val canApply = when (kind) {
@@ -140,17 +142,17 @@ internal fun ReportFilterScreen(
                     modifier = Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 4.dp),
                 ) {
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Đóng", tint = MaterialTheme.brand.onHeader)
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_close), tint = MaterialTheme.brand.onHeader)
                     }
                     Text(
-                        "Bộ lọc",
+                        stringResource(R.string.sfa_131),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.brand.onHeader,
                         modifier = Modifier.weight(1f).padding(start = 4.dp),
                     )
                     TextButton(onClick = ::reset) {
-                        Text("Đặt lại", color = MaterialTheme.brand.onHeader)
+                        Text(stringResource(R.string.sfa_127), color = MaterialTheme.brand.onHeader)
                     }
                 }
 
@@ -193,7 +195,7 @@ internal fun ReportFilterScreen(
                         .navigationBarsPadding()
                         .padding(16.dp)
                         .height(50.dp),
-                ) { Text("Áp dụng", style = MaterialTheme.typography.titleMedium) }
+                ) { Text(stringResource(R.string.order_apply), style = MaterialTheme.typography.titleMedium) }
             }
         }
     }
@@ -235,11 +237,11 @@ private fun FilterCard(title: String, content: @Composable ColumnScope.() -> Uni
 @Composable
 private fun DayFilter(date: LocalDate, today: LocalDate, onDate: (LocalDate) -> Unit) {
     PresetRow(
-        presets = listOf("Hôm nay" to today, "Hôm qua" to today.minusDays(1)),
+        presets = listOf(stringResource(R.string.dashboard_today) to today, stringResource(R.string.sfb_184) to today.minusDays(1)),
         selected = date,
         onSelect = onDate,
     )
-    DateField(label = "Ngày", date = date, today = today, onDate = onDate)
+    DateField(label = stringResource(R.string.sfa_128), date = date, today = today, onDate = onDate)
 }
 
 // -----------------------------------------------------------------------------
@@ -256,7 +258,7 @@ private fun MonthFilter(month: LocalDate, today: LocalDate, onMonth: (LocalDate)
     var year by rememberSaveable { mutableStateOf(month.year) }
 
     PresetRow(
-        presets = listOf("Tháng này" to thisMonth, "Tháng trước" to thisMonth.minusMonths(1)),
+        presets = listOf(stringResource(R.string.range_this_month) to thisMonth, stringResource(R.string.sfa_180) to thisMonth.minusMonths(1)),
         selected = month,
         onSelect = {
             year = it.year
@@ -266,7 +268,7 @@ private fun MonthFilter(month: LocalDate, today: LocalDate, onMonth: (LocalDate)
 
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
         IconButton(onClick = { year-- }) {
-            Icon(Icons.Default.ChevronLeft, contentDescription = "Năm trước")
+            Icon(Icons.Default.ChevronLeft, contentDescription = stringResource(R.string.sfa_129))
         }
         Text(
             "Năm $year",
@@ -275,7 +277,7 @@ private fun MonthFilter(month: LocalDate, today: LocalDate, onMonth: (LocalDate)
             modifier = Modifier.weight(1f),
         )
         IconButton(onClick = { year++ }, enabled = year < today.year) {
-            Icon(Icons.Default.ChevronRight, contentDescription = "Năm sau")
+            Icon(Icons.Default.ChevronRight, contentDescription = stringResource(R.string.sfa_130))
         }
     }
 
@@ -323,15 +325,15 @@ private fun WindowFilter(
 ) {
     val lastMonth = today.withDayOfMonth(1).minusMonths(1)
     val presets = listOf(
-        "Tháng này" to ReportWindow.thisMonth(today),
-        "Tháng trước" to ReportWindow(lastMonth, lastMonth.withDayOfMonth(lastMonth.lengthOfMonth())),
-        "7 ngày qua" to ReportWindow(today.minusDays(6), today),
-        "30 ngày qua" to ReportWindow(today.minusDays(29), today),
+        stringResource(R.string.range_this_month) to ReportWindow.thisMonth(today),
+        stringResource(R.string.sfa_180) to ReportWindow(lastMonth, lastMonth.withDayOfMonth(lastMonth.lengthOfMonth())),
+        stringResource(R.string.sfb_185) to ReportWindow(today.minusDays(6), today),
+        stringResource(R.string.sfb_186) to ReportWindow(today.minusDays(29), today),
     )
     PresetRow(presets = presets, selected = ReportWindow(from, to), onSelect = onPreset)
 
-    DateField(label = "Từ ngày", date = from, today = today, onDate = onFrom)
-    DateField(label = "Đến ngày", date = to, today = today, onDate = onTo)
+    DateField(label = stringResource(R.string.sfa_70), date = from, today = today, onDate = onFrom)
+    DateField(label = stringResource(R.string.sfa_71), date = to, today = today, onDate = onTo)
 
     if (error != null) {
         Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
@@ -403,9 +405,9 @@ private fun DateField(label: String, date: LocalDate, today: LocalDate, onDate: 
                         }
                         picking = false
                     },
-                ) { Text("Chọn") }
+                ) { Text(stringResource(R.string.sfa_72)) }
             },
-            dismissButton = { TextButton(onClick = { picking = false }) { Text("Huỷ") } },
+            dismissButton = { TextButton(onClick = { picking = false }) { Text(stringResource(R.string.sfa_35)) } },
         ) { DatePicker(state = pickerState) }
     }
 }

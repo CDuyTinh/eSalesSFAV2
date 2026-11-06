@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.receivables
 
 import androidx.compose.foundation.clickable
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -117,12 +119,12 @@ private fun CustomerList(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clip(HeaderShape),
-                title = { Text("Công nợ") },
+                title = { Text(stringResource(R.string.sfa_114)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Quay lại",
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
                 },
@@ -138,7 +140,7 @@ private fun CustomerList(
             when {
                 state.loading -> SkeletonList(count = 5)
                 state.error != null -> ErrorBox(state.error, onRetry = onRetry)
-                state.customers.isEmpty() -> ErrorBox("Không có khách hàng nào còn nợ")
+                state.customers.isEmpty() -> ErrorBox(stringResource(R.string.sfa_115))
                 else -> LazyColumn(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -148,7 +150,7 @@ private fun CustomerList(
                         OutlinedTextField(
                             value = state.query,
                             onValueChange = onQueryChanged,
-                            label = { Text("Tìm khách hàng") },
+                            label = { Text(stringResource(R.string.sfa_116)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                         )
@@ -157,7 +159,7 @@ private fun CustomerList(
                     if (state.visible.isEmpty()) {
                         item {
                             Text(
-                                text = "Không tìm thấy khách hàng phù hợp",
+                                text = stringResource(R.string.sfa_117),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center,
@@ -188,7 +190,7 @@ private fun TotalCard(state: ReceivablesUiState) {
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
-                text = "Tổng công nợ (VND)",
+                text = stringResource(R.string.sfa_118),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -250,7 +252,7 @@ private fun DebtorCard(customer: ReceivableCustomer, onClick: () -> Unit) {
                         modifier = Modifier.padding(top = 4.dp),
                     ) {
                         Text(
-                            text = "Quá hạn",
+                            text = stringResource(R.string.sfa_119),
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                         )
@@ -294,7 +296,7 @@ private fun CustomerDetail(
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Quay lại",
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
                 },
@@ -310,7 +312,7 @@ private fun CustomerDetail(
                 Column(Modifier.padding(16.dp)) {
                     Row(Modifier.fillMaxWidth()) {
                         Text(
-                            text = "Tổng thu",
+                            text = stringResource(R.string.sfa_120),
                             style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.weight(1f),
                         )
@@ -322,7 +324,7 @@ private fun CustomerDetail(
                     }
                     Spacer(Modifier.height(12.dp))
                     PrimaryButton(
-                        text = "Ghi nhận thu tiền",
+                        text = stringResource(R.string.sfa_121),
                         onClick = onSubmit,
                         enabled = open.canSubmit,
                         loading = open.submitting,
@@ -342,13 +344,13 @@ private fun CustomerDetail(
                     open.error?.let { message -> item { Notice(message) } }
 
                     if (open.collected) {
-                        item { Notice(message = "Đã ghi nhận số tiền thu.", error = false) }
+                        item { Notice(message = stringResource(R.string.sfb_175), error = false) }
                     }
 
                     if (open.invoices.isEmpty()) {
                         item {
                             Text(
-                                text = "Khách hàng này không còn hoá đơn nào chưa thanh toán",
+                                text = stringResource(R.string.sfa_122),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center,
@@ -372,7 +374,7 @@ private fun CustomerDetail(
                         OutlinedTextField(
                             value = open.draft.note,
                             onValueChange = onNoteChanged,
-                            label = { Text("Ghi chú phiếu thu") },
+                            label = { Text(stringResource(R.string.sfa_123)) },
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
@@ -445,17 +447,17 @@ private fun InvoiceCard(
                     onValueChange = { text ->
                         onAmountChanged(text.filter { it.isDigit() }.toLongOrNull() ?: 0L)
                     },
-                    label = { Text("Số tiền thu") },
+                    label = { Text(stringResource(R.string.sfa_124)) },
                     singleLine = true,
                     isError = overrun,
                     supportingText = {
-                        if (overrun) Text("Vượt quá dư nợ của hoá đơn này")
+                        if (overrun) Text(stringResource(R.string.sfa_125))
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f),
                 )
                 Spacer(Modifier.width(8.dp))
-                TextButton(onClick = onPayInFull) { Text("Thu hết") }
+                TextButton(onClick = onPayInFull) { Text(stringResource(R.string.sfa_126)) }
             }
         }
     }

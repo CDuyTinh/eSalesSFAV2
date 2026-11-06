@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.feature.routemap
 
 import android.content.Intent
+import com.tinhcd.myesalessfa.R
 import com.tinhcd.myesalessfa.core.R as CoreR
 import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
 import androidx.compose.ui.res.stringResource
@@ -142,12 +143,12 @@ private fun RouteMapContent(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clip(HeaderShape),
-                title = { Text("Bản đồ tuyến") },
+                title = { Text(stringResource(R.string.sfa_147)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Quay lại",
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
                 },
@@ -165,9 +166,9 @@ private fun RouteMapContent(
                 state.error != null -> ErrorBox(state.error, onRetry = onRetry)
                 state.stops.isEmpty() -> ErrorBox(
                     if (state.unmapped > 0) {
-                        "Không có điểm bán nào trong tuyến hôm nay có toạ độ"
+                        stringResource(R.string.sfb_218)
                     } else {
-                        "Không có khách hàng nào trong tuyến hôm nay"
+                        stringResource(R.string.route_empty)
                     },
                 )
 
@@ -215,7 +216,7 @@ private fun RouteMapContent(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(16.dp),
-                    ) { Icon(Icons.Default.MyLocation, contentDescription = "Vị trí của tôi") }
+                    ) { Icon(Icons.Default.MyLocation, contentDescription = stringResource(R.string.sfa_148)) }
 
                     state.selected?.let { stop ->
                         StopSheet(
@@ -315,7 +316,7 @@ private fun StopSheet(
 
             Row(Modifier.padding(top = 8.dp)) {
                 OutlinedButton(onClick = onNavigate, modifier = Modifier.weight(1f)) {
-                    Text("Chỉ đường")
+                    Text(stringResource(R.string.sfa_149))
                 }
                 Spacer(Modifier.width(8.dp))
                 androidx.compose.material3.Button(
@@ -351,17 +352,19 @@ private fun RouteStop.hue(): Float = when (status) {
  */
 private fun VisitStatus.openable(): Boolean = this != VisitStatus.ABANDONED
 
+@Composable
 private fun VisitStatus.actionLabel(): String = when (this) {
     VisitStatus.IN_PROGRESS -> "Vào cuộc"
     VisitStatus.PLANNED -> "Check-in"
-    else -> "Ghé lại"
+    else -> stringResource(R.string.route_visit_again)
 }
 
+@Composable
 private fun VisitStatus.label(): String = when (this) {
-    VisitStatus.PLANNED -> "Chưa ghé"
-    VisitStatus.IN_PROGRESS -> "Đang viếng thăm"
-    VisitStatus.COMPLETED -> "Đã hoàn thành"
-    VisitStatus.NO_ORDER -> "Không đặt hàng"
-    VisitStatus.CLOSED -> "Đóng cửa"
-    VisitStatus.ABANDONED -> "Bỏ dở - không check-out"
+    VisitStatus.PLANNED -> stringResource(R.string.visit_planned)
+    VisitStatus.IN_PROGRESS -> stringResource(R.string.shell_visiting)
+    VisitStatus.COMPLETED -> stringResource(R.string.visit_completed)
+    VisitStatus.NO_ORDER -> stringResource(R.string.visit_no_order)
+    VisitStatus.CLOSED -> stringResource(R.string.visit_closed)
+    VisitStatus.ABANDONED -> stringResource(R.string.visit_abandoned)
 }

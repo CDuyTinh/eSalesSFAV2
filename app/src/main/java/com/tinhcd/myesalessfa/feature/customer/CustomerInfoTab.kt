@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.customer
 
 import androidx.compose.foundation.layout.Box
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -49,7 +51,7 @@ fun CustomerInfoTab(
         when {
             state.loading -> SkeletonDetailCard()
             state.error != null -> ErrorBox(state.error, onRetry = onRetry)
-            info == null -> ErrorBox("Không tìm thấy khách hàng này", onRetry = onRetry)
+            info == null -> ErrorBox(stringResource(R.string.sfa_2), onRetry = onRetry)
             else -> Column(
                 Modifier
                     .fillMaxSize()
@@ -78,19 +80,19 @@ private fun DetailCard(info: CustomerInfo) {
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(horizontal = 12.dp)) {
-            DetailRow("Mã khách hàng", info.code)
-            DetailRow("Điện thoại", info.phone, missing = "Chưa có số điện thoại")
-            DetailRow("Tên khách hàng", info.name)
+            DetailRow(stringResource(R.string.sfb_30), info.code)
+            DetailRow(stringResource(R.string.account_phone), info.phone, missing = stringResource(R.string.route_no_phone))
+            DetailRow(stringResource(R.string.sfb_31), info.name)
             // The legacy proc substitutes the shop name when no contact is
             // recorded. Said plainly instead: a rep who reads the owner's name
             // back to a shop that never gave one looks like they guessed.
-            DetailRow("Người liên hệ", info.contactName, missing = "Chưa ghi nhận")
-            DetailRow("Địa chỉ", info.address, missing = "Chưa có địa chỉ")
-            DetailRow("Kênh bán hàng", info.channelName, missing = "Chưa phân kênh")
-            DetailRow("Nhóm khách hàng", info.className, missing = "Chưa phân nhóm")
-            DetailRow("Loại cửa hàng", info.shopTypeName, missing = "Chưa phân loại")
-            DetailRow("Doanh số tháng này", formatDong(info.monthRevenue))
-            DetailRow("Hạn mức công nợ", creditLimitText(info.creditLimit), last = true)
+            DetailRow(stringResource(R.string.order_contact_person), info.contactName, missing = stringResource(R.string.sfb_32))
+            DetailRow(stringResource(R.string.order_address), info.address, missing = stringResource(R.string.route_no_address))
+            DetailRow(stringResource(R.string.sfb_33), info.channelName, missing = stringResource(R.string.sfb_34))
+            DetailRow(stringResource(R.string.sfa_93), info.className, missing = stringResource(R.string.sfb_35))
+            DetailRow(stringResource(R.string.sfa_95), info.shopTypeName, missing = stringResource(R.string.sfb_36))
+            DetailRow(stringResource(R.string.sfb_37), formatDong(info.monthRevenue))
+            DetailRow(stringResource(R.string.sfb_38), creditLimitText(info.creditLimit), last = true)
         }
     }
 }

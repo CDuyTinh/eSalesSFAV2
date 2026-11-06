@@ -1,6 +1,8 @@
 package com.tinhcd.myesalessfa.feature.traderegis
 
 import androidx.compose.foundation.clickable
+import com.tinhcd.myesalessfa.R
+import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -131,10 +133,10 @@ private fun ListPage(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clip(HeaderShape),
-                title = { Text("Đăng ký chương trình") },
+                title = { Text(stringResource(R.string.sfa_153)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Quay lại")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -146,7 +148,7 @@ private fun ListPage(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onNew) {
-                Icon(Icons.Default.Add, contentDescription = "Đăng ký cho khách hàng")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.sfa_154))
             }
         },
     ) { padding ->
@@ -166,7 +168,7 @@ private fun ListPage(
                         OutlinedTextField(
                             value = state.query,
                             onValueChange = onQuery,
-                            label = { Text("Tìm khách hàng hoặc chương trình") },
+                            label = { Text(stringResource(R.string.sfa_155)) },
                             singleLine = true,
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.fillMaxWidth(),
@@ -235,7 +237,7 @@ private fun ListPage(
                     }
 
                     if (state.visible.isEmpty()) {
-                        item { EmptyBox("Chưa đăng ký chương trình nào") }
+                        item { EmptyBox(stringResource(R.string.sfa_156)) }
                     } else {
                         items(state.visible, key = { it.id }) { row -> RegistrationCard(row) }
                     }
@@ -259,7 +261,7 @@ private fun SlotCard(board: TradeRegistrationBoard) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                "Suất đăng ký đã dùng",
+                stringResource(R.string.sfb_222),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -276,19 +278,19 @@ private fun SlotCard(board: TradeRegistrationBoard) {
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 StatTile(
-                    label = "Trưng bày",
+                    label = stringResource(R.string.sfa_144),
                     value = board.count(TradeKind.DISPLAY).toString(),
                     colors = Kpi.Violet,
                     modifier = Modifier.weight(1f),
                 )
                 StatTile(
-                    label = "Tích lũy",
+                    label = stringResource(R.string.sfa_145),
                     value = board.count(TradeKind.LOYALTY).toString(),
                     colors = Kpi.Green,
                     modifier = Modifier.weight(1f),
                 )
                 StatTile(
-                    label = "Còn lại",
+                    label = stringResource(R.string.sfa_113),
                     value = board.slotsLeft.toString(),
                     colors = Kpi.Blue,
                     modifier = Modifier.weight(1f),
@@ -392,10 +394,10 @@ private fun PickerPage(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clip(HeaderShape),
-                title = { Text("Chọn khách hàng") },
+                title = { Text(stringResource(R.string.sfa_157)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Quay lại")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -410,7 +412,7 @@ private fun PickerPage(
             OutlinedTextField(
                 value = state.pickerQuery,
                 onValueChange = onQuery,
-                label = { Text("Tìm theo tên hoặc mã") },
+                label = { Text(stringResource(R.string.sfa_158)) },
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -419,7 +421,7 @@ private fun PickerPage(
             if (state.pickerLoading) {
                 SkeletonList(count = 6, lines = 1)
             } else if (state.visibleCustomers.isEmpty()) {
-                EmptyBox("Không tìm thấy khách hàng nào")
+                EmptyBox(stringResource(R.string.sfa_159))
             } else {
                 LazyColumn(
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
@@ -492,7 +494,7 @@ private fun OffersPage(
                 modifier = Modifier.clip(HeaderShape),
                 title = {
                     Column {
-                        Text("Chương trình mở")
+                        Text(stringResource(R.string.sfa_160))
                         state.chosen?.let {
                             Text(it.name, style = MaterialTheme.typography.bodySmall)
                         }
@@ -500,7 +502,7 @@ private fun OffersPage(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Quay lại")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -516,7 +518,7 @@ private fun OffersPage(
                 state.offersLoading -> SkeletonList(count = 4)
 
                 state.offers.isEmpty -> EmptyBox(
-                    "Khách hàng này không còn chương trình nào để đăng ký",
+                    stringResource(R.string.sfb_223),
                 )
 
                 else -> LazyColumn(
@@ -528,7 +530,7 @@ private fun OffersPage(
                     }
 
                     if (state.offers.display.isNotEmpty()) {
-                        item { SectionTitle("Trưng bày") }
+                        item { SectionTitle(stringResource(R.string.sfa_144)) }
                         items(state.offers.display, key = { it.programId }) { offer ->
                             DisplayOfferCard(
                                 offer = offer,
@@ -541,7 +543,7 @@ private fun OffersPage(
                     }
 
                     if (state.offers.loyalty.isNotEmpty()) {
-                        item { SectionTitle("Tích lũy") }
+                        item { SectionTitle(stringResource(R.string.sfa_145)) }
                         items(state.offers.loyalty, key = { it.programId }) { offer ->
                             LoyaltyOfferCard(
                                 offer = offer,
@@ -671,7 +673,7 @@ private fun LevelRow(
         FilledTonalButton(onClick = onRegister, enabled = enabled) {
             // A level with no slots left is shown and refused rather than
             // hidden: the rep needs to know it exists and is full.
-            Text(if (enabled) "Đăng ký" else "Hết suất")
+            Text(if (enabled) stringResource(R.string.sfb_28) else stringResource(R.string.sfb_24))
         }
     }
 }
