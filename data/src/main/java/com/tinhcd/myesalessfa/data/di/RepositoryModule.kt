@@ -3,6 +3,8 @@ package com.tinhcd.myesalessfa.data.di
 import com.tinhcd.myesalessfa.data.repository.AuthRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.CatalogRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.CheckInRepositoryImpl
+import com.tinhcd.myesalessfa.data.repository.NfcTagRepositoryImpl
+import com.tinhcd.myesalessfa.domain.repository.NfcTagRepository
 import com.tinhcd.myesalessfa.data.repository.DashboardRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.DisplayAuditRepositoryImpl
 import com.tinhcd.myesalessfa.data.repository.LoyaltyRepositoryImpl
@@ -93,6 +95,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCheckInRepository(impl: CheckInRepositoryImpl): CheckInRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindNfcTagRepository(impl: NfcTagRepositoryImpl): NfcTagRepository
 
     @Binds
     @Singleton

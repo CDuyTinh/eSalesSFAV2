@@ -60,6 +60,7 @@ class CheckInRepositoryImpl @Inject constructor(
                     // Was never sent: the screen asked for a reason and the row
                     // arrived without one.
                     checkInReasonId = request.reasonId,
+                    checkInNfcUid = request.nfcUid,
                     note = request.note,
                 ),
             ).orThrow()

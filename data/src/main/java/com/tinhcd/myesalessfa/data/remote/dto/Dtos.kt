@@ -159,5 +159,6 @@ data class NewVisitDto(
     @SerialName("check_in_distance_m") val checkInDistanceM: Double? = null,
     @SerialName("check_in_photo_path") val checkInPhotoPath: String? = null,
     @SerialName("check_in_reason_id") val checkInReasonId: String? = null,
+    @SerialName("check_in_nfc_uid") val checkInNfcUid: String? = null,
     val note: String? = null,
 )

@@ -17,6 +17,9 @@ import com.tinhcd.myesalessfa.domain.model.RouteStop
 import com.tinhcd.myesalessfa.domain.model.VisitStatus
 import com.tinhcd.myesalessfa.domain.repository.CheckInRepository
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
+import com.tinhcd.myesalessfa.domain.repository.NfcTagRepository
+import com.tinhcd.myesalessfa.domain.model.NfcTagOwner
+import com.tinhcd.myesalessfa.feature.nfc.RecentNfcTap
 import com.tinhcd.myesalessfa.domain.repository.RouteRepository
 import com.tinhcd.myesalessfa.domain.usecase.EvaluateCheckInUseCase
 import io.mockk.coEvery
@@ -70,6 +73,8 @@ class CheckInViewModelTest {
     private val location = mockk<LocationProvider>()
     private val photos = mockk<PhotoStore>(relaxed = true)
     private val strings = mockk<AppStrings>(relaxed = true)
+    private val nfcTags = mockk<NfcTagRepository>()
+    private val recentTap = RecentNfcTap()
 
     @Before
     fun setUp() {
@@ -94,6 +99,8 @@ class CheckInViewModelTest {
             evaluate = EvaluateCheckInUseCase(),
             locationProvider = location,
             photoStore = photos,
+            nfcTags = nfcTags,
+            recentNfcTap = recentTap,
         )
     }
 
@@ -173,5 +180,54 @@ class CheckInViewModelTest {
         assertFalse(vm.state.value.loading)
         assertNull(vm.state.value.customer)
         assertFalse(vm.state.value.canSubmit)
+    }
+
+    @Test
+    fun `the shop's own tag stands in for a reason when the GPS is off`() = runTest {
+        coEvery { nfcTags.ownerOf("04A1B2") } returns DataResult.Success(NfcTagOwner("c1", "KH001", shop.name))
+        val vm = viewModel(acrossTown)
+        assertFalse(vm.state.value.canSubmit)
+
+        vm.onNfcTag("04A1B2")
+
+        assertTrue(vm.state.value.nfc is NfcCheck.Verified)
+        assertFalse(vm.state.value.needsReason)
+        assertTrue(vm.state.value.canSubmit)
+        vm.submit()
+        coVerify { checkIns.checkIn(match { it.nfcUid == "04A1B2" && it.reasonId == null }) }
+    }
+
+    @Test
+    fun `another shop's tag proves nothing here, and is still sent`() = runTest {
+        coEvery { nfcTags.ownerOf("04FFFF") } returns DataResult.Success(NfcTagOwner("c2", "KH002", "Tạp hóa Bình"))
+        val vm = viewModel(acrossTown)
+
+        vm.onNfcTag("04FFFF")
+
+        assertEquals(NfcCheck.Foreign("04FFFF", "Tạp hóa Bình"), vm.state.value.nfc)
+        assertTrue(vm.state.value.needsReason)
+        vm.selectReason(farReason)
+        vm.submit()
+        coVerify { checkIns.checkIn(match { it.nfcUid == "04FFFF" && it.reasonId == "r1" }) }
+    }
+
+    @Test
+    fun `with no signal the tag is kept for the server to match`() = runTest {
+        coEvery { nfcTags.ownerOf(any()) } returns DataResult.Failure(AppError.Network())
+        val vm = viewModel(atTheDoor)
+
+        vm.onNfcTag("04A1B2")
+
+        assertEquals(NfcCheck.Unchecked("04A1B2"), vm.state.value.nfc)
+    }
+
+    @Test
+    fun `a tag tapped on the route list carries into the check-in it opened`() = runTest {
+        coEvery { nfcTags.ownerOf("04A1B2") } returns DataResult.Success(NfcTagOwner("c1", "KH001", shop.name))
+        recentTap.record("c1", "04A1B2")
+
+        val vm = viewModel(acrossTown)
+
+        assertTrue(vm.state.value.nfcVerified)
     }
 }

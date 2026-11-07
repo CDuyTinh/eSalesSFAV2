@@ -961,4 +961,29 @@
 
     <!-- Quét mã vạch: quyền -->
     <string name="scan_permission_rationale">The app needs the camera to read the barcodes on products.</string>
+
+    <!-- Check-in: thẻ NFC -->
+    <string name="checkin_nfc">NFC tag</string>
+    <string name="checkin_nfc_tap">Tap the phone on the shop\'s tag</string>
+    <string name="checkin_nfc_off">NFC is off — tap to turn on</string>
+    <string name="checkin_nfc_checking">Checking the tag…</string>
+    <string name="checkin_nfc_verified">Presence confirmed at this shop</string>
+    <string name="checkin_nfc_foreign">Tag belongs to another shop: %1$s</string>
+    <string name="checkin_nfc_unknown">This tag is not registered to any shop</string>
+    <string name="checkin_nfc_unchecked">Tag read; it will be matched when sent</string>
+
+    <!-- Gắn thẻ NFC -->
+    <string name="nfc_register_action">Register the shop\'s NFC tag</string>
+    <string name="nfc_register_title">Register NFC tag</string>
+    <string name="nfc_register_hint">Hold the back of the phone to the NFC sticker in the shop. At later check-ins, tapping it confirms you are here.</string>
+    <string name="nfc_register_done">Tag registered to this shop</string>
+    <string name="nfc_register_unchanged">This tag is already this shop\'s</string>
+    <string name="nfc_register_taken">Tag is registered to another shop: %1$s. Ask a supervisor to clear it.</string>
+    <string name="nfc_register_no_visit">A tag can only be registered while checked in at the shop</string>
+    <string name="nfc_register_invalid">Could not read the tag\'s ID</string>
+    <string name="nfc_register_failed">Could not register the tag. Check the connection and tap again.</string>
+
+    <!-- Tuyến: thẻ NFC -->
+    <string name="route_nfc_off_route">Tag of %1$s — this shop is not on today\'s route</string>
+    <string name="route_nfc_failed">Could not check the tag. Check the connection and tap again.</string>
 </resources>

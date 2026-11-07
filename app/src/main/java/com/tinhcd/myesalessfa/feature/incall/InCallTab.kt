@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Storefront
@@ -37,9 +38,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -59,6 +65,9 @@ import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
 import com.tinhcd.myesalessfa.domain.model.SupportedSteps
 import com.tinhcd.myesalessfa.domain.model.WorkflowStep
+import com.tinhcd.myesalessfa.feature.nfc.NfcRegisterDialog
+import com.tinhcd.myesalessfa.feature.nfc.NfcState
+import com.tinhcd.myesalessfa.feature.nfc.nfcState
 import com.tinhcd.myesalessfa.feature.photo.PhotoBlock
 import com.tinhcd.myesalessfa.feature.photo.rememberCameraCapture
 
@@ -122,6 +131,8 @@ fun InCallTab(
                             onOpenStep = onOpenStep,
                         )
 
+                        NfcRegisterButton()
+
                         Spacer(Modifier.height(16.dp))
                     }
 
@@ -177,6 +188,29 @@ fun InCallTab(
             }
         }
     }
+}
+
+/**
+ * Binding the shop's NFC sticker, done once per shop from inside a visit:
+ * the check-in that got the rep here is what vouches for the binding. Not
+ * shown on a phone with no NFC.
+ */
+@Composable
+private fun NfcRegisterButton() {
+    val context = LocalContext.current
+    if (remember { nfcState(context) } == NfcState.UNSUPPORTED) return
+    var open by remember { mutableStateOf(false) }
+
+    TextButton(
+        onClick = { open = true },
+        modifier = Modifier.padding(start = 8.dp, top = 8.dp),
+    ) {
+        Icon(Icons.Default.Nfc, contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.size(8.dp))
+        Text(stringResource(R.string.nfc_register_action))
+    }
+
+    if (open) NfcRegisterDialog(onDismiss = { open = false })
 }
 
 /**

@@ -14,6 +14,8 @@ import com.tinhcd.myesalessfa.domain.model.SyncState
 import com.tinhcd.myesalessfa.domain.model.VisitStatus
 import com.tinhcd.myesalessfa.domain.repository.AuthRepository
 import com.tinhcd.myesalessfa.domain.repository.CheckInRepository
+import com.tinhcd.myesalessfa.domain.repository.NfcTagRepository
+import com.tinhcd.myesalessfa.feature.nfc.RecentNfcTap
 import com.tinhcd.myesalessfa.domain.repository.ReferenceDataSync
 import com.tinhcd.myesalessfa.domain.usecase.GetTodayRouteUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -62,6 +64,10 @@ data class RouteUiState(
      * act on.
      */
     val sync: SyncState = SyncState(),
+    /** A tapped tag led to this stop; the screen opens it once and clears it. */
+    val nfcStop: RouteStop? = null,
+    /** What a tapped tag could not lead to, said once. */
+    val nfcMessage: UiText? = null,
 ) {
     /**
      * The stop the rep is inside, when they are inside one.
@@ -111,6 +117,8 @@ class RouteViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val referenceDataSync: ReferenceDataSync,
     checkInRepository: CheckInRepository,
+    private val nfcTags: NfcTagRepository,
+    private val recentNfcTap: RecentNfcTap,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(RouteUiState())
@@ -184,4 +192,35 @@ class RouteViewModel @Inject constructor(
         }
     }
 
+
+    /**
+     * A shop's tag tapped on the route list: straight into that stop, the way
+     * tapping its card would. A tag for a shop that is not on today's route is
+     * named rather than opened -- the route is what the rep is paid to cover,
+     * and an off-route visit goes through the customer list on purpose.
+     */
+    fun onNfcTag(uid: String) {
+        viewModelScope.launch {
+            val message = when (val result = nfcTags.ownerOf(uid)) {
+                is DataResult.Success -> {
+                    val owner = result.data
+                    val stop = owner?.let { o -> _state.value.stops.firstOrNull { it.customer.id == o.customerId } }
+                    when {
+                        stop != null -> {
+                            recentNfcTap.record(stop.customer.id, uid)
+                            _state.update { it.copy(nfcStop = stop) }
+                            return@launch
+                        }
+                        owner != null -> uiText(R.string.route_nfc_off_route, owner.name)
+                        else -> uiText(R.string.checkin_nfc_unknown)
+                    }
+                }
+
+                is DataResult.Failure -> uiText(R.string.route_nfc_failed)
+            }
+            _state.update { it.copy(nfcMessage = message) }
+        }
+    }
+
+    fun onNfcHandled() = _state.update { it.copy(nfcStop = null, nfcMessage = null) }
 }
