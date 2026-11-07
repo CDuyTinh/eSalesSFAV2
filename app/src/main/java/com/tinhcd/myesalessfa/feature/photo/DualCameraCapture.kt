@@ -110,6 +110,7 @@ private fun CameraStep(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val shotFailed = stringResource(R.string.camera_shot_failed)
     val previewView = remember {
         PreviewView(context).apply { scaleType = PreviewView.ScaleType.FILL_CENTER }
     }
@@ -153,7 +154,7 @@ private fun CameraStep(
                 override fun onError(exception: ImageCaptureException) {
                     File(path).delete()
                     shooting = false
-                    Toast.makeText(context, context.getString(R.string.camera_shot_failed), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, shotFailed, Toast.LENGTH_SHORT).show()
                 }
             },
         )

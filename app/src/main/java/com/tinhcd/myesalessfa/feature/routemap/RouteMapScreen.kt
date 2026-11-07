@@ -55,6 +55,7 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberMarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.tinhcd.myesalessfa.core.ui.HeaderShape
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
@@ -190,7 +191,7 @@ private fun RouteMapContent(
                             val lat = stop.customer.lat ?: return@forEach
                             val lng = stop.customer.lng ?: return@forEach
                             Marker(
-                                state = MarkerState(LatLng(lat, lng)),
+                                state = rememberMarkerState(key = stop.customer.id, position = LatLng(lat, lng)),
                                 title = stop.customer.name,
                                 snippet = stop.customer.code,
                                 icon = BitmapDescriptorFactory.defaultMarker(stop.hue()),
