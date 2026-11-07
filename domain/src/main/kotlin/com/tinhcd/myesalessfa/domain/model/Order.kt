@@ -33,6 +33,8 @@ data class Product(
     val categoryName: String?,
     val baseUomCode: String,
     val vatBasisPoints: Int,
+    /** EAN-13 on the base unit, what the scanner in Đặt hàng looks for. */
+    val barcode: String? = null,
 )
 
 /** One effective-dated row of the price list. */

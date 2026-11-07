@@ -952,4 +952,17 @@
     <string name="cap_out_of_quota">hết suất của khách hàng</string>
     <string name="cap_out_of_budget">hết ngân sách</string>
     <string name="cap_out_of_stock">không đủ hàng tặng</string>
+
+    <!-- Quét mã vạch -->
+    <string name="scan_title">Quét mã vạch</string>
+    <string name="scan_hint">Mỗi lần quét thêm 1 đơn vị lẻ</string>
+    <string name="scan_waiting">Đưa mã vạch vào khung</string>
+    <string name="scan_added">%1$s: %2$d %3$s</string>
+    <string name="scan_not_found">Không có sản phẩm mã %1$s</string>
+    <string name="scan_torch_on">Bật đèn</string>
+    <string name="scan_torch_off">Tắt đèn</string>
+    <string name="order_scan">Quét mã vạch</string>
+
+    <!-- Quét mã vạch: quyền -->
+    <string name="scan_permission_rationale">Ứng dụng cần quyền camera để quét mã vạch trên sản phẩm.</string>
 </resources>

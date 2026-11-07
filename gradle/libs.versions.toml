@@ -52,6 +52,9 @@ exifinterface = "1.4.1"
 # the rep on the front one, which a camera app reached by intent cannot be told
 # to do. CameraX runs both inside the app.
 camerax = "1.4.2"
+# On-device barcode reading for the scanner in Đặt hàng; the bundled model, so
+# it works offline and on phones without Play services updates.
+mlkitBarcode = "17.3.0"
 # Long lists (Báo cáo đơn hàng) load a page at a time as the rep scrolls.
 paging = "3.3.6"
 playServicesLocation = "21.4.0"
@@ -137,6 +140,7 @@ androidx-paging-common = { group = "androidx.paging", name = "paging-common", ve
 androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
 androidx-paging-testing = { group = "androidx.paging", name = "paging-testing", version.ref = "paging" }
 androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
+mlkit-barcode = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "mlkitBarcode" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }

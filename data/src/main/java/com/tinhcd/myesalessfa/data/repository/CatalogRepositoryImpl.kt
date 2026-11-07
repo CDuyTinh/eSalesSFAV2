@@ -65,6 +65,7 @@ class CatalogRepositoryImpl @Inject constructor(
                     categorySort = it.categorySort,
                     baseUom = it.baseUom,
                     vatBasisPoints = it.vatBasisPoints,
+                    barcode = it.barcode,
                 )
             },
         )
@@ -154,6 +155,7 @@ class CatalogRepositoryImpl @Inject constructor(
                 categoryName = it.categoryName,
                 baseUomCode = it.baseUom,
                 vatBasisPoints = it.vatBasisPoints,
+                barcode = it.barcode,
             )
         }
 

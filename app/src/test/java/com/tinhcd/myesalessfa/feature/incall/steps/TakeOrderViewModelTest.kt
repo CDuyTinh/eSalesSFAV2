@@ -46,13 +46,13 @@ class TakeOrderViewModelTest {
 
     /** Sold by the can by default; 24 cans to the case. */
     private val cola = PricedProduct(
-        product = Product("p1", "NGK001", "Nước ngọt Cola 330ml", "Nước giải khát", "PCS", vatBasisPoints = 1000),
+        product = Product("p1", "NGK001", "Nước ngọt Cola 330ml", "Nước giải khát", "PCS", vatBasisPoints = 1000, barcode = "8930101000017"),
         units = listOf(PricedUnit(can, 10_000), PricedUnit(case, 230_000)),
     )
 
     /** Sold by the case by default. */
     private val water = PricedProduct(
-        product = Product("p2", "NGK002", "Nước suối 500ml", "Nước giải khát", "PCS", vatBasisPoints = 1000),
+        product = Product("p2", "NGK002", "Nước suối 500ml", "Nước giải khát", "PCS", vatBasisPoints = 1000, barcode = "8930101000024"),
         units = listOf(PricedUnit(can.copy(isDefault = false), 5_000), PricedUnit(case.copy(isDefault = true), 110_000)),
     )
 
@@ -175,5 +175,39 @@ class TakeOrderViewModelTest {
 
         assertEquals(R.string.order_save_failed, vm.state.value.error.resId())
         assertEquals(TakeOrderPage.CONFIRM, vm.state.value.page)
+    }
+
+    @Test
+    fun `each scan adds one can to the list, and commits like typing`() = runTest {
+        val vm = viewModel()
+
+        vm.onBarcode("8930101000017")
+        val said = vm.onBarcode("8930101000017")
+
+        assertEquals(R.string.scan_added, said.resId())
+        assertEquals(2, vm.state.value.draftQty["p1"])
+        vm.commitDraft()
+        assertEquals(2, vm.state.value.order.quantityOf("p1", "PCS"))
+    }
+
+    @Test
+    fun `a scan moves a row showing cases onto cans, keeping what was typed`() = runTest {
+        val vm = viewModel()
+        vm.onDraftQtyChange(water, 1) // one case, water's default unit
+
+        vm.onBarcode("8930101000024")
+
+        assertEquals("PCS", vm.state.value.unitFor(water).unit.uomCode)
+        assertEquals(25, vm.state.value.draftQty["p2"])
+    }
+
+    @Test
+    fun `a code no product carries is said, and nothing is added`() = runTest {
+        val vm = viewModel()
+
+        val said = vm.onBarcode("4006381333931")
+
+        assertEquals(R.string.scan_not_found, said.resId())
+        assertTrue(vm.state.value.draftQty.isEmpty())
     }
 }

@@ -1,6 +1,7 @@
 package com.tinhcd.myesalessfa.data.local
 
 import androidx.room.AutoMigration
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.DeleteTable
@@ -172,6 +173,8 @@ data class ProductEntity(
     val categorySort: Int,
     val baseUom: String,
     val vatBasisPoints: Int,
+    /** EAN-13 on the base unit; null where head office has not entered one. */
+    @ColumnInfo(defaultValue = "NULL") val barcode: String? = null,
 )
 
 @Entity(tableName = "sale_unit", primaryKeys = ["productId", "uomCode"])
@@ -303,7 +306,7 @@ class DropOfflineTables : AutoMigrationSpec
         SurveyDefinitionEntity::class,
         MenuItemEntity::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = true,
     // Everything in here is reference data the app re-fetches on launch, so these
     // migrations are a courtesy rather than a safeguard — nothing kept locally is
@@ -315,6 +318,7 @@ class DropOfflineTables : AutoMigrationSpec
         AutoMigration(from = 5, to = 6),
         AutoMigration(from = 6, to = 7, spec = DropOfflineTables::class),
         AutoMigration(from = 7, to = 8),
+        AutoMigration(from = 9, to = 10),
     ],
 )
 abstract class AppDatabase : RoomDatabase() {
