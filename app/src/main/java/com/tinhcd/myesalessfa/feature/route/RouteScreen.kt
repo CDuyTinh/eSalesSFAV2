@@ -457,6 +457,7 @@ private fun ListHeading(subtitle: String, count: Int, modifier: Modifier = Modif
             Text(
                 text = stringResource(R.string.route_today),
                 style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
             )

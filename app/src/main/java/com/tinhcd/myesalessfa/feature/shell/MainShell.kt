@@ -639,6 +639,7 @@ private fun DayNotStartedPanel(
             Text(
                 text = stringResource(R.string.shell_day_not_started),
                 style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
             )
             Text(
