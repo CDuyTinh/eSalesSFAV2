@@ -57,6 +57,10 @@ camerax = "1.4.2"
 mlkitBarcode = "17.3.0"
 # Home-screen widget (Hôm nay), drawn with Compose-style code.
 glance = "1.1.1"
+# Baseline Profile + Macrobenchmark (:baselineprofile).
+benchmark = "1.5.0"
+profileinstaller = "1.4.1"
+uiautomator = "2.3.0"
 # Long lists (Báo cáo đơn hàng) load a page at a time as the rep scrolls.
 paging = "3.3.6"
 playServicesLocation = "21.4.0"
@@ -152,6 +156,9 @@ maps-compose = { group = "com.google.maps.android", name = "maps-compose", versi
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmark" }
+androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
+androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
@@ -162,6 +169,8 @@ androidx-test-core = { group = "androidx.test", name = "core-ktx", version.ref =
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+android-test = { id = "com.android.test", version.ref = "agp" }
+baselineprofile = { id = "androidx.baselineprofile", version.ref = "benchmark" }
 # Note: no kotlin-android entry. AGP 9 provides Kotlin for Android modules
 # itself, and applying KGP on top fails with a duplicate `kotlin` extension.
 # Only the pure-JVM :domain module needs an explicit Kotlin plugin.
