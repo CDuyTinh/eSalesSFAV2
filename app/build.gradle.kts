@@ -10,6 +10,12 @@ plugins {
 }
 
 android {
+    // Robolectric reads the merged resources: the Compose UI tests check what the
+    // screens actually say.
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+
     namespace = "com.tinhcd.myesalessfa"
     compileSdk { version = release(37) }
 
@@ -89,6 +95,14 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     testImplementation(libs.junit)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.turbine)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
