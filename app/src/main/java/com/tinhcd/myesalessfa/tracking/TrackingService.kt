@@ -3,7 +3,6 @@ package com.tinhcd.myesalessfa.tracking
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -12,10 +11,12 @@ import android.content.pm.ServiceInfo
 import android.os.BatteryManager
 import android.os.Build
 import android.os.IBinder
-import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
-import com.tinhcd.myesalessfa.MainActivity
+import com.tinhcd.myesalessfa.R
+import com.tinhcd.myesalessfa.core.ui.AppStrings
+import com.tinhcd.myesalessfa.progress.TodayProgress
+import com.tinhcd.myesalessfa.progress.dayNotification
 import com.tinhcd.myesalessfa.core.location.LocationProvider
 import com.tinhcd.myesalessfa.domain.model.TracePoint
 import com.tinhcd.myesalessfa.domain.repository.LocationTraceRepository
@@ -46,6 +47,8 @@ class TrackingService : Service() {
 
     @Inject lateinit var location: LocationProvider
     @Inject lateinit var trace: LocationTraceRepository
+    @Inject lateinit var strings: AppStrings
+    @Inject lateinit var progress: TodayProgress
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var collecting: Job? = null
@@ -57,6 +60,11 @@ class TrackingService : Service() {
             stopTracking()
             return START_NOT_STICKY
         }
+        if (intent?.action == ACTION_REFRESH) {
+            // New figures for the bar; only reached while running (see refreshNotification).
+            if (running) getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification())
+            return START_STICKY
+        }
         if (!location.hasPermission()) {
             // Without location there is nothing to record; the shell asks again.
             stopSelf()
@@ -66,7 +74,10 @@ class TrackingService : Service() {
             this, NOTIFICATION_ID, notification(),
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0,
         )
+        running = true
         if (collecting == null) {
+            // The day's figures for the notification, which starts from the stored ones.
+            scope.launch { progress.refresh() }
             collecting = scope.launch {
                 val intervalMs = trace.intervalSeconds() * 1000L
                 trace.flush()
@@ -92,6 +103,7 @@ class TrackingService : Service() {
     }
 
     private fun stopTracking() {
+        running = false
         collecting?.cancel()
         collecting = null
         // One last try at what is still queued; the next day's start sends the rest.
@@ -103,6 +115,7 @@ class TrackingService : Service() {
     }
 
     override fun onDestroy() {
+        running = false
         scope.cancel()
         super.onDestroy()
     }
@@ -112,26 +125,15 @@ class TrackingService : Service() {
             ?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
             ?.takeIf { it in 0..100 }
 
-    private fun notification() = NotificationCompat.Builder(this, ensureChannel())
-        .setSmallIcon(android.R.drawable.ic_menu_mylocation)
-        .setContentTitle("Đang trong ngày làm việc")
-        .setContentText("Vị trí được ghi lại đến khi bạn chấm công ra")
-        .setOngoing(true)
-        .setContentIntent(
-            PendingIntent.getActivity(
-                this, 0, Intent(this, MainActivity::class.java),
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-            ),
-        )
-        .build()
+    private fun notification() = dayNotification(this, ensureChannel(), strings, progress.store.read())
 
     private fun ensureChannel(): String {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = getSystemService(NotificationManager::class.java)
             if (manager.getNotificationChannel(CHANNEL_ID) == null) {
                 manager.createNotificationChannel(
-                    NotificationChannel(CHANNEL_ID, "Theo dõi vị trí", NotificationManager.IMPORTANCE_LOW).apply {
-                        description = "Thông báo khi vị trí đang được ghi lại trong ngày làm việc"
+                    NotificationChannel(CHANNEL_ID, strings(R.string.day_notif_channel), NotificationManager.IMPORTANCE_LOW).apply {
+                        description = strings(R.string.day_notif_channel_desc)
                     },
                 )
             }
@@ -143,6 +145,10 @@ class TrackingService : Service() {
         private const val CHANNEL_ID = "tracking"
         private const val NOTIFICATION_ID = 4101
         private const val ACTION_STOP = "com.tinhcd.myesalessfa.tracking.STOP"
+        private const val ACTION_REFRESH = "com.tinhcd.myesalessfa.tracking.REFRESH"
+
+        /** Whether the day is being traced, so a refresh knows there is a notification to redraw. */
+        @Volatile private var running = false
 
         /**
          * Safe to call repeatedly: a running service keeps its one collection.
@@ -164,6 +170,16 @@ class TrackingService : Service() {
 
         fun stop(context: Context) {
             context.startService(Intent(context, TrackingService::class.java).setAction(ACTION_STOP))
+        }
+
+        /**
+         * Redraws the notification from the stored figures. Nothing when the day
+         * is not running: starting the service just to show progress would
+         * start the location trace with it.
+         */
+        fun refreshNotification(context: Context) {
+            if (!running) return
+            context.startService(Intent(context, TrackingService::class.java).setAction(ACTION_REFRESH))
         }
     }
 }
