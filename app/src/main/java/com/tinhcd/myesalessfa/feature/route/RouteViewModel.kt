@@ -68,6 +68,14 @@ data class RouteUiState(
     val nfcStop: RouteStop? = null,
     /** What a tapped tag could not lead to, said once. */
     val nfcMessage: UiText? = null,
+    /**
+     * The cards should arrive one after another the next time they are drawn:
+     * the first time the tab opens, and whenever the list is fetched from
+     * nothing (after the skeleton or an error). Not on every return to the tab --
+     * the shell drops the screen when another tab is chosen, but this survives,
+     * and replaying the entrance forty times a day would be noise.
+     */
+    val entrancePending: Boolean = true,
 ) {
     /**
      * The stop the rep is inside, when they are inside one.
@@ -142,7 +150,7 @@ class RouteViewModel @Inject constructor(
     }
 
     fun load() {
-        _state.update { it.copy(loading = true, error = null) }
+        _state.update { it.copy(loading = true, error = null, entrancePending = it.entrancePending || it.stops.isEmpty()) }
         viewModelScope.launch {
             when (val result = getTodayRoute()) {
                 is DataResult.Success -> _state.update {
@@ -221,6 +229,9 @@ class RouteViewModel @Inject constructor(
             _state.update { it.copy(nfcMessage = message) }
         }
     }
+
+    /** The entrance has started; the cards on screen keep playing it. */
+    fun onEntranceShown() = _state.update { it.copy(entrancePending = false) }
 
     fun onNfcHandled() = _state.update { it.copy(nfcStop = null, nfcMessage = null) }
 }

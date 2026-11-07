@@ -28,7 +28,12 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.ui.MotionDurationScale
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlinx.coroutines.delay
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -37,7 +42,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -166,6 +171,7 @@ fun RouteScreen(
         onRefreshReferenceData = viewModel::refreshReferenceData,
         onQueryChanged = viewModel::onQueryChanged,
         onFilterChanged = viewModel::onFilterChanged,
+        onEntranceShown = viewModel::onEntranceShown,
     )
 }
 
@@ -182,6 +188,7 @@ private fun RouteContent(
     onRefreshReferenceData: () -> Unit,
     onQueryChanged: (String) -> Unit,
     onFilterChanged: (RouteFilter) -> Unit,
+    onEntranceShown: () -> Unit = {},
 ) {
     var filterSheetOpen by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -271,6 +278,8 @@ private fun RouteContent(
                             // searched for the next shop must still be told the previous
                             // one is open, and it would have scrolled out of the results.
                             openStop = state.openStop,
+                            animateEntrance = state.entrancePending,
+                            onEntranceShown = onEntranceShown,
                         )
                     }
                 }
@@ -291,6 +300,37 @@ private fun RouteContent(
                 },
             )
         }
+    }
+}
+
+/** Cards that wait their turn on arrival; past these the list is off screen anyway. */
+private const val STAGGER_MAX = 8
+
+/** Between one card starting and the next. */
+private const val STAGGER_MS = 50L
+
+/**
+ * The card rises a little and fades in, a beat after the one above it, so the
+ * route reads top to bottom as it arrives -- the order the rep will walk it.
+ *
+ * Decided once per card, when it is first composed: a card scrolled into view
+ * later, or drawn again after the list already arrived, just appears. The
+ * wait is scaled with the system animation setting like the animation itself,
+ * so with animations off the cards appear together at once.
+ */
+@Composable
+private fun Modifier.staggeredEntrance(index: Int, play: Boolean): Modifier {
+    val animate = remember { play && index < STAGGER_MAX }
+    if (!animate) return this
+    val progress = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        val scale = coroutineContext[MotionDurationScale]?.scaleFactor ?: 1f
+        delay((index * STAGGER_MS * scale).toLong())
+        progress.animateTo(1f, tween(ROUTE_ANIM_MS + 100, easing = FastOutSlowInEasing))
+    }
+    return graphicsLayer {
+        alpha = progress.value
+        translationY = (1f - progress.value) * 32.dp.toPx()
     }
 }
 
@@ -415,7 +455,14 @@ private fun StopList(
     onOpenCustomer: (RouteStop) -> Unit,
     onCall: (String) -> Unit,
     openStop: RouteStop?,
+    animateEntrance: Boolean = false,
+    onEntranceShown: () -> Unit = {},
 ) {
+    // Started the moment the list is first drawn; each card on screen has
+    // already taken its own copy of the flag, so clearing it here does not
+    // cut their animations short -- it only stops later ones from playing.
+    LaunchedEffect(Unit) { if (animateEntrance) onEntranceShown() }
+
     Column(Modifier.fillMaxSize()) {
         // Above the heading and outside the list, so it cannot scroll away. The
         // greyed check-in chips below it are otherwise a dead end: the rep can
@@ -484,7 +531,7 @@ private fun StopList(
                 }
             }
 
-            items(stops, key = { it.customer.id }) { stop ->
+            itemsIndexed(stops, key = { _, stop -> stop.customer.id }) { index, stop ->
                 StopCard(
                     stop = stop,
                     onOpen = { onOpenStop(stop) },
@@ -498,7 +545,7 @@ private fun StopList(
                         fadeInSpec = tween(ROUTE_ANIM_MS),
                         placementSpec = tween(ROUTE_ANIM_MS),
                         fadeOutSpec = tween(ROUTE_ANIM_MS),
-                    ),
+                    ).staggeredEntrance(index, animateEntrance),
                 )
             }
         }
