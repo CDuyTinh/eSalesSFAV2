@@ -65,6 +65,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.SubcomposeAsyncImage
 import com.tinhcd.myesalessfa.core.ui.ErrorBox
+import com.tinhcd.myesalessfa.core.ui.SharedKeys
+import com.tinhcd.myesalessfa.core.ui.sharedContainer
 import com.tinhcd.myesalessfa.core.ui.SkeletonList
 import com.tinhcd.myesalessfa.core.ui.formatDong
 import com.tinhcd.myesalessfa.core.ui.theme.MyeSalesTheme
@@ -108,6 +110,8 @@ private val BannerHeight = 260.dp
 
 @Composable
 fun CustomerHubScreen(
+    /** Names the shared banner, so the route card it was opened from can grow into it. */
+    customerId: String,
     /**
      * Null until the rep has checked in. Drives whether the work tab exists at
      * all — matching the legacy, which hid it for the same reason: there is no
@@ -144,7 +148,7 @@ fun CustomerHubScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        CustomerBanner(info = detail.info, onBack = onBack)
+        CustomerBanner(customerId = customerId, info = detail.info, onBack = onBack)
 
         TabPills(
             tabs = tabs,
@@ -192,14 +196,17 @@ fun CustomerHubScreen(
  * The gradient costs nothing and removes the whole class of that problem.
  */
 @Composable
-private fun CustomerBanner(info: CustomerInfo?, onBack: () -> Unit) {
+private fun CustomerBanner(customerId: String, info: CustomerInfo?, onBack: () -> Unit) {
     val context = LocalContext.current
+    val shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
 
     Box(
         Modifier
+            // Grows out of the picture on the route card that opened it.
+            .sharedContainer(SharedKeys.store(customerId), shape)
             .fillMaxWidth()
             .height(BannerHeight)
-            .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)),
+            .clip(shape),
     ) {
         if (info?.avatarUrl.isNullOrBlank()) {
             BannerPlaceholder()
@@ -733,7 +740,7 @@ private fun ProgramChip(text: String, tint: Color) {
 private fun CustomerHubPreview() {
     MyeSalesTheme {
         Column {
-            CustomerBanner(info = sampleCustomerInfo, onBack = {})
+            CustomerBanner(customerId = sampleCustomerInfo.customerId, info = sampleCustomerInfo, onBack = {})
             TabPills(
                 tabs = HubTab.entries.toList(),
                 selected = HubTab.INFO,

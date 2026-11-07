@@ -2,9 +2,21 @@ package com.tinhcd.myesalessfa.navigation
 
 import com.tinhcd.myesalessfa.push.FollowPushRoute
 import com.tinhcd.myesalessfa.feature.promotion.PromotionCatalogueScreen
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.navigation.NamedNavArgument
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import com.tinhcd.myesalessfa.core.ui.LocalNavAnimatedScope
+import com.tinhcd.myesalessfa.core.ui.LocalSharedTransitionScope
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -127,290 +139,325 @@ fun AppNavHost(
 ) {
     FollowPushRoute(navController, Routes.SHELL, ::pushDestination)
 
-    NavHost(navController = navController, startDestination = startDestination) {
+    // One shared-transition scope around the whole graph, so an element can
+    // travel from one destination to the next (the shop's picture from a route
+    // card into its banner). Destinations that take part also publish their
+    // own animation scope; see [sharedComposable] below.
+    SharedTransitionLayout {
+        CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+            NavHost(
+                navController = navController,
+                startDestination = startDestination,
+                // A new screen comes in from the right over the old one, which drifts
+                // left and fades; back runs it in reverse. The pop pair is what the
+                // predictive back gesture scrubs, so the rep sees the screen they are
+                // returning to while still dragging.
+                enterTransition = { slideInHorizontally(tween(NAV_MS)) { it / 4 } + fadeIn(tween(NAV_MS)) },
+                exitTransition = { slideOutHorizontally(tween(NAV_MS)) { -it / 10 } + fadeOut(tween(NAV_MS)) },
+                popEnterTransition = { slideInHorizontally(tween(NAV_MS)) { -it / 10 } + fadeIn(tween(NAV_MS)) },
+                popExitTransition = { slideOutHorizontally(tween(NAV_MS)) { it / 4 } + fadeOut(tween(NAV_MS)) },
+            ) {
 
-        composable(Routes.LOGIN) {
-            LoginScreen(
-                onSignedIn = {
-                    navController.navigate(Routes.SHELL) {
-                        // No going back to the login form with the hardware
-                        // button once a session exists.
-                        popUpTo(Routes.LOGIN) { inclusive = true }
-                    }
-                },
-            )
-        }
+                composable(Routes.LOGIN) {
+                    LoginScreen(
+                        onSignedIn = {
+                            navController.navigate(Routes.SHELL) {
+                                // No going back to the login form with the hardware
+                                // button once a session exists.
+                                popUpTo(Routes.LOGIN) { inclusive = true }
+                            }
+                        },
+                    )
+                }
 
-        composable(Routes.SHELL) {
-            MainShell(
-                onOpenMap = { navController.navigate(Routes.ROUTE_MAP) },
-                onOpenAccount = { navController.navigate(Routes.ACCOUNT) },
-                onOpenWorkDay = { navController.navigate(Routes.WORK_DAY) },
-                onOpenNotifications = { navController.navigate(Routes.NOTIFICATIONS) },
-                onOpenMenuEntry = { code ->
-                    // The shell has already refused anything not in SupportedMenu,
-                    // so an unknown code here would be a registry that disagrees
-                    // with itself rather than a rep pressing something odd.
-                    when (code) {
-                        // The menu opens the dossier, not the blank form: a rep
-                        // reaching for "khách hàng mới" is as often checking on
-                        // one they filed as starting another.
-                        SupportedMenu.NEW_CUSTOMER ->
-                            navController.navigate(Routes.CUSTOMER_DOSSIER)
-                        SupportedMenu.REPORT -> navController.navigate(Routes.REPORTS)
-                        SupportedMenu.TRADE_REGIS ->
-                            navController.navigate(Routes.TRADE_REGIS)
-                        SupportedMenu.RECEIVABLE -> navController.navigate(Routes.RECEIVABLES)
-                        SupportedMenu.DAILY_SALES_TARGET ->
-                            navController.navigate(Routes.DAILY_TARGET)
+                sharedComposable(Routes.SHELL) {
+                    MainShell(
+                        onOpenMap = { navController.navigate(Routes.ROUTE_MAP) },
+                        onOpenAccount = { navController.navigate(Routes.ACCOUNT) },
+                        onOpenWorkDay = { navController.navigate(Routes.WORK_DAY) },
+                        onOpenNotifications = { navController.navigate(Routes.NOTIFICATIONS) },
+                        onOpenMenuEntry = { code ->
+                            // The shell has already refused anything not in SupportedMenu,
+                            // so an unknown code here would be a registry that disagrees
+                            // with itself rather than a rep pressing something odd.
+                            when (code) {
+                                // The menu opens the dossier, not the blank form: a rep
+                                // reaching for "khách hàng mới" is as often checking on
+                                // one they filed as starting another.
+                                SupportedMenu.NEW_CUSTOMER ->
+                                    navController.navigate(Routes.CUSTOMER_DOSSIER)
+                                SupportedMenu.REPORT -> navController.navigate(Routes.REPORTS)
+                                SupportedMenu.TRADE_REGIS ->
+                                    navController.navigate(Routes.TRADE_REGIS)
+                                SupportedMenu.RECEIVABLE -> navController.navigate(Routes.RECEIVABLES)
+                                SupportedMenu.DAILY_SALES_TARGET ->
+                                    navController.navigate(Routes.DAILY_TARGET)
 
-                        SupportedMenu.SALES_FOCUS -> navController.navigate(Routes.FOCUS_PRODUCTS)
-                        SupportedMenu.TRADE_PROMOTION -> navController.navigate(Routes.PROMOTIONS)
-                        SupportedMenu.SITE -> navController.navigate(Routes.SITE_STOCK)
-                        SupportedMenu.WORKING_NOTE -> navController.navigate(Routes.WORK_NOTES)
-                        SupportedMenu.MY_TASK ->
-                            navController.navigate(Routes.workPlans("ASSIGNED"))
+                                SupportedMenu.SALES_FOCUS -> navController.navigate(Routes.FOCUS_PRODUCTS)
+                                SupportedMenu.TRADE_PROMOTION -> navController.navigate(Routes.PROMOTIONS)
+                                SupportedMenu.SITE -> navController.navigate(Routes.SITE_STOCK)
+                                SupportedMenu.WORKING_NOTE -> navController.navigate(Routes.WORK_NOTES)
+                                SupportedMenu.MY_TASK ->
+                                    navController.navigate(Routes.workPlans("ASSIGNED"))
 
-                        SupportedMenu.WORKING_PLAN ->
-                            navController.navigate(Routes.workPlans("MINE"))
+                                SupportedMenu.WORKING_PLAN ->
+                                    navController.navigate(Routes.workPlans("MINE"))
 
-                        SupportedMenu.LEAVE_APPLICATION -> navController.navigate(Routes.LEAVE)
-                    }
-                },
-                onOpenStop = { stop -> navController.navigateToStop(stop) },
-                onOpenCustomer = { stop -> navController.navigateToCustomer(stop) },
-                // Straight to the step from the work sheet, skipping the outlet
-                // screen. The rep is already inside the visit — the shortcut
-                // exists precisely to save them the two screens back to it.
-                onOpenVisitStep = { visitId, customerId, formId ->
-                    navController.navigate(Routes.step(visitId, customerId, formId))
-                },
-                onSignedOut = {
-                    navController.navigate(Routes.LOGIN) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                },
-            )
-        }
+                                SupportedMenu.LEAVE_APPLICATION -> navController.navigate(Routes.LEAVE)
+                            }
+                        },
+                        onOpenStop = { stop -> navController.navigateToStop(stop) },
+                        onOpenCustomer = { stop -> navController.navigateToCustomer(stop) },
+                        // Straight to the step from the work sheet, skipping the outlet
+                        // screen. The rep is already inside the visit — the shortcut
+                        // exists precisely to save them the two screens back to it.
+                        onOpenVisitStep = { visitId, customerId, formId ->
+                            navController.navigate(Routes.step(visitId, customerId, formId))
+                        },
+                        onSignedOut = {
+                            navController.navigate(Routes.LOGIN) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        },
+                    )
+                }
 
-        composable(Routes.LEAVE) {
-            LeaveScreen(onBack = { navController.popBackStack() })
-        }
+                composable(Routes.LEAVE) {
+                    LeaveScreen(onBack = { navController.popBackStack() })
+                }
 
-        composable(Routes.WORK_NOTES) {
-            WorkNoteScreen(onBack = { navController.popBackStack() })
-        }
+                composable(Routes.WORK_NOTES) {
+                    WorkNoteScreen(onBack = { navController.popBackStack() })
+                }
 
-        composable(Routes.TRADE_REGIS) {
-            TradeRegisScreen(onBack = { navController.popBackStack() })
-        }
+                composable(Routes.TRADE_REGIS) {
+                    TradeRegisScreen(onBack = { navController.popBackStack() })
+                }
 
-        composable(Routes.CUSTOMER_DOSSIER) {
-            CustomerDossierScreen(
-                onBack = { navController.popBackStack() },
-                onRegisterNew = { navController.navigate(Routes.NEW_CUSTOMER) },
-            )
-        }
+                composable(Routes.CUSTOMER_DOSSIER) {
+                    CustomerDossierScreen(
+                        onBack = { navController.popBackStack() },
+                        onRegisterNew = { navController.navigate(Routes.NEW_CUSTOMER) },
+                    )
+                }
 
-        composable(Routes.NOTIFICATIONS) {
-            NotificationScreen(onBack = { navController.popBackStack() })
-        }
+                composable(Routes.NOTIFICATIONS) {
+                    NotificationScreen(onBack = { navController.popBackStack() })
+                }
 
-        composable(
-            route = Routes.WORK_PLANS,
-            arguments = listOf(
-                navArgument("scope") {
-                    type = NavType.StringType
-                    defaultValue = "ALL"
-                },
-            ),
-        ) {
-            WorkPlanScreen(onBack = { navController.popBackStack() })
-        }
+                composable(
+                    route = Routes.WORK_PLANS,
+                    arguments = listOf(
+                        navArgument("scope") {
+                            type = NavType.StringType
+                            defaultValue = "ALL"
+                        },
+                    ),
+                ) {
+                    WorkPlanScreen(onBack = { navController.popBackStack() })
+                }
 
-        composable(Routes.SITE_STOCK) {
-            SiteStockScreen(onBack = { navController.popBackStack() })
-        }
+                composable(Routes.SITE_STOCK) {
+                    SiteStockScreen(onBack = { navController.popBackStack() })
+                }
 
-        composable(Routes.PROMOTIONS) {
-            PromotionCatalogueScreen(onBack = { navController.popBackStack() })
-        }
+                composable(Routes.PROMOTIONS) {
+                    PromotionCatalogueScreen(onBack = { navController.popBackStack() })
+                }
 
-        composable(Routes.FOCUS_PRODUCTS) {
-            FocusProductsScreen(onBack = { navController.popBackStack() })
-        }
+                composable(Routes.FOCUS_PRODUCTS) {
+                    FocusProductsScreen(onBack = { navController.popBackStack() })
+                }
 
-        composable(Routes.DAILY_TARGET) {
-            DailyTargetScreen(onBack = { navController.popBackStack() })
-        }
+                composable(Routes.DAILY_TARGET) {
+                    DailyTargetScreen(onBack = { navController.popBackStack() })
+                }
 
-        composable(Routes.ACCOUNT) {
-            // No sign-out on success. Supabase keeps the session alive across a
-            // password change, and throwing the rep back to the login screen
-            // mid-route would cost them their place for no security gained.
-            AccountScreen(onBack = { navController.popBackStack() })
-        }
+                composable(Routes.ACCOUNT) {
+                    // No sign-out on success. Supabase keeps the session alive across a
+                    // password change, and throwing the rep back to the login screen
+                    // mid-route would cost them their place for no security gained.
+                    AccountScreen(onBack = { navController.popBackStack() })
+                }
 
-        composable(Routes.ROUTE_MAP) {
-            RouteMapScreen(
-                // Same destination rule as the list: how far the visit has got
-                // decides whether a tap opens the check-in or the work list. It
-                // lives in one place so the two screens cannot diverge.
-                onOpenStop = { stop -> navController.navigateToStop(stop) },
-                onBack = { navController.popBackStack() },
-            )
-        }
+                composable(Routes.ROUTE_MAP) {
+                    RouteMapScreen(
+                        // Same destination rule as the list: how far the visit has got
+                        // decides whether a tap opens the check-in or the work list. It
+                        // lives in one place so the two screens cannot diverge.
+                        onOpenStop = { stop -> navController.navigateToStop(stop) },
+                        onBack = { navController.popBackStack() },
+                    )
+                }
 
-        composable(Routes.RECEIVABLES) {
-            ReceivablesScreen(onBack = { navController.popBackStack() })
-        }
+                composable(Routes.RECEIVABLES) {
+                    ReceivablesScreen(onBack = { navController.popBackStack() })
+                }
 
-        composable(Routes.REPORTS) {
-            ReportsMenuScreen(
-                onBack = { navController.popBackStack() },
-                onOpenReport = { kind -> navController.navigate(Routes.report(kind.wire)) },
-            )
-        }
+                composable(Routes.REPORTS) {
+                    ReportsMenuScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenReport = { kind -> navController.navigate(Routes.report(kind.wire)) },
+                    )
+                }
 
-        composable(
-            route = Routes.REPORT,
-            arguments = listOf(navArgument("kind") { type = NavType.StringType }),
-        ) {
-            ReportsScreen(onBack = { navController.popBackStack() })
-        }
+                composable(
+                    route = Routes.REPORT,
+                    arguments = listOf(navArgument("kind") { type = NavType.StringType }),
+                ) {
+                    ReportsScreen(onBack = { navController.popBackStack() })
+                }
 
-        composable(Routes.NEW_CUSTOMER) {
-            // Back to the shell. The outlet is already on today's route by the
-            // time this closes, and the route reloads when its tab resumes.
-            NewCustomerScreen(onDone = { navController.popBackStack() })
-        }
+                composable(Routes.NEW_CUSTOMER) {
+                    // Back to the shell. The outlet is already on today's route by the
+                    // time this closes, and the route reloads when its tab resumes.
+                    NewCustomerScreen(onDone = { navController.popBackStack() })
+                }
 
-        composable(Routes.WORK_DAY) {
-            // Back to the shell either way. The punch went through the repository
-            // the shell is collecting, so the bar and the drawer already know.
-            WorkDayScreen(onDone = { navController.popBackStack() })
-        }
+                composable(Routes.WORK_DAY) {
+                    // Back to the shell either way. The punch went through the repository
+                    // the shell is collecting, so the bar and the drawer already know.
+                    WorkDayScreen(onDone = { navController.popBackStack() })
+                }
 
-        composable(
-            route = Routes.CHECK_IN,
-            arguments = listOf(navArgument("customerId") { type = NavType.StringType }),
-        ) {
-            // Back to the route list, which reloads and now shows the stop as
-            // in progress. Going straight into the workflow would need the new
-            // visit id, which a queued check-in does not have yet.
-            CheckInScreen(onDone = { navController.popBackStack() })
-        }
+                composable(
+                    route = Routes.CHECK_IN,
+                    arguments = listOf(navArgument("customerId") { type = NavType.StringType }),
+                ) {
+                    // Back to the route list, which reloads and now shows the stop as
+                    // in progress. Going straight into the workflow would need the new
+                    // visit id, which a queued check-in does not have yet.
+                    CheckInScreen(onDone = { navController.popBackStack() })
+                }
 
-        composable(
-            route = Routes.CUSTOMER,
-            arguments = listOf(
-                navArgument("customerId") { type = NavType.StringType },
-                // Absent before check-in, which is what hides the work tab. It
-                // travels in the route rather than being looked up here: the
-                // caller already has the stop, and a second fetch could disagree
-                // with the card the rep just tapped.
-                navArgument("visitId") {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                },
-            ),
-        ) { entry ->
-            val customerId = entry.arguments?.getString("customerId").orEmpty()
-            val visitId = entry.arguments?.getString("visitId")
-            CustomerHubScreen(
-                visitId = visitId,
-                onOpenStep = { formId ->
-                    // Only reachable from the work tab, which only exists when
-                    // there is a visit — so the id is present here.
-                    navController.navigate(Routes.step(visitId.orEmpty(), customerId, formId))
-                },
-                onCheckedOut = { navController.popBackStack(Routes.SHELL, inclusive = false) },
-                onBack = { navController.popBackStack() },
-            )
-        }
+                sharedComposable(
+                    route = Routes.CUSTOMER,
+                    arguments = listOf(
+                        navArgument("customerId") { type = NavType.StringType },
+                        // Absent before check-in, which is what hides the work tab. It
+                        // travels in the route rather than being looked up here: the
+                        // caller already has the stop, and a second fetch could disagree
+                        // with the card the rep just tapped.
+                        navArgument("visitId") {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        },
+                    ),
+                ) { entry ->
+                    val customerId = entry.arguments?.getString("customerId").orEmpty()
+                    val visitId = entry.arguments?.getString("visitId")
+                    CustomerHubScreen(
+                        customerId = customerId,
+                        visitId = visitId,
+                        onOpenStep = { formId ->
+                            // Only reachable from the work tab, which only exists when
+                            // there is a visit — so the id is present here.
+                            navController.navigate(Routes.step(visitId.orEmpty(), customerId, formId))
+                        },
+                        onCheckedOut = { navController.popBackStack(Routes.SHELL, inclusive = false) },
+                        onBack = { navController.popBackStack() },
+                    )
+                }
 
-        composable(
-            route = Routes.STEP,
-            arguments = listOf(
-                navArgument("visitId") { type = NavType.StringType },
-                navArgument("customerId") { type = NavType.StringType },
-                navArgument("formId") { type = NavType.StringType },
-                navArgument("surveyTypeId") {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                },
-            ),
-        ) { entry ->
-            val formId = entry.arguments?.getString("formId")
-            val surveyTypeId = entry.arguments?.getString("surveyTypeId")
+                composable(
+                    route = Routes.STEP,
+                    arguments = listOf(
+                        navArgument("visitId") { type = NavType.StringType },
+                        navArgument("customerId") { type = NavType.StringType },
+                        navArgument("formId") { type = NavType.StringType },
+                        navArgument("surveyTypeId") {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        },
+                    ),
+                ) { entry ->
+                    val formId = entry.arguments?.getString("formId")
+                    val surveyTypeId = entry.arguments?.getString("surveyTypeId")
 
-            // The registry of what this build can render lives in SupportedSteps.
-            when (formId) {
-                // The last step still served by the generic note form. Feedback used
-                // to share it and outgrew it: it needs a topic and a voice note.
-                SupportedSteps.OUTSIDE_CHECKING ->
-                    NoteStepScreen(onDone = { navController.popBackStack() })
+                    // The registry of what this build can render lives in SupportedSteps.
+                    when (formId) {
+                        // The last step still served by the generic note form. Feedback used
+                        // to share it and outgrew it: it needs a topic and a voice note.
+                        SupportedSteps.OUTSIDE_CHECKING ->
+                            NoteStepScreen(onDone = { navController.popBackStack() })
 
-                SupportedSteps.FEEDBACK ->
-                    FeedbackScreen(onDone = { navController.popBackStack() })
+                        SupportedSteps.FEEDBACK ->
+                            FeedbackScreen(onDone = { navController.popBackStack() })
 
-                SupportedSteps.TAKE_ORDER ->
-                    TakeOrderScreen(onDone = { navController.popBackStack() })
+                        SupportedSteps.TAKE_ORDER ->
+                            TakeOrderScreen(onDone = { navController.popBackStack() })
 
-                SupportedSteps.STOCK_OUTLET ->
-                    StockCountScreen(onDone = { navController.popBackStack() })
+                        SupportedSteps.STOCK_OUTLET ->
+                            StockCountScreen(onDone = { navController.popBackStack() })
 
-                SupportedSteps.STOCK_OUT_DATE ->
-                    NearExpiryScreen(onDone = { navController.popBackStack() })
+                        SupportedSteps.STOCK_OUT_DATE ->
+                            NearExpiryScreen(onDone = { navController.popBackStack() })
 
-                SupportedSteps.DISPLAY_REMARK ->
-                    DisplayAuditScreen(onDone = { navController.popBackStack() })
+                        SupportedSteps.DISPLAY_REMARK ->
+                            DisplayAuditScreen(onDone = { navController.popBackStack() })
 
-                SupportedSteps.POSM_STATUS ->
-                    PosmScreen(onDone = { navController.popBackStack() })
+                        SupportedSteps.POSM_STATUS ->
+                            PosmScreen(onDone = { navController.popBackStack() })
 
-                // The only step that opens a list rather than a form: an outlet owes
-                // every survey live for its branch today. A questionnaire on that
-                // list comes back through this same route with its id named, which
-                // is the `surveyTypeId != null` arm below.
-                SupportedSteps.MARKET_INFO ->
-                    if (surveyTypeId == null) {
-                        MarketInfoScreen(
-                            onDone = { navController.popBackStack() },
-                            onOpenQuestionnaire = { id ->
-                                navController.navigate(
-                                    Routes.step(
-                                        visitId = entry.arguments
-                                            ?.getString("visitId").orEmpty(),
-                                        customerId = entry.arguments
-                                            ?.getString("customerId").orEmpty(),
-                                        formId = SupportedSteps.MARKET_INFO,
-                                        surveyTypeId = id,
-                                    ),
+                        // The only step that opens a list rather than a form: an outlet owes
+                        // every survey live for its branch today. A questionnaire on that
+                        // list comes back through this same route with its id named, which
+                        // is the `surveyTypeId != null` arm below.
+                        SupportedSteps.MARKET_INFO ->
+                            if (surveyTypeId == null) {
+                                MarketInfoScreen(
+                                    onDone = { navController.popBackStack() },
+                                    onOpenQuestionnaire = { id ->
+                                        navController.navigate(
+                                            Routes.step(
+                                                visitId = entry.arguments
+                                                    ?.getString("visitId").orEmpty(),
+                                                customerId = entry.arguments
+                                                    ?.getString("customerId").orEmpty(),
+                                                formId = SupportedSteps.MARKET_INFO,
+                                                surveyTypeId = id,
+                                            ),
+                                        )
+                                    },
                                 )
-                            },
-                        )
-                    } else {
-                        SurveyScreen(onDone = { navController.popBackStack() })
+                            } else {
+                                SurveyScreen(onDone = { navController.popBackStack() })
+                            }
+
+                        // Every questionnaire step shares this screen. Adding another is a
+                        // survey_type row naming its form id, plus that id in SupportedSteps —
+                        // no branch of its own. market_info is spoken for above: it opens a
+                        // list first, and reaches this screen through the arm that names a
+                        // questionnaire.
+                        in SupportedSteps.surveyFormIds ->
+                            SurveyScreen(onDone = { navController.popBackStack() })
+
+                        // The step list already refuses to open these, but answering an
+                        // unknown step with a note form would record the wrong shape of
+                        // data under its name — worse than not opening at all.
+                        else -> LaunchedEffect(Unit) { navController.popBackStack() }
                     }
-
-                // Every questionnaire step shares this screen. Adding another is a
-                // survey_type row naming its form id, plus that id in SupportedSteps —
-                // no branch of its own. market_info is spoken for above: it opens a
-                // list first, and reaches this screen through the arm that names a
-                // questionnaire.
-                in SupportedSteps.surveyFormIds ->
-                    SurveyScreen(onDone = { navController.popBackStack() })
-
-                // The step list already refuses to open these, but answering an
-                // unknown step with a note form would record the wrong shape of
-                // data under its name — worse than not opening at all.
-                else -> LaunchedEffect(Unit) { navController.popBackStack() }
+                }
             }
         }
     }
+}
+
+/** Long enough to follow, short enough not to be in the way forty times a day. */
+private const val NAV_MS = 300
+
+/**
+ * [composable] for a destination that has shared elements: it publishes its
+ * own enter/exit animation so [sharedContainer] can follow it.
+ */
+private fun NavGraphBuilder.sharedComposable(
+    route: String,
+    arguments: List<NamedNavArgument> = emptyList(),
+    content: @Composable (NavBackStackEntry) -> Unit,
+) = composable(route = route, arguments = arguments) { entry ->
+    CompositionLocalProvider(LocalNavAnimatedScope provides this) { content(entry) }
 }
 
 /**

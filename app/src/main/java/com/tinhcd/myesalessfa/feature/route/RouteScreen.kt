@@ -2,6 +2,8 @@ package com.tinhcd.myesalessfa.feature.route
 
 import android.content.Intent
 import com.tinhcd.myesalessfa.R
+import com.tinhcd.myesalessfa.core.ui.SharedKeys
+import com.tinhcd.myesalessfa.core.ui.sharedContainer
 import android.widget.Toast
 import com.tinhcd.myesalessfa.feature.nfc.NfcTagReader
 import androidx.compose.ui.res.stringResource
@@ -515,7 +517,7 @@ private fun StopCard(
     ) {
         Column {
             Row(Modifier.padding(12.dp)) {
-                StoreAvatar(url = stop.customer.avatarUrl, order = stop.visitOrder)
+                StoreAvatar(customerId = stop.customer.id, url = stop.customer.avatarUrl, order = stop.visitOrder)
 
                 Spacer(Modifier.width(12.dp))
 
@@ -610,14 +612,20 @@ private fun StopCard(
  * The number is on the photo rather than beside the name because it answers a
  * different question — where am I in the day — and putting it in the text column
  * made the name the second thing read instead of the first.
+ *
+ * It is also where the shop's own screen grows from: opening the card turns
+ * this picture into that screen's banner, so the rep sees which shop they
+ * opened rather than reading it again.
  */
 @Composable
-private fun StoreAvatar(url: String?, order: Int) {
+private fun StoreAvatar(customerId: String, url: String?, order: Int) {
     Box {
         Surface(
             shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.primaryContainer,
-            modifier = Modifier.size(72.dp),
+            modifier = Modifier
+                .sharedContainer(SharedKeys.store(customerId), RoundedCornerShape(12.dp))
+                .size(72.dp),
         ) {
             if (url.isNullOrBlank()) {
                 Box(contentAlignment = Alignment.Center) {
