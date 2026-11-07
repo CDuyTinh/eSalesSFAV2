@@ -31,6 +31,17 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import android.provider.Settings
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.MotionDurationScale
 import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.delay
@@ -596,9 +607,11 @@ private fun ListHeading(subtitle: String, count: Int, modifier: Modifier = Modif
  *
  * The chip is the commitment: check in, or step back into the call in progress.
  * It stays on the card because that is the thing a rep taps forty times a day.
+ *
+ * Internal rather than private for RouteCardTest, which draws it.
  */
 @Composable
-private fun StopCard(
+internal fun StopCard(
     stop: RouteStop,
     onOpen: () -> Unit,
     onOpenHub: () -> Unit,
@@ -612,6 +625,7 @@ private fun StopCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = modifier
             .fillMaxWidth()
+            .visitingRing(stop.status == VisitStatus.IN_PROGRESS)
             // Always enabled, unlike the chip. A finished stop, or one where the
             // outlet was shut, is exactly when a rep goes looking for the phone
             // number or what the shop last took.
@@ -705,6 +719,46 @@ private fun StopCard(
                 }
             }
         }
+    }
+}
+
+/**
+ * A ring round the stop the rep is inside, slowly brightening and fading, so
+ * it is found at a glance in a long route -- the one shop that is still open
+ * on the rep's day. Amber, the colour its code chip already wears.
+ *
+ * Drawn over the card and read only while drawing, so the pulse redraws the
+ * ring without recomposing the card every frame. Holds still at full colour
+ * when the phone has animations turned off.
+ */
+@Composable
+private fun Modifier.visitingRing(visiting: Boolean): Modifier {
+    if (!visiting) return this
+    val color = StatusAmber
+    val context = LocalContext.current
+    val still = remember {
+        Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+    }
+    val alpha = if (still) {
+        remember { mutableFloatStateOf(1f) }
+    } else {
+        rememberInfiniteTransition(label = "visitingRing").animateFloat(
+            initialValue = 0.25f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(1200, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+            label = "visitingRingAlpha",
+        )
+    }
+    return drawWithContent {
+        drawContent()
+        val stroke = 2.dp.toPx()
+        drawRoundRect(
+            color = color.copy(alpha = alpha.value),
+            topLeft = Offset(stroke / 2, stroke / 2),
+            size = Size(size.width - stroke, size.height - stroke),
+            cornerRadius = CornerRadius(12.dp.toPx() - stroke / 2),
+            style = Stroke(width = stroke),
+        )
     }
 }
 
