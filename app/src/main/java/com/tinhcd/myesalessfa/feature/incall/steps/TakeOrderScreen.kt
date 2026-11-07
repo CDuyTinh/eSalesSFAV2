@@ -1,11 +1,14 @@
 package com.tinhcd.myesalessfa.feature.incall.steps
 
+import android.Manifest
 import androidx.activity.compose.BackHandler
 import com.tinhcd.myesalessfa.feature.common.reasonsText
 import com.tinhcd.myesalessfa.feature.common.label
 import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
+import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
+import com.tinhcd.myesalessfa.feature.scan.BarcodeScanner
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,6 +33,7 @@ import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.CardGiftcard
@@ -460,6 +464,11 @@ private fun BasketFooter(state: TakeOrderUiState, onConfirm: () -> Unit) {
 private fun ProductsHeader(state: TakeOrderUiState, viewModel: TakeOrderViewModel) {
     var sortOpen by remember { mutableStateOf(false) }
     var filterOpen by remember { mutableStateOf(false) }
+    var scanOpen by remember { mutableStateOf(false) }
+    val cameraPermission = rememberPermissionRequest(
+        listOf(Manifest.permission.CAMERA),
+        stringResource(R.string.scan_permission_rationale),
+    )
 
     StepHeader(
         title = stringResource(R.string.order_products),
@@ -468,6 +477,13 @@ private fun ProductsHeader(state: TakeOrderUiState, viewModel: TakeOrderViewMode
         actions = {
             // Badged the way the legacy bar badges them, so a rep can see from the
             // list that it is narrowed without opening either sheet to check.
+            HeaderAction(
+                icon = Icons.Default.QrCodeScanner,
+                description = stringResource(R.string.order_scan),
+                badge = null,
+                tint = MaterialTheme.brand.onHeader,
+                onClick = { cameraPermission.launch { scanOpen = true } },
+            )
             HeaderAction(
                 icon = Icons.Default.SwapVert,
                 description = stringResource(R.string.order_sort),
@@ -491,6 +507,10 @@ private fun ProductsHeader(state: TakeOrderUiState, viewModel: TakeOrderViewMode
             )
         },
     )
+
+    if (scanOpen) {
+        BarcodeScanner(onCode = viewModel::onBarcode, onClose = { scanOpen = false })
+    }
 
     if (sortOpen) {
         SortSheet(

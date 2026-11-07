@@ -96,6 +96,7 @@ data class CatalogueProductDto(
     val name: String,
     @SerialName("base_uom") val baseUom: String,
     @SerialName("vat_basis_points") val vatBasisPoints: Int,
+    val barcode: String? = null,
     @SerialName("category_name") val categoryName: String? = null,
     @SerialName("category_sort") val categorySort: Int = 9999,
     /** Nested by the function, so no client-side grouping by product id. */

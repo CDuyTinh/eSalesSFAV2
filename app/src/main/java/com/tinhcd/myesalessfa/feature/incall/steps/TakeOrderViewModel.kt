@@ -428,6 +428,43 @@ class TakeOrderViewModel @Inject constructor(
     }
 
     /**
+     * A barcode read by the scanner: one more of that product on the list.
+     *
+     * The code is printed on the base unit, so the scan counts pieces. A row
+     * showing cases is moved onto pieces first, carrying anything already typed
+     * across at the case's rate, or the next scan would add a whole case. Like
+     * typing, it goes into the pending quantities, not the basket: the rep scans
+     * along the shelf and commits once.
+     *
+     * Returns what the scanner says back, so a rep scanning a box they cannot
+     * see the screen behind knows whether it counted.
+     */
+    fun onBarcode(code: String): UiText {
+        val current = _state.value
+        val product = current.catalogue.firstOrNull { it.product.barcode == code.trim() }
+            ?: return uiText(R.string.scan_not_found, code)
+        val base = product.units.firstOrNull { it.unit.conversionRate == 1 } ?: current.unitFor(product)
+        val shown = current.unitFor(product)
+
+        val already = if (shown.unit.uomCode == base.unit.uomCode) {
+            current.listQtyOf(product)
+        } else {
+            current.draftQty[product.product.id]?.let { it * shown.unit.conversionRate }
+                ?: current.order.quantityOf(product.product.id, base.unit.uomCode)
+        }
+        val qty = already + 1
+
+        _state.update {
+            it.copy(
+                chosenUnit = it.chosenUnit + (product.product.id to base.unit.uomCode),
+                draftQty = it.draftQty + (product.product.id to qty),
+                error = null,
+            )
+        }
+        return uiText(R.string.scan_added, product.product.name, qty, base.unit.uomName)
+    }
+
+    /**
      * Writes everything typed on the list into the basket at once.
      *
      * A zero commits as a removal rather than being skipped. The legacy list

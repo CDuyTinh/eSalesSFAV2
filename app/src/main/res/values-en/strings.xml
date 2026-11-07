@@ -948,4 +948,17 @@
     <string name="cap_out_of_quota">the customer\'s lots are used up</string>
     <string name="cap_out_of_budget">the budget is used up</string>
     <string name="cap_out_of_stock">not enough free goods</string>
+
+    <!-- Quét mã vạch -->
+    <string name="scan_title">Scan barcodes</string>
+    <string name="scan_hint">Each scan adds one base unit</string>
+    <string name="scan_waiting">Hold a barcode inside the frame</string>
+    <string name="scan_added">%1$s: %2$d %3$s</string>
+    <string name="scan_not_found">No product with code %1$s</string>
+    <string name="scan_torch_on">Turn on the light</string>
+    <string name="scan_torch_off">Turn off the light</string>
+    <string name="order_scan">Scan barcodes</string>
+
+    <!-- Quét mã vạch: quyền -->
+    <string name="scan_permission_rationale">The app needs the camera to read the barcodes on products.</string>
 </resources>

@@ -28,7 +28,7 @@
 import { handler, json, readAll } from "../_shared/client.ts";
 
 const PRODUCT_COLUMNS =
-  "id,code,name,base_uom,vat_basis_points,category:category_id(name,sort_order)";
+  "id,code,name,base_uom,vat_basis_points,barcode,category:category_id(name,sort_order)";
 
 const PRODUCT_UOM_COLUMNS =
   "product_id,uom_code,conversion_rate,is_default_sale,sort_order,uom:uom_code(name)";
@@ -41,6 +41,7 @@ interface ProductRow {
   name: string;
   base_uom: string;
   vat_basis_points: number;
+  barcode: string | null;
   category: { name: string; sort_order: number } | null;
 }
 
@@ -104,6 +105,8 @@ Deno.serve(handler(async (_req, db) => {
       name: p.name,
       base_uom: p.base_uom,
       vat_basis_points: p.vat_basis_points,
+      // The EAN on the base unit, scanned in Đặt hàng.
+      barcode: p.barcode,
       category_name: p.category?.name ?? null,
       // Products with no category sort last rather than first, so an
       // uncategorised item does not lead the catalogue.
