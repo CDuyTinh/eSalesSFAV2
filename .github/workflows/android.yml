@@ -45,8 +45,26 @@ jobs:
 
       # Unit tests include the Compose UI and Room tests, which run on the JVM
       # through Robolectric, so no emulator is needed.
+      # Teed to a file so a failure can be raised as annotations below.
       - name: Build, test and lint
-        run: ./gradlew assembleDebug testDebugUnitTest :domain:test :app:lintDebug --stacktrace
+        run: |
+          set -o pipefail
+          ./gradlew assembleDebug testDebugUnitTest :domain:test :app:lintDebug --stacktrace 2>&1 | tee build.log
+
+      # The job log needs a signed-in viewer; annotations do not. The lines that
+      # say what broke -- the failing task, the root cause, compiler errors,
+      # failed tests -- are put where anyone looking at the run can read them.
+      - name: Explain a failure
+        if: failure()
+        run: |
+          [ -f build.log ] || exit 0
+          # The failing task, the line under "What went wrong", root causes,
+          # compiler errors and failed tests; ten at most, each once.
+          grep -E -A1 "What went wrong" build.log | grep -v -E "What went wrong|^--$" > why.txt || true
+          grep -E "^> Task .* FAILED$|^Caused by:|^e: | FAILED$" build.log >> why.txt || true
+          awk '!seen[$0]++' why.txt | head -n 10 | while IFS= read -r line; do
+            echo "::error::$line"
+          done
 
       - name: Debug APK
         uses: actions/upload-artifact@v4
