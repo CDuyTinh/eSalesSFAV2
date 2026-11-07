@@ -31,9 +31,14 @@
         android:name="android.hardware.nfc"
         android:required="false" />
 
+    <!-- enableOnBackInvokedCallback: predictive back on Android 13-15 as well
+         (16 turns it on for this targetSdk anyway). Every back press goes
+         through Compose's BackHandler / the NavHost, which both support it:
+         dragging back previews the screen underneath before letting go. -->
     <application
         android:name=".MyeSalesApp"
         android:allowBackup="true"
+        android:enableOnBackInvokedCallback="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
