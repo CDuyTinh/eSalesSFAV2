@@ -107,7 +107,7 @@ fun LoginScreen(
  * checked.
  */
 @Composable
-private fun LoginContent(
+internal fun LoginContent(
     state: LoginUiState,
     onUsernameChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,

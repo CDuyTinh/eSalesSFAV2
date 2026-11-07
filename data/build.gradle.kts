@@ -13,6 +13,12 @@ plugins {
 }
 
 android {
+    // Robolectric reads the merged resources: the Compose UI tests check what the
+    // screens actually say.
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+
     namespace = "com.tinhcd.myesalessfa.data"
     compileSdk { version = release(37) }
 
@@ -79,6 +85,9 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     testImplementation(libs.junit)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.junit)
     // Asserts the requests Retrofit actually builds. Without a device to run the
     // app on, this is what proves the annotations produce the URLs verified
     // against the live API by hand.
