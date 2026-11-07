@@ -24,6 +24,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -220,30 +232,48 @@ private fun RouteContent(
                 }
             }
 
-            when {
-                state.loading && state.stops.isEmpty() -> SkeletonList(count = 5, lines = 3)
-                state.error != null -> ErrorBox(state.error.asString(), onRetry = onRetry)
-                state.stops.isEmpty() ->
-                    ErrorBox(stringResource(R.string.route_empty))
+            val phase = when {
+                state.loading && state.stops.isEmpty() -> RoutePhase.LOADING
+                state.error != null -> RoutePhase.ERROR
+                state.stops.isEmpty() -> RoutePhase.EMPTY
+                else -> RoutePhase.LIST
+            }
 
-                else -> StopList(
-                    stops = state.visibleStops,
-                    filtering = state.filtering,
-                    filter = state.filter,
-                    subtitle = listOfNotNull(state.me?.fullName, state.me?.branchName)
-                        .joinToString(" - "),
-                    onOpenStop = onOpenStop,
-                    onOpenCustomer = onOpenCustomer,
-                    onCall = { phone ->
-                        context.startActivity(
-                            Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone")),
+            // Pulling the list down does what the header's refresh does: fetch the
+            // reference data again and reload the route. The header button stays,
+            // because a gesture nobody has shown the rep is one they will not find.
+            PullToRefreshBox(
+                isRefreshing = state.sync.syncing,
+                onRefresh = onRefreshReferenceData,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                // The skeleton hands over to the cards with a cross-fade rather
+                // than a cut, so the eye stays where the first card will be.
+                Crossfade(targetState = phase, animationSpec = tween(ROUTE_ANIM_MS), label = "routePhase") { shown ->
+                    when (shown) {
+                        RoutePhase.LOADING -> SkeletonList(count = 5, lines = 3)
+                        RoutePhase.ERROR -> ErrorBox(state.error?.asString().orEmpty(), onRetry = onRetry)
+                        RoutePhase.EMPTY -> ErrorBox(stringResource(R.string.route_empty))
+                        RoutePhase.LIST -> StopList(
+                            stops = state.visibleStops,
+                            filtering = state.filtering,
+                            filter = state.filter,
+                            subtitle = listOfNotNull(state.me?.fullName, state.me?.branchName)
+                                .joinToString(" - "),
+                            onOpenStop = onOpenStop,
+                            onOpenCustomer = onOpenCustomer,
+                            onCall = { phone ->
+                                context.startActivity(
+                                    Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone")),
+                                )
+                            },
+                            // From the whole route, not the filtered list: a rep who has
+                            // searched for the next shop must still be told the previous
+                            // one is open, and it would have scrolled out of the results.
+                            openStop = state.openStop,
                         )
-                    },
-                    // From the whole route, not the filtered list: a rep who has
-                    // searched for the next shop must still be told the previous
-                    // one is open, and it would have scrolled out of the results.
-                    openStop = state.openStop,
-                )
+                    }
+                }
             }
         }
     }
@@ -263,6 +293,12 @@ private fun RouteContent(
         }
     }
 }
+
+/** What the list area is showing; the cross-fade runs between these. */
+private enum class RoutePhase { LOADING, ERROR, EMPTY, LIST }
+
+/** One duration for the list's motion, so its pieces move together. */
+private const val ROUTE_ANIM_MS = 300
 
 // -----------------------------------------------------------------------------
 // Header
@@ -384,7 +420,16 @@ private fun StopList(
         // Above the heading and outside the list, so it cannot scroll away. The
         // greyed check-in chips below it are otherwise a dead end: the rep can
         // see they may not check in and nothing tells them why or what to do.
-        if (openStop != null) {
+        // The shop stays named while the banner shrinks away after its check-out.
+        var lastOpen by remember { mutableStateOf(openStop) }
+        if (openStop != null && openStop != lastOpen) lastOpen = openStop
+        val shown = lastOpen
+        AnimatedVisibility(
+            visible = openStop != null && shown != null,
+            enter = expandVertically(tween(ROUTE_ANIM_MS)) + fadeIn(tween(ROUTE_ANIM_MS)),
+            exit = shrinkVertically(tween(ROUTE_ANIM_MS)) + fadeOut(tween(ROUTE_ANIM_MS)),
+        ) {
+            if (shown == null) return@AnimatedVisibility
             Surface(
                 color = MaterialTheme.colorScheme.secondaryContainer,
                 shape = RoundedCornerShape(10.dp),
@@ -404,7 +449,7 @@ private fun StopList(
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = stringResource(R.string.route_open_visit, openStop.customer.name),
+                        text = stringResource(R.string.route_open_visit, shown.customer.name),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
@@ -425,7 +470,7 @@ private fun StopList(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             if (stops.isEmpty()) {
-                item {
+                item(key = "no-match") {
                     Text(
                         text = stringResource(R.string.route_no_match),
                         style = MaterialTheme.typography.bodyLarge,
@@ -433,7 +478,8 @@ private fun StopList(
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 32.dp),
+                            .padding(vertical = 32.dp)
+                            .animateItem(),
                     )
                 }
             }
@@ -445,6 +491,14 @@ private fun StopList(
                     onOpenHub = { onOpenCustomer(stop) },
                     checkInBlocked = openStop != null && openStop.customer.id != stop.customer.id,
                     onCall = onCall,
+                    // Searching or filtering, a card that drops out fades and the
+                    // ones below slide up into its place, so the rep can follow
+                    // which shops are left instead of re-reading the whole list.
+                    modifier = Modifier.animateItem(
+                        fadeInSpec = tween(ROUTE_ANIM_MS),
+                        placementSpec = tween(ROUTE_ANIM_MS),
+                        fadeOutSpec = tween(ROUTE_ANIM_MS),
+                    ),
                 )
             }
         }
@@ -503,12 +557,13 @@ private fun StopCard(
     onOpenHub: () -> Unit,
     checkInBlocked: Boolean,
     onCall: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Card(
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             // Always enabled, unlike the chip. A finished stop, or one where the
             // outlet was shut, is exactly when a rep goes looking for the phone
@@ -663,8 +718,11 @@ private fun StoreAvatar(customerId: String, url: String?, order: Int) {
 
 @Composable
 private fun CodeChip(code: String, color: Color) {
+    // Eased rather than switched: coming back from a check-out, the code turning
+    // from amber to green is how the rep sees the stop they just finished.
+    val animated by animateColorAsState(color, tween(ROUTE_ANIM_MS), label = "codeChip")
     Surface(
-        color = color,
+        color = animated,
         contentColor = MaterialTheme.status.onStatus,
         shape = RoundedCornerShape(12.dp),
     ) {
@@ -716,6 +774,35 @@ private fun InfoRow(icon: ImageVector, text: String) {
  */
 @Composable
 private fun StopAction(status: VisitStatus, checkInBlocked: Boolean, onOpen: () -> Unit) {
+    // The chip changes meaning with the stop (check in, back into the visit,
+    // visit again), so the old one fades and shrinks as the new one grows in
+    // rather than the label jumping under the rep's thumb.
+    AnimatedContent(
+        targetState = status,
+        // Only a change of what the chip offers animates; COMPLETED to NO_ORDER
+        // is the same "visit again" chip and stays put.
+        contentKey = { it.actionKind() },
+        transitionSpec = {
+            (fadeIn(tween(ROUTE_ANIM_MS)) + scaleIn(tween(ROUTE_ANIM_MS), initialScale = 0.85f))
+                .togetherWith(fadeOut(tween(ROUTE_ANIM_MS / 2)))
+        },
+        contentAlignment = Alignment.CenterEnd,
+        label = "stopAction",
+    ) { shown -> StopActionChip(shown, checkInBlocked, onOpen) }
+}
+
+/** What the action chip offers, which is what its animation follows. */
+private enum class ActionKind { CHECK_IN, ENTER, AGAIN, NONE }
+
+private fun VisitStatus.actionKind() = when (this) {
+    VisitStatus.PLANNED -> ActionKind.CHECK_IN
+    VisitStatus.IN_PROGRESS -> ActionKind.ENTER
+    VisitStatus.COMPLETED, VisitStatus.NO_ORDER, VisitStatus.CLOSED -> ActionKind.AGAIN
+    VisitStatus.ABANDONED -> ActionKind.NONE
+}
+
+@Composable
+private fun StopActionChip(status: VisitStatus, checkInBlocked: Boolean, onOpen: () -> Unit) {
     when (status) {
         // Grey and inert while another shop is open, the way the legacy card
         // greys it. The banner above the list says which shop and what to do
@@ -769,8 +856,9 @@ private fun ActionChip(
     enabled: Boolean = true,
 ) {
     Surface(
-        color = container,
-        contentColor = content,
+        color = animateColorAsState(container, tween(ROUTE_ANIM_MS), label = "chipContainer").value,
+        // Greying out when another shop opens, and back, eases the same way.
+        contentColor = animateColorAsState(content, tween(ROUTE_ANIM_MS), label = "chipContent").value,
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .padding(end = 4.dp)
