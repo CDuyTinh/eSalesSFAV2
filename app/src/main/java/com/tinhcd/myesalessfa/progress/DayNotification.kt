@@ -79,9 +79,12 @@ fun dayNotification(
     return builder.build()
 }
 
-/** "3 đơn · 4,2 tr · KPI tháng 68%", the month part only with a target. */
+/**
+ * "3 đơn · 4,2 tr · KPI tháng 68%". Sales only once there are some -- a bare
+ * "0" beside "0 đơn" reads as a stray digit -- and the month only with a target.
+ */
 internal fun dayLine(strings: AppStrings, day: TodaySnapshot): String = buildList {
     add(strings(R.string.day_notif_orders, day.orderCount))
-    add(compactMoney(day.revenue))
+    if (day.revenue > 0) add(compactMoney(day.revenue))
     day.monthPercent?.let { add(strings(R.string.day_notif_month, it)) }
 }.joinToString(" · ")
