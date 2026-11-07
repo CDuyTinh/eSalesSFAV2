@@ -16,7 +16,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -122,7 +122,9 @@ class MainActivity : ComponentActivity() {
                 // worse; so is a spinner after the splash. The splash continues.
                 when (val destination = start) {
                     null -> SplashHold()
-                    else -> Scaffold(modifier = Modifier.fillMaxSize()) { _ ->
+                    // The background only: every screen draws its own bars and insets,
+                    // so a Scaffold here had no padding to give.
+                    else -> Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                         AppNavHost(startDestination = destination)
                     }
                 }
