@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.hilt)
     // Reads app/google-services.json (Firebase project esalesv2) for FCM.
     alias(libs.plugins.google.services)
+    // Ships the profile :baselineprofile generates (src/release/generated).
+    alias(libs.plugins.baselineprofile)
 }
 
 android {
@@ -44,6 +46,9 @@ android {
             optimization {
                 enable = false
             }
+            // Debug-signed until the release keystore exists, so the benchmark
+            // build types the profile plugin derives from this one can be installed.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -85,6 +90,9 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.mlkit.barcode)
     implementation(libs.androidx.glance.appwidget)
+    // Installs the Baseline Profile on a sideloaded APK, where no store does it.
+    implementation(libs.androidx.profileinstaller)
+    baselineProfile(project(":baselineprofile"))
     implementation(libs.androidx.paging.compose)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)

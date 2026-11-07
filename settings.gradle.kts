@@ -32,3 +32,6 @@ include(":app")
 include(":domain")
 include(":data")
 include(":core")
+// Not a feature module: generates the Baseline Profile and runs the startup
+// benchmark against :app, on a connected phone.
+include(":baselineprofile")
