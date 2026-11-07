@@ -986,4 +986,20 @@
     <!-- Tuyến: thẻ NFC -->
     <string name="route_nfc_off_route">Tag of %1$s — this shop is not on today\'s route</string>
     <string name="route_nfc_failed">Could not check the tag. Check the connection and tap again.</string>
+
+    <!-- Widget + thông báo ngày làm việc -->
+    <string name="widget_label">Today</string>
+    <string name="widget_description">The day\'s progress: visits, orders, sales and the month\'s KPI</string>
+    <string name="widget_updated">at %1$s</string>
+    <string name="widget_visits">Visits %1$d/%2$d</string>
+    <string name="widget_empty">No figures for today yet. Tap to open the app.</string>
+    <string name="widget_refresh">Refresh</string>
+    <string name="day_notif_title">Working day in progress</string>
+    <string name="day_notif_tracking">Your location is recorded until you clock out</string>
+    <string name="day_notif_tracking_short">Recording location</string>
+    <string name="day_notif_visits">Visited %1$d of %2$d shops</string>
+    <string name="day_notif_orders">%1$d orders</string>
+    <string name="day_notif_month">Month KPI %1$d%%</string>
+    <string name="day_notif_channel">Working day</string>
+    <string name="day_notif_channel_desc">The day\'s progress, and location recording until you clock out</string>
 </resources>

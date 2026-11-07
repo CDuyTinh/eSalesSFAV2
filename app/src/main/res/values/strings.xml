@@ -990,4 +990,20 @@
     <!-- Tuyến: thẻ NFC -->
     <string name="route_nfc_off_route">Thẻ của %1$s — cửa hàng không có trong tuyến hôm nay</string>
     <string name="route_nfc_failed">Không kiểm tra được thẻ. Kiểm tra mạng rồi chạm lại.</string>
+
+    <!-- Widget + thông báo ngày làm việc -->
+    <string name="widget_label">Hôm nay</string>
+    <string name="widget_description">Tiến độ trong ngày: viếng thăm, đơn hàng, doanh số và KPI tháng</string>
+    <string name="widget_updated">lúc %1$s</string>
+    <string name="widget_visits">Viếng thăm %1$d/%2$d</string>
+    <string name="widget_empty">Chưa có số liệu hôm nay. Chạm để mở ứng dụng.</string>
+    <string name="widget_refresh">Làm mới</string>
+    <string name="day_notif_title">Đang trong ngày làm việc</string>
+    <string name="day_notif_tracking">Vị trí được ghi lại đến khi bạn chấm công ra</string>
+    <string name="day_notif_tracking_short">Đang ghi vị trí</string>
+    <string name="day_notif_visits">Đã ghé %1$d/%2$d cửa hàng</string>
+    <string name="day_notif_orders">%1$d đơn</string>
+    <string name="day_notif_month">KPI tháng %1$d%%</string>
+    <string name="day_notif_channel">Ngày làm việc</string>
+    <string name="day_notif_channel_desc">Tiến độ trong ngày và việc ghi vị trí đến khi chấm công ra</string>
 </resources>
