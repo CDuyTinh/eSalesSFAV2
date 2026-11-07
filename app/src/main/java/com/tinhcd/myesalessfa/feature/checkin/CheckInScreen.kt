@@ -5,9 +5,13 @@ import com.tinhcd.myesalessfa.R
 import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.R as CoreR
 import com.tinhcd.myesalessfa.core.permission.rememberPermissionRequest
+import com.tinhcd.myesalessfa.feature.nfc.NfcState
+import com.tinhcd.myesalessfa.feature.nfc.NfcTagReader
+import com.tinhcd.myesalessfa.feature.nfc.nfcState
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import android.content.Intent
 import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.tinhcd.myesalessfa.feature.photo.DualCameraCapture
@@ -39,6 +43,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -130,6 +135,9 @@ fun CheckInScreen(
         )
     }
 
+    // The shop's tag, read whenever it is tapped while this screen is open.
+    NfcTagReader(onTag = viewModel::onNfcTag)
+
     LaunchedEffect(state.finished) {
         if (state.finished) onDone()
     }
@@ -168,6 +176,8 @@ fun CheckInScreen(
                                 locating = state.locating,
                                 onRefresh = viewModel::refreshLocation,
                             )
+
+                            NfcRow(nfc = state.nfc)
 
                             if (state.needsReason) {
                                 HorizontalDivider()
@@ -387,6 +397,49 @@ private fun DistanceRow(gate: CheckInGate?, locating: Boolean, onRefresh: () -> 
             }
 
             else -> Unit
+        }
+    }
+}
+
+/**
+ * Thẻ NFC: whether the shop's tag has been tapped, and what it said.
+ *
+ * Hidden on a phone with no NFC, where it could only ever say no. With NFC
+ * switched off it says so and opens the setting, since the tag is worth the
+ * detour for a rep the GPS has put across the street.
+ */
+@Composable
+private fun NfcRow(nfc: NfcCheck?) {
+    val context = LocalContext.current
+    val device = remember(nfc) { nfcState(context) }
+    if (device == NfcState.UNSUPPORTED) return
+
+    val status = MaterialTheme.status
+    val (value, color) = when {
+        nfc is NfcCheck.Verified -> stringResource(R.string.checkin_nfc_verified) to status.success
+        nfc is NfcCheck.Checking -> stringResource(R.string.checkin_nfc_checking) to MaterialTheme.colorScheme.onSurfaceVariant
+        nfc is NfcCheck.Foreign -> stringResource(R.string.checkin_nfc_foreign, nfc.customerName) to MaterialTheme.colorScheme.error
+        nfc is NfcCheck.Unknown -> stringResource(R.string.checkin_nfc_unknown) to MaterialTheme.colorScheme.error
+        nfc is NfcCheck.Unchecked -> stringResource(R.string.checkin_nfc_unchecked) to status.warning
+        device == NfcState.OFF -> stringResource(R.string.checkin_nfc_off) to MaterialTheme.colorScheme.onSurfaceVariant
+        else -> stringResource(R.string.checkin_nfc_tap) to MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    HorizontalDivider()
+    InfoRow(
+        label = stringResource(R.string.checkin_nfc),
+        value = value,
+        valueColor = color,
+        onClick = if (device == NfcState.OFF) {
+            { context.startActivity(Intent(Settings.ACTION_NFC_SETTINGS)) }
+        } else {
+            null
+        },
+    ) {
+        if (nfc is NfcCheck.Checking) {
+            CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+        } else {
+            Icon(Icons.Default.Nfc, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
         }
     }
 }

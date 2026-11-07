@@ -96,4 +96,6 @@ data class CheckInRequest(
     /** Why the rep checked in despite the gate (too far, weak GPS), as a reason_code id. */
     val reasonId: String?,
     val note: String?,
+    /** UID of the NFC tag tapped in the shop; the server decides whether it is this customer's. */
+    val nfcUid: String? = null,
 )

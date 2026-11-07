@@ -1198,3 +1198,29 @@ data class CatalogueBudgetDto(
     val spent: Double? = null,
     val remaining: Double? = null,
 )
+
+// -----------------------------------------------------------------------------
+// nfc-tag
+// -----------------------------------------------------------------------------
+
+@Serializable
+data class NfcLookupDto(val owner: NfcOwnerDto? = null)
+
+@Serializable
+data class NfcOwnerDto(
+    @SerialName("customer_id") val customerId: String,
+    val code: String,
+    val name: String,
+)
+
+@Serializable
+data class NfcRegisterDto(
+    @SerialName("customer_id") val customerId: String,
+    @SerialName("tag_uid") val tagUid: String,
+)
+
+@Serializable
+data class NfcRegistrationDto(
+    val result: String,
+    @SerialName("customer_name") val customerName: String? = null,
+)

@@ -20,6 +20,8 @@ import com.tinhcd.myesalessfa.domain.model.ReasonKind
 import com.tinhcd.myesalessfa.domain.model.RouteStop
 import com.tinhcd.myesalessfa.domain.repository.CheckInRepository
 import com.tinhcd.myesalessfa.domain.repository.ConfigRepository
+import com.tinhcd.myesalessfa.domain.repository.NfcTagRepository
+import com.tinhcd.myesalessfa.feature.nfc.RecentNfcTap
 import com.tinhcd.myesalessfa.domain.repository.RouteRepository
 import com.tinhcd.myesalessfa.domain.usecase.EvaluateCheckInUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -66,18 +68,52 @@ data class CheckInUiState(
     val error: UiText? = null,
     val finished: Boolean = false,
     val queuedOffline: Boolean = false,
+    /** The outlet's NFC tag, once the rep has tapped one. */
+    val nfc: NfcCheck? = null,
 ) {
-    /** A reason is required whenever the gate is not clean. */
-    val needsReason: Boolean get() = gate is CheckInGate.NeedsReason
+    /** The tapped tag is this customer's, as the server says. */
+    val nfcVerified: Boolean get() = nfc is NfcCheck.Verified
+
+    /**
+     * A reason is required whenever the gate is not clean, unless the shop's
+     * own tag was tapped: every gate is a complaint about the GPS fix, and the
+     * tag answers the question the fix could not.
+     */
+    val needsReason: Boolean get() = gate is CheckInGate.NeedsReason && !nfcVerified
 
     val canSubmit: Boolean
         get() = !submitting && !locating && !capturing &&
             (!photoRequired || photoLocalPath != null) &&
             when (gate) {
                 is CheckInGate.Allowed -> true
-                is CheckInGate.NeedsReason -> selectedReason != null
+                is CheckInGate.NeedsReason -> selectedReason != null || nfcVerified
+                // Too far for policy to allow even with a reason: the tag is
+                // proof the GPS is wrong, which is the case the block is not for.
+                is CheckInGate.Blocked -> nfcVerified
                 else -> false
             }
+}
+
+/** What tapping a tag at the door came to. */
+sealed interface NfcCheck {
+    val uid: String
+
+    data class Checking(override val uid: String) : NfcCheck
+
+    /** Registered to this customer. */
+    data class Verified(override val uid: String) : NfcCheck
+
+    /** Registered to another customer, named when the branch can see them. */
+    data class Foreign(override val uid: String, val customerName: String) : NfcCheck
+
+    /** Nobody registered it. */
+    data class Unknown(override val uid: String) : NfcCheck
+
+    /**
+     * Could not be looked up (no signal). Sent with the check-in all the same;
+     * the server matches it when it arrives.
+     */
+    data class Unchecked(override val uid: String) : NfcCheck
 }
 
 @HiltViewModel
@@ -90,6 +126,8 @@ class CheckInViewModel @Inject constructor(
     private val evaluate: EvaluateCheckInUseCase,
     private val locationProvider: LocationProvider,
     private val photoStore: PhotoStore,
+    private val nfcTags: NfcTagRepository,
+    private val recentNfcTap: RecentNfcTap,
 ) : ViewModel() {
 
     private val customerId: String = checkNotNull(savedStateHandle["customerId"])
@@ -100,6 +138,9 @@ class CheckInViewModel @Inject constructor(
     val state: StateFlow<CheckInUiState> = _state.asStateFlow()
 
     init {
+        // Opened by tapping this shop's tag on the route list: that tap counts.
+        recentNfcTap.take(customerId)?.let(::onNfcTag)
+
         viewModelScope.launch {
             policy = configRepository.checkInPolicy()
             _state.update { it.copy(photoRequired = policy.photoRequired) }
@@ -153,6 +194,29 @@ class CheckInViewModel @Inject constructor(
     fun selectReason(reason: ReasonCode) = _state.update { it.copy(selectedReason = reason) }
 
     fun onNoteChange(value: String) = _state.update { it.copy(note = value) }
+
+    /** A tag tapped while the check-in is open. The same tag again is ignored. */
+    fun onNfcTag(uid: String) {
+        val current = _state.value
+        if (current.nfc?.uid == uid && current.nfc !is NfcCheck.Unchecked) return
+        _state.update { it.copy(nfc = NfcCheck.Checking(uid)) }
+
+        viewModelScope.launch {
+            val check = when (val result = nfcTags.ownerOf(uid)) {
+                is DataResult.Success -> {
+                    val owner = result.data
+                    when {
+                        owner == null -> NfcCheck.Unknown(uid)
+                        owner.customerId == customerId -> NfcCheck.Verified(uid)
+                        else -> NfcCheck.Foreign(uid, owner.name)
+                    }
+                }
+
+                is DataResult.Failure -> NfcCheck.Unchecked(uid)
+            }
+            _state.update { if (it.nfc?.uid == uid) it.copy(nfc = check) else it }
+        }
+    }
 
     fun openCamera() = _state.update { it.copy(cameraOpen = true, error = null) }
 
@@ -234,7 +298,11 @@ class CheckInViewModel @Inject constructor(
                     else -> 0.0
                 },
                 photoLocalPath = current.photoLocalPath,
-                reasonId = current.selectedReason?.id,
+                // Not sent when the tag made it unnecessary: a reason picked
+                // before the tap would say the GPS was explained by something else.
+                reasonId = current.selectedReason?.id?.takeIf { current.needsReason },
+                // Any tag read, matched or not: a wrong tag is evidence too.
+                nfcUid = current.nfc?.uid,
                 // Blank is not a note. Sending "" would fill a column someone
                 // will later query for "check-ins that came with a note".
                 note = current.note.trim().takeIf { it.isNotEmpty() },

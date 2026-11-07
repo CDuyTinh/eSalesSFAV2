@@ -28,6 +28,7 @@ import com.tinhcd.myesalessfa.data.remote.service.PromotionCatalogueService
 import com.tinhcd.myesalessfa.data.remote.service.DeviceTokenService
 import com.tinhcd.myesalessfa.data.remote.service.LocationTraceService
 import com.tinhcd.myesalessfa.data.remote.service.TradeRegistrationService
+import com.tinhcd.myesalessfa.data.remote.service.NfcTagService
 import com.tinhcd.myesalessfa.data.remote.service.VisitService
 import com.tinhcd.myesalessfa.data.remote.service.WorkNoteService
 import com.tinhcd.myesalessfa.data.remote.service.WorkPlanService
@@ -164,6 +165,11 @@ object NetworkModule {
     @Singleton
     fun provideVisitService(retrofit: Retrofit): VisitService =
         retrofit.create(VisitService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideNfcTagService(retrofit: Retrofit): NfcTagService =
+        retrofit.create(NfcTagService::class.java)
 
     @Provides
     @Singleton

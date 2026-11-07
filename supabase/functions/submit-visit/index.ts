@@ -27,6 +27,8 @@ interface Body {
   check_in_distance_m?: number | null;
   check_in_photo_path?: string | null;
   check_in_reason_id?: string | null;
+  /** The NFC tag tapped in the shop; the database decides whether it matches. */
+  check_in_nfc_uid?: string | null;
   note?: string | null;
 }
 
@@ -85,6 +87,7 @@ Deno.serve(handler(async (req, db) => {
       check_in_distance_m: body.check_in_distance_m ?? null,
       check_in_photo_path: body.check_in_photo_path ?? null,
       check_in_reason_id: body.check_in_reason_id ?? null,
+      check_in_nfc_uid: body.check_in_nfc_uid ?? null,
       note: body.note ?? null,
     }).select("id"),
   );

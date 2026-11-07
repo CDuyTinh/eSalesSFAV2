@@ -2,6 +2,8 @@ package com.tinhcd.myesalessfa.feature.route
 
 import android.content.Intent
 import com.tinhcd.myesalessfa.R
+import android.widget.Toast
+import com.tinhcd.myesalessfa.feature.nfc.NfcTagReader
 import androidx.compose.ui.res.stringResource
 import com.tinhcd.myesalessfa.core.ui.theme.status
 import android.net.Uri
@@ -120,6 +122,23 @@ fun RouteScreen(
 
     LaunchedEffect(state.sync.syncing) {
         if (!state.sync.syncing) onReferenceDataRefreshed()
+    }
+
+    // A shop's NFC tag opens its stop, as tapping the card would.
+    NfcTagReader(onTag = viewModel::onNfcTag)
+    LaunchedEffect(state.nfcStop) {
+        state.nfcStop?.let {
+            viewModel.onNfcHandled()
+            onOpenStop(it)
+        }
+    }
+    val context = LocalContext.current
+    val nfcMessage = state.nfcMessage?.asString()
+    LaunchedEffect(nfcMessage) {
+        nfcMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.onNfcHandled()
+        }
     }
 
     RouteContent(

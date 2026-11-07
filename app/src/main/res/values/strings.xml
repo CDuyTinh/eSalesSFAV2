@@ -965,4 +965,29 @@
 
     <!-- Quét mã vạch: quyền -->
     <string name="scan_permission_rationale">Ứng dụng cần quyền camera để quét mã vạch trên sản phẩm.</string>
+
+    <!-- Check-in: thẻ NFC -->
+    <string name="checkin_nfc">Thẻ NFC</string>
+    <string name="checkin_nfc_tap">Chạm điện thoại vào thẻ của cửa hàng</string>
+    <string name="checkin_nfc_off">NFC đang tắt — chạm để bật</string>
+    <string name="checkin_nfc_checking">Đang kiểm tra thẻ…</string>
+    <string name="checkin_nfc_verified">Đã xác nhận có mặt tại cửa hàng</string>
+    <string name="checkin_nfc_foreign">Thẻ của cửa hàng khác: %1$s</string>
+    <string name="checkin_nfc_unknown">Thẻ chưa được gắn cho cửa hàng nào</string>
+    <string name="checkin_nfc_unchecked">Đã đọc thẻ, sẽ đối chiếu khi gửi</string>
+
+    <!-- Gắn thẻ NFC -->
+    <string name="nfc_register_action">Gắn thẻ NFC cho cửa hàng</string>
+    <string name="nfc_register_title">Gắn thẻ NFC</string>
+    <string name="nfc_register_hint">Chạm mặt sau điện thoại vào thẻ NFC dán tại cửa hàng. Lần sau check-in, chạm thẻ là xác nhận có mặt.</string>
+    <string name="nfc_register_done">Đã gắn thẻ cho cửa hàng này</string>
+    <string name="nfc_register_unchanged">Thẻ này đã gắn cho cửa hàng này</string>
+    <string name="nfc_register_taken">Thẻ đã gắn cho cửa hàng khác: %1$s. Nhờ giám sát gỡ trước.</string>
+    <string name="nfc_register_no_visit">Chỉ gắn được thẻ khi đang check-in tại cửa hàng</string>
+    <string name="nfc_register_invalid">Không đọc được mã thẻ</string>
+    <string name="nfc_register_failed">Không gắn được thẻ. Kiểm tra mạng rồi chạm lại.</string>
+
+    <!-- Tuyến: thẻ NFC -->
+    <string name="route_nfc_off_route">Thẻ của %1$s — cửa hàng không có trong tuyến hôm nay</string>
+    <string name="route_nfc_failed">Không kiểm tra được thẻ. Kiểm tra mạng rồi chạm lại.</string>
 </resources>
